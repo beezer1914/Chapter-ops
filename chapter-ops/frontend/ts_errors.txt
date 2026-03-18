@@ -1,0 +1,3 @@
+src/pages/Settings.tsx(5,1): error TS6133: 'useBrandingStore' is declared but its value is never read.
+src/pages/Settings.tsx(28,10): error TS6133: 'BRANDING_PRESETS' is declared but its value is never read.
+src/stores/notificationStore.ts(22,19): error TS2503: Cannot find namespace 'NodeJS'.
