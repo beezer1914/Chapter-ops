@@ -5,7 +5,7 @@ Handles login, registration (with invite codes), logout, and current user.
 These routes are tenant-exempt (no chapter context needed).
 """
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from flask import Blueprint, jsonify, request, session
 from flask_login import current_user, login_required, login_user, logout_user
@@ -112,11 +112,27 @@ def register():
             )
             membership_active = not bool(member_app_template)
 
+            # Determine financial status based on initiation date
+            initiation_date = None
+            raw_date = data.get("initiation_date")
+            if raw_date:
+                try:
+                    initiation_date = date.fromisoformat(raw_date)
+                except (ValueError, TypeError):
+                    pass
+
+            if initiation_date:
+                days_since = (date.today() - initiation_date).days
+                financial_status = "neophyte" if days_since < 365 else "not_financial"
+            else:
+                financial_status = "not_financial"
+
             membership = ChapterMembership(
                 user_id=user.id,
                 chapter_id=invite.chapter_id,
                 role=invite.role,
-                financial_status="neophyte",
+                financial_status=financial_status,
+                initiation_date=initiation_date,
                 active=membership_active,
             )
             db.session.add(membership)

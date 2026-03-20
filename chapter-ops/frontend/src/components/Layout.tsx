@@ -19,6 +19,7 @@ import {
   Megaphone,
   FolderOpen,
   BookOpen,
+  FileText,
   Settings as SettingsIcon,
   LogOut,
   Menu,
@@ -45,6 +46,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: "Chapter",
     items: [
       { to: "/payments", label: "Payments", icon: CreditCard, minRole: "member" },
+      { to: "/invoices", label: "Invoices", icon: FileText, minRole: "member" },
       { to: "/donations", label: "Donations", icon: HeartHandshake, minRole: "member" },
       { to: "/events", label: "Events", icon: Calendar, minRole: "member" },
       { to: "/communications", label: "Communications", icon: Megaphone, minRole: "member" },

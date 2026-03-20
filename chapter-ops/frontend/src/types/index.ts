@@ -28,6 +28,7 @@ export interface RegisterRequest {
   last_name: string;
   phone?: string;
   invite_code?: string;
+  initiation_date?: string;
 }
 
 export interface AuthResponse {
@@ -686,6 +687,7 @@ export interface StripeDuesCheckoutRequest {
   amount: number;
   fee_type_id?: string;
   notes?: string;
+  invoice_id?: string;
 }
 
 export interface StripeDonationCheckoutRequest {
@@ -1015,4 +1017,100 @@ export interface UpdateArticleRequest {
   status?: KbStatus;
   is_featured?: boolean;
   tags?: string[];
+}
+
+// ============================================================================
+// Invoice types
+// ============================================================================
+
+export type InvoiceScope = "member" | "chapter";
+export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
+
+export interface Invoice {
+  id: string;
+  scope: InvoiceScope;
+  chapter_id: string | null;
+  billed_user_id: string | null;
+  fee_type_id: string | null;
+  region_id: string | null;
+  billed_chapter_id: string | null;
+  per_member_rate: string | null;
+  member_count: number | null;
+  invoice_number: string;
+  description: string;
+  amount: string;
+  status: InvoiceStatus;
+  due_date: string;
+  sent_at: string | null;
+  paid_at: string | null;
+  notes: string | null;
+  payment_id: string | null;
+  created_by_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceWithUser extends Invoice {
+  billed_user?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+}
+
+export interface InvoiceWithChapter extends Invoice {
+  billed_chapter?: {
+    id: string;
+    name: string;
+    designation: string;
+  };
+}
+
+export interface ChapterBillInvoice extends Invoice {
+  region?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface CreateInvoiceRequest {
+  billed_user_id: string;
+  amount: number;
+  description: string;
+  due_date: string;
+  fee_type_id?: string;
+  notes?: string;
+}
+
+export interface BulkCreateInvoiceRequest {
+  amount: number;
+  description: string;
+  due_date: string;
+  fee_type_id?: string;
+  notes?: string;
+  user_ids?: string[];
+  exclude_statuses?: string[];
+}
+
+export interface CreateRegionalInvoiceRequest {
+  billed_chapter_id: string;
+  description: string;
+  due_date: string;
+  per_member_rate?: number;
+  amount?: number;
+  notes?: string;
+}
+
+export interface BulkRegionalInvoiceRequest {
+  per_member_rate: number;
+  description: string;
+  due_date: string;
+  notes?: string;
+}
+
+export interface InvoiceSummary {
+  total_invoiced: string;
+  total_count: number;
+  by_status: Record<string, { count: number; amount: string }>;
 }

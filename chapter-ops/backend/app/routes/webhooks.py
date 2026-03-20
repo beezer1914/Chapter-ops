@@ -17,7 +17,7 @@ import stripe
 from flask import Blueprint, current_app, jsonify, request
 
 from app.extensions import db
-from app.models import Chapter, ChapterMembership, Payment, Donation
+from app.models import Chapter, ChapterMembership, Payment, Donation, Invoice
 from app.models.event import EventAttendance
 
 logger = logging.getLogger(__name__)
@@ -132,6 +132,29 @@ def _create_payment_from_session(session: dict, metadata: dict, payment_type: st
         if plan and plan.is_complete():
             plan.status = "completed"
             logger.info(f"PaymentPlan {plan_id} marked complete.")
+
+    # Auto-link to outstanding invoice if one exists for this user+chapter
+    invoice_id = metadata.get("invoice_id")
+    if invoice_id:
+        invoice = db.session.get(Invoice, invoice_id)
+        if invoice and invoice.status in ("sent", "overdue", "draft"):
+            invoice.payment_id = payment.id
+            invoice.status = "paid"
+            invoice.paid_at = payment.created_at
+            logger.info(f"Invoice {invoice_id} marked paid via payment {payment.id}")
+    else:
+        # Try to find an open invoice matching this user + chapter + amount
+        open_invoice = Invoice.query.filter(
+            Invoice.chapter_id == chapter_id,
+            Invoice.billed_user_id == user_id,
+            Invoice.status.in_(["sent", "overdue"]),
+            Invoice.payment_id.is_(None),
+        ).order_by(Invoice.due_date.asc()).first()
+        if open_invoice and open_invoice.amount == amount:
+            open_invoice.payment_id = payment.id
+            open_invoice.status = "paid"
+            open_invoice.paid_at = payment.created_at
+            logger.info(f"Auto-linked invoice {open_invoice.id} to payment {payment.id}")
 
     db.session.commit()
     logger.info(f"Payment recorded: {payment.id} for session {session_id}")

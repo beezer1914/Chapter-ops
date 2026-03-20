@@ -11,6 +11,12 @@ import {
   searchDirectory,
   fetchDirectoryMemberDetail,
 } from "@/services/regionService";
+import {
+  fetchRegionalInvoices,
+  createRegionalInvoice,
+  bulkCreateRegionalInvoices,
+  updateRegionalInvoice,
+} from "@/services/invoiceService";
 import type {
   RegionWithStats,
   RegionDetail,
@@ -21,6 +27,8 @@ import type {
   OrgDirectoryMember,
   OrgDirectoryChapter,
   OrgDirectoryMemberDetail,
+  InvoiceWithChapter,
+  InvoiceStatus,
 } from "@/types";
 
 const REGION_ROLE_LABELS: Record<RegionRole, string> = {
@@ -487,6 +495,328 @@ function RegionDetailView({
         isOrgAdmin={isOrgAdmin}
         onUpdated={onRefresh}
       />
+
+      {(isOrgAdmin || detail.members.some(m => ["regional_director", "regional_1st_vice", "regional_treasurer"].includes(m.role))) && (
+        <RegionalInvoicesSection
+          regionId={detail.region.id}
+          chapters={detail.chapters}
+          canManage={isOrgAdmin || detail.members.some(m => ["regional_director", "regional_treasurer"].includes(m.role))}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Regional Invoices Section ───────────────────────────────────────────
+
+const INV_STATUS: Record<string, { label: string; cls: string }> = {
+  draft: { label: "Draft", cls: "bg-gray-100 text-gray-700" },
+  sent: { label: "Sent", cls: "bg-blue-100 text-blue-700" },
+  paid: { label: "Paid", cls: "bg-emerald-100 text-emerald-700" },
+  overdue: { label: "Overdue", cls: "bg-red-100 text-red-700" },
+  cancelled: { label: "Cancelled", cls: "bg-gray-100 text-gray-500" },
+};
+
+function RegionalInvoicesSection({
+  regionId,
+  chapters,
+  canManage,
+}: {
+  regionId: string;
+  chapters: ChapterWithMemberCount[];
+  canManage: boolean;
+}) {
+  const [invoices, setInvoices] = useState<InvoiceWithChapter[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState<"single" | "bulk" | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Single form state
+  const [chapterId, setChapterId] = useState("");
+  const [rateOrFlat, setRateOrFlat] = useState<"rate" | "flat">("rate");
+  const [rate, setRate] = useState("");
+  const [flatAmount, setFlatAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [notes, setNotes] = useState("");
+
+  // Bulk form state
+  const [bulkRate, setBulkRate] = useState("");
+  const [bulkDescription, setBulkDescription] = useState("");
+  const [bulkDueDate, setBulkDueDate] = useState("");
+  const [bulkNotes, setBulkNotes] = useState("");
+
+  useEffect(() => { load(); }, [regionId]);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const data = await fetchRegionalInvoices(regionId);
+      setInvoices(data);
+    } catch {
+      setError("Failed to load regional invoices.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCreateSingle(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const inv = await createRegionalInvoice(regionId, {
+        billed_chapter_id: chapterId,
+        description,
+        due_date: dueDate,
+        per_member_rate: rateOrFlat === "rate" ? parseFloat(rate) : undefined,
+        amount: rateOrFlat === "flat" ? parseFloat(flatAmount) : undefined,
+        notes: notes || undefined,
+      });
+      setInvoices((prev) => [inv, ...prev]);
+      setShowForm(null);
+      setChapterId(""); setRate(""); setFlatAmount(""); setDescription(""); setDueDate(""); setNotes("");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Failed to create invoice.";
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleCreateBulk(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const result = await bulkCreateRegionalInvoices(regionId, {
+        per_member_rate: parseFloat(bulkRate),
+        description: bulkDescription,
+        due_date: bulkDueDate,
+        notes: bulkNotes || undefined,
+      });
+      setInvoices((prev) => [...result.invoices, ...prev]);
+      setShowForm(null);
+      setBulkRate(""); setBulkDescription(""); setBulkDueDate(""); setBulkNotes("");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Failed to create invoices.";
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleStatusChange(invoiceId: string, status: string) {
+    try {
+      const updated = await updateRegionalInvoice(regionId, invoiceId, { status });
+      setInvoices((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    } catch {
+      setError("Failed to update invoice.");
+    }
+  }
+
+  const fmt = (v: string | number) =>
+    `$${parseFloat(String(v)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmtDate = (iso: string) =>
+    iso ? new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "";
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-gray-900">Head Tax & Regional Invoices</h2>
+        {canManage && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowForm(showForm === "single" ? null : "single")}
+              className="text-sm bg-brand-primary text-white px-3 py-1.5 rounded-lg font-medium hover:bg-brand-primary-dark transition"
+            >
+              + Invoice Chapter
+            </button>
+            <button
+              onClick={() => setShowForm(showForm === "bulk" ? null : "bulk")}
+              className="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg font-medium hover:bg-gray-50 transition"
+            >
+              Invoice All Chapters
+            </button>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+          {error}
+          <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
+        </div>
+      )}
+
+      {/* Single invoice form */}
+      {showForm === "single" && canManage && (
+        <form onSubmit={handleCreateSingle} className="border border-gray-200 rounded-lg p-4 mb-4 space-y-3">
+          <h3 className="font-semibold text-gray-900 text-sm">Invoice a Chapter</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Chapter</label>
+              <select value={chapterId} onChange={(e) => setChapterId(e.target.value)} required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary">
+                <option value="">Select chapter...</option>
+                {chapters.map((ch) => (
+                  <option key={ch.id} value={ch.id}>{ch.name} ({ch.designation}) — {ch.member_count} members</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Billing Method</label>
+              <div className="flex gap-3 mt-1">
+                <label className="flex items-center gap-1.5 text-sm">
+                  <input type="radio" checked={rateOrFlat === "rate"} onChange={() => setRateOrFlat("rate")} className="text-brand-primary" />
+                  Per Member Rate
+                </label>
+                <label className="flex items-center gap-1.5 text-sm">
+                  <input type="radio" checked={rateOrFlat === "flat"} onChange={() => setRateOrFlat("flat")} className="text-brand-primary" />
+                  Flat Amount
+                </label>
+              </div>
+            </div>
+            {rateOrFlat === "rate" ? (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Rate per Member ($)</label>
+                <input type="number" step="0.01" min="0.01" value={rate} onChange={(e) => setRate(e.target.value)} required
+                  placeholder="e.g., 10.00"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Amount ($)</label>
+                <input type="number" step="0.01" min="0.01" value={flatAmount} onChange={(e) => setFlatAmount(e.target.value)} required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+              </div>
+            )}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Due Date</label>
+              <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} required
+                placeholder="e.g., Spring 2026 Head Tax"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Notes <span className="text-gray-400">(optional)</span></label>
+              <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button type="submit" disabled={submitting}
+              className="bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-primary-dark transition disabled:opacity-50">
+              {submitting ? "Creating..." : "Create Invoice"}
+            </button>
+            <button type="button" onClick={() => setShowForm(null)} className="text-gray-500 text-sm font-medium px-3 py-2">Cancel</button>
+          </div>
+        </form>
+      )}
+
+      {/* Bulk form */}
+      {showForm === "bulk" && canManage && (
+        <form onSubmit={handleCreateBulk} className="border border-gray-200 rounded-lg p-4 mb-4 space-y-3">
+          <h3 className="font-semibold text-gray-900 text-sm">Bulk Head Tax — All Chapters</h3>
+          <p className="text-xs text-gray-500">Creates an invoice for every active chapter based on their current member count.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Rate per Member ($)</label>
+              <input type="number" step="0.01" min="0.01" value={bulkRate} onChange={(e) => setBulkRate(e.target.value)} required
+                placeholder="e.g., 10.00"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Due Date</label>
+              <input type="date" value={bulkDueDate} onChange={(e) => setBulkDueDate(e.target.value)} required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              <input type="text" value={bulkDescription} onChange={(e) => setBulkDescription(e.target.value)} required
+                placeholder="e.g., Spring 2026 Head Tax"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button type="submit" disabled={submitting}
+              className="bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-primary-dark transition disabled:opacity-50">
+              {submitting ? "Creating..." : `Invoice ${chapters.length} Chapters`}
+            </button>
+            <button type="button" onClick={() => setShowForm(null)} className="text-gray-500 text-sm font-medium px-3 py-2">Cancel</button>
+          </div>
+        </form>
+      )}
+
+      {/* Invoice list */}
+      {loading ? (
+        <p className="text-gray-500 text-sm py-6 text-center">Loading invoices...</p>
+      ) : invoices.length === 0 ? (
+        <p className="text-gray-400 text-sm py-6 text-center">No regional invoices yet.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Chapter</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Members</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                {canManage && <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {invoices.map((inv) => {
+                const s = INV_STATUS[inv.status] ?? INV_STATUS.draft;
+                return (
+                  <tr key={inv.id} className="hover:bg-gray-50 transition">
+                    <td className="px-4 py-3">
+                      <p className="text-xs font-mono text-gray-400">{inv.invoice_number}</p>
+                      <p className="text-sm text-gray-900">{inv.description}</p>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {inv.billed_chapter ? `${inv.billed_chapter.name} (${inv.billed_chapter.designation})` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {inv.member_count != null ? `${inv.member_count} × ${fmt(inv.per_member_rate ?? "0")}` : "Flat"}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">{fmt(inv.amount)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{fmtDate(inv.due_date)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${s.cls}`}>{s.label}</span>
+                    </td>
+                    {canManage && (
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {inv.status === "draft" && (
+                            <button onClick={() => handleStatusChange(inv.id, "sent")}
+                              className="text-xs text-blue-600 hover:text-blue-800 font-medium">Send</button>
+                          )}
+                          {(inv.status === "sent" || inv.status === "overdue") && (
+                            <button onClick={() => handleStatusChange(inv.id, "paid")}
+                              className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Mark Paid</button>
+                          )}
+                          {inv.status !== "paid" && inv.status !== "cancelled" && (
+                            <button onClick={() => handleStatusChange(inv.id, "cancelled")}
+                              className="text-xs text-gray-400 hover:text-red-600 font-medium">Cancel</button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

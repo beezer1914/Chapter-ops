@@ -26,6 +26,7 @@ from app.models.workflow import (
 )
 from app.models.event import Event, EventAttendance
 from app.models.announcement import Announcement
+from app.models.invoice import Invoice
 from app.models.document import Document
 from app.models.knowledge_article import KnowledgeArticle
 
@@ -51,6 +52,7 @@ __all__ = [
     "Event",
     "EventAttendance",
     "Announcement",
+    "Invoice",
     "Document",
     "KnowledgeArticle",
 ]

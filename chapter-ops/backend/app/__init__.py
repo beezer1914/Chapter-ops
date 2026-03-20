@@ -108,6 +108,7 @@ def create_app(config_class=None):
     from app.routes.comms import comms_bp
     from app.routes.documents import documents_bp
     from app.routes.kb import kb_bp
+    from app.routes.invoices import invoices_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(onboarding_bp)
@@ -128,6 +129,7 @@ def create_app(config_class=None):
     app.register_blueprint(comms_bp)
     app.register_blueprint(documents_bp)
     app.register_blueprint(kb_bp)
+    app.register_blueprint(invoices_bp)
 
     # Exempt API routes from CSRF (using session cookies + SameSite instead)
     csrf.exempt(auth_bp)
@@ -146,6 +148,7 @@ def create_app(config_class=None):
     csrf.exempt(comms_bp)
     csrf.exempt(documents_bp)
     csrf.exempt(kb_bp)
+    csrf.exempt(invoices_bp)
     csrf.exempt(stripe_connect_bp)
     csrf.exempt(webhooks_bp)
     csrf.exempt(files_bp)

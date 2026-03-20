@@ -291,6 +291,7 @@ def create_dues_checkout():
                 "user_id": current_user.id,
                 "fee_type_id": data.get("fee_type_id", ""),
                 "notes": data.get("notes", ""),
+                "invoice_id": data.get("invoice_id", ""),
             },
         )
     except stripe.error.StripeError as e:

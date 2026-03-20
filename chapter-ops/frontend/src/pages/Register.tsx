@@ -20,6 +20,7 @@ const registerSchema = z
     confirm_password: z.string(),
     phone: z.string().optional(),
     invite_code: z.string().optional(),
+    initiation_date: z.string().optional(),
   })
   .refine((data) => data.password === data.confirm_password, {
     message: "Passwords do not match",
@@ -56,6 +57,7 @@ export default function Register() {
       confirm_password: "",
       phone: "",
       invite_code: "",
+      initiation_date: "",
     },
   });
 
@@ -72,6 +74,7 @@ export default function Register() {
         password: data.password,
         phone: data.phone || undefined,
         invite_code: data.invite_code || undefined,
+        initiation_date: data.initiation_date || undefined,
       });
       const user = useAuthStore.getState().user;
       if (user?.active_chapter_id) {
@@ -202,6 +205,21 @@ export default function Register() {
               {...register("phone")}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
+          </div>
+
+          <div>
+            <label htmlFor="initiation_date" className="block text-sm font-medium text-gray-700">
+              Initiation Date <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              id="initiation_date"
+              type="date"
+              {...register("initiation_date")}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              When were you initiated into your organization? This helps us set your membership status.
+            </p>
           </div>
 
           <div>
