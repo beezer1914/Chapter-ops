@@ -28,7 +28,8 @@ import {
 } from "lucide-react";
 
 const METHOD_LABELS: Record<string, string> = {
-  cash: "Cash", check: "Check", bank_transfer: "Bank Transfer", manual: "Manual",
+  cash: "Cash", check: "Check", bank_transfer: "Bank Transfer",
+  zelle: "Zelle", venmo: "Venmo", cashapp: "Cash App", manual: "Other",
 };
 
 const METHOD_COLORS: Record<string, string> = {
@@ -36,6 +37,9 @@ const METHOD_COLORS: Record<string, string> = {
   cash: "bg-emerald-500",
   check: "bg-amber-500",
   bank_transfer: "bg-sky-500",
+  zelle: "bg-purple-500",
+  venmo: "bg-blue-500",
+  cashapp: "bg-green-500",
   manual: "bg-gray-400",
 };
 

@@ -49,7 +49,8 @@ function formatDate(iso: string): string {
 }
 
 const METHOD_LABELS: Record<string, string> = {
-  cash: "Cash", check: "Check", bank_transfer: "Bank Transfer", manual: "Manual",
+  cash: "Cash", check: "Check", bank_transfer: "Bank Transfer",
+  zelle: "Zelle", venmo: "Venmo", cashapp: "Cash App", manual: "Other",
 };
 
 const FREQUENCY_LABELS: Record<string, string> = {

@@ -20,7 +20,7 @@ from app.utils.decorators import chapter_required, role_required
 
 payments_bp = Blueprint("payments", __name__, url_prefix="/api/payments")
 
-VALID_METHODS = {"cash", "check", "bank_transfer", "manual"}
+VALID_METHODS = {"cash", "check", "bank_transfer", "zelle", "venmo", "cashapp", "manual"}
 VALID_PAYMENT_TYPES = {"one-time", "installment"}
 
 
