@@ -29,41 +29,70 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex font-body bg-gray-50">
-      {/* Left Pane - Branding & Geometric Background */}
+    <div className="min-h-screen flex font-body bg-[#f8f9fb]">
+      {/* Left Pane — Immersive brand panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-brand-primary-dark relative overflow-hidden items-center justify-center">
-        {/* Abstract gradients */}
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-primary-main to-brand-primary-dark opacity-95"></div>
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle,_var(--tw-gradient-stops))] from-brand-accent-main/20 via-transparent to-transparent blur-3xl rounded-full transform translate-x-1/3 -translate-y-1/3"></div>
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[radial-gradient(circle,_var(--tw-gradient-stops))] from-brand-primary-light/10 via-transparent to-transparent blur-3xl rounded-full transform -translate-x-1/4 translate-y-1/4"></div>
+        {/* Base gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-primary-main via-brand-primary-dark to-[#020810]" />
 
-        <div className="relative z-10 text-center text-white px-12 animate-fade-in">
-          <h1 className="text-5xl font-heading font-bold mb-6 tracking-tight drop-shadow-md">ChapterOps</h1>
-          <p className="text-xl font-light text-brand-primary-light max-w-md mx-auto leading-relaxed">
+        {/* Diagonal mesh overlay */}
+        <div className="absolute inset-0 bg-mesh-diagonal" />
+
+        {/* Radial accent glow */}
+        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-[radial-gradient(circle,_var(--tw-gradient-stops))] from-brand-accent-main/15 via-transparent to-transparent blur-3xl rounded-full" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,_var(--tw-gradient-stops))] from-brand-primary-light/8 via-transparent to-transparent blur-3xl rounded-full" />
+
+        {/* Floating Greek letters — ambient decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden>
+          <span className="absolute top-[12%] left-[8%] text-7xl font-heading font-bold text-white/[0.04] float-slow">&#931;</span>
+          <span className="absolute top-[60%] left-[15%] text-5xl font-heading font-bold text-white/[0.03] float-medium" style={{ animationDelay: "1s" }}>&#934;</span>
+          <span className="absolute top-[25%] right-[12%] text-6xl font-heading font-bold text-white/[0.04] float-medium" style={{ animationDelay: "2s" }}>&#913;</span>
+          <span className="absolute bottom-[15%] right-[20%] text-8xl font-heading font-bold text-white/[0.03] float-slow" style={{ animationDelay: "3s" }}>&#916;</span>
+          <span className="absolute top-[45%] left-[45%] text-5xl font-heading font-bold text-white/[0.025] float-slow" style={{ animationDelay: "1.5s" }}>&#928;</span>
+          <span className="absolute bottom-[35%] left-[55%] text-6xl font-heading font-bold text-white/[0.03] float-medium" style={{ animationDelay: "0.5s" }}>&#937;</span>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 text-center text-white px-12 anim-card-reveal">
+          <h1 className="text-5xl font-heading font-bold mb-4 tracking-tight">
+            Chapter<span className="text-brand-accent-main">Ops</span>
+          </h1>
+          <div className="w-12 h-0.5 bg-brand-accent-main/60 mx-auto mb-6" />
+          <p className="text-lg font-light text-white/60 max-w-sm mx-auto leading-relaxed">
             The premium platform for modern greek organization management.
           </p>
         </div>
       </div>
 
-      {/* Right Pane - Form */}
-      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto w-full max-w-sm lg:max-w-md animate-slide-up">
-          <div className="bg-white py-10 px-8 lg:px-12 shadow-glass border border-gray-100 rounded-3xl">
+      {/* Right Pane — Form */}
+      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 relative">
+        {/* Soft radial gradient background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-brand-primary-light/30 via-[#f8f9fb] to-[#f8f9fb]" />
+
+        <div className="relative z-10 mx-auto w-full max-w-sm lg:max-w-md anim-card-reveal" style={{ animationDelay: "200ms" }}>
+          {/* Mobile logo */}
+          <div className="lg:hidden text-center mb-8">
+            <h1 className="text-3xl font-heading font-bold text-gray-900">
+              Chapter<span className="text-brand-primary-main">Ops</span>
+            </h1>
+          </div>
+
+          <div className="bg-white py-10 px-8 lg:px-12 shadow-xl shadow-gray-200/50 rounded-2xl">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-heading font-extrabold text-gray-900 mb-2">Welcome Back</h2>
-              <p className="text-sm text-gray-500">Sign in to access your workspace</p>
+              <h2 className="text-2xl font-heading font-bold text-gray-900 mb-1">Welcome back</h2>
+              <p className="text-sm text-gray-400">Sign in to your workspace</p>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded text-sm font-medium animate-fade-in">
+              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg text-sm font-medium anim-card-reveal">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="anim-card-reveal" style={{ animationDelay: "300ms" }}>
+                <label htmlFor="email" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Email
                 </label>
                 <input
                   id="email"
@@ -71,13 +100,13 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-brand-primary-main focus:ring-2 focus:ring-brand-primary-light transition-all duration-200 outline-none"
+                  className="block w-full rounded-xl border border-gray-200 px-4 py-3 bg-gray-50/80 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-brand-primary-main focus:ring-2 focus:ring-brand-primary-light/50 transition-all duration-200 outline-none"
                   placeholder="name@example.com"
                 />
               </div>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="anim-card-reveal" style={{ animationDelay: "380ms" }}>
+                <label htmlFor="password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                   Password
                 </label>
                 <input
@@ -86,32 +115,34 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-3 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-brand-primary-main focus:ring-2 focus:ring-brand-primary-light transition-all duration-200 outline-none"
-                  placeholder="••••••••"
+                  className="block w-full rounded-xl border border-gray-200 px-4 py-3 bg-gray-50/80 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-brand-primary-main focus:ring-2 focus:ring-brand-primary-light/50 transition-all duration-200 outline-none"
+                  placeholder="Enter your password"
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-soft text-sm font-semibold text-white bg-brand-primary-main hover:bg-brand-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary-main transition-colors duration-200 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
-              >
-                {submitting ? (
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  "Sign In"
-                )}
-              </button>
+              <div className="anim-card-reveal" style={{ animationDelay: "460ms" }}>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full flex justify-center items-center py-3.5 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-brand-primary-main to-brand-primary-dark hover:shadow-lg hover:shadow-brand-primary-main/25 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary-main transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {submitting ? (
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <>Sign In<span className="ml-2">→</span></>
+                  )}
+                </button>
+              </div>
             </form>
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-gray-500">
+            <div className="mt-8 text-center anim-card-reveal" style={{ animationDelay: "540ms" }}>
+              <p className="text-sm text-gray-400">
                 Don't have an account?{" "}
                 <Link to="/register" className="font-semibold text-brand-primary-main hover:text-brand-primary-dark transition-colors">
-                  Create one now
+                  Create one
                 </Link>
               </p>
             </div>

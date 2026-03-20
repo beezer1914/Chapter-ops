@@ -45,7 +45,7 @@ import type {
   Typography,
   ChapterTransferRequest,
 } from "@/types";
-import { getDivineNinePresets, getPresetById } from "@/data/brandingPresets";
+import { BRANDING_PRESETS, getPresetById } from "@/data/brandingPresets";
 
 const ROLE_HIERARCHY: Record<MemberRole, number> = {
   member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
@@ -1623,14 +1623,12 @@ function BrandingTab({
           onChange={handlePresetSelect}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary"
         >
-          <option value="">-- Choose a preset or customize below --</option>
-          <optgroup label="Divine Nine (NPHC)">
-            {getDivineNinePresets().map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.greek_letters} - {preset.name} ({preset.founded_year})
-              </option>
-            ))}
-          </optgroup>
+          <option value="">-- Choose a palette or customize below --</option>
+          {BRANDING_PRESETS.map((preset) => (
+            <option key={preset.id} value={preset.id}>
+              {preset.name} — {preset.description}
+            </option>
+          ))}
         </select>
         <p className="text-xs text-gray-500 mt-2">
           Select your organization to auto-fill official brand colors. You can customize them after applying.

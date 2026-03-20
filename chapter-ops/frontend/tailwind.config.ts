@@ -50,24 +50,39 @@ export default {
         body: ["var(--font-body)", "sans-serif"],
       },
       boxShadow: {
-        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
-        'glass-hover': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-        'soft': '0 10px 40px -10px rgba(0,0,0,0.05)',
+        glass: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+        "glass-hover": "0 8px 32px 0 rgba(31, 38, 135, 0.15)",
+        soft: "0 10px 40px -10px rgba(0,0,0,0.05)",
+        lifted:
+          "0 16px 48px -12px rgba(0, 0, 0, 0.1), 0 4px 12px -2px rgba(0, 0, 0, 0.04)",
+        "glow-brand": "0 0 20px -4px var(--color-primary-main)",
       },
       animation: {
-        'fade-in': 'fadeIn 0.5s ease-out',
-        'slide-up': 'slideUp 0.5s ease-out',
+        "fade-in": "fadeIn 0.5s ease-out",
+        "slide-up": "slideUp 0.5s ease-out",
+        "card-reveal":
+          "cardReveal 0.5s cubic-bezier(0.22, 1, 0.36, 1) both",
+        "section-reveal":
+          "sectionReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
         slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        }
-      }
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        cardReveal: {
+          "0%": { opacity: "0", transform: "translateY(16px) scale(0.97)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        sectionReveal: {
+          "0%": { opacity: "0", transform: "translateY(24px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
     },
   },
   plugins: [],

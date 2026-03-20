@@ -205,7 +205,7 @@ export default function OrganizationStep() {
             <input
               id="org_name"
               type="text"
-              placeholder="e.g., Phi Beta Sigma Fraternity, Inc."
+              placeholder="e.g., Alpha Beta Gamma Fraternity, Inc."
               {...register("name")}
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
@@ -222,7 +222,7 @@ export default function OrganizationStep() {
               <input
                 id="abbreviation"
                 type="text"
-                placeholder="e.g., PBS"
+                placeholder="e.g., ABG"
                 {...register("abbreviation")}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
@@ -237,7 +237,7 @@ export default function OrganizationStep() {
               <input
                 id="greek_letters"
                 type="text"
-                placeholder="e.g., \u03A6\u0392\u03A3"
+                placeholder="e.g., \u0391\u0392\u0393"
                 {...register("greek_letters")}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
@@ -296,7 +296,7 @@ export default function OrganizationStep() {
               <input
                 id="founded_year"
                 type="text"
-                placeholder="e.g., 1914"
+                placeholder="e.g., 1920"
                 {...register("founded_year")}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />

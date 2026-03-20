@@ -19,6 +19,7 @@ import Communications from "@/pages/Communications";
 import Documents from "@/pages/Documents";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import EventPublic from "@/pages/EventPublic";
+import Landing from "@/pages/Landing";
 import StripeCallback from "@/pages/StripeCallback";
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Public routes */}
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 

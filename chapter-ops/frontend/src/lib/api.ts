@@ -22,7 +22,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Redirect to login if not authenticated
       const currentPath = window.location.pathname;
-      if (currentPath !== "/login" && currentPath !== "/register") {
+      if (currentPath !== "/" && currentPath !== "/login" && currentPath !== "/register" && !currentPath.startsWith("/e/")) {
         window.location.href = "/login";
       }
     }
