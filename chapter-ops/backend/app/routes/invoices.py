@@ -551,7 +551,13 @@ def create_regional_invoice(region_id):
     db.session.add(invoice)
     db.session.commit()
 
-    return jsonify(invoice.to_dict()), 201
+    result = invoice.to_dict()
+    result["billed_chapter"] = {
+        "id": chapter.id,
+        "name": chapter.name,
+        "designation": chapter.designation,
+    }
+    return jsonify(result), 201
 
 
 @invoices_bp.route("/regional/<region_id>/bulk", methods=["POST"])
@@ -625,7 +631,17 @@ def bulk_create_regional_invoices(region_id):
     return jsonify({
         "message": f"Created {len(created)} regional invoices.",
         "count": len(created),
-        "invoices": [inv.to_dict() for inv in created],
+        "invoices": [
+            {
+                **inv.to_dict(),
+                "billed_chapter": {
+                    "id": inv.billed_chapter.id,
+                    "name": inv.billed_chapter.name,
+                    "designation": inv.billed_chapter.designation,
+                } if inv.billed_chapter else None,
+            }
+            for inv in created
+        ],
     }), 201
 
 
