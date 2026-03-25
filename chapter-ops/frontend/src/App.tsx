@@ -20,6 +20,9 @@ import Documents from "@/pages/Documents";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import EventPublic from "@/pages/EventPublic";
 import Invoices from "@/pages/Invoices";
+import Intake from "@/pages/Intake";
+import Expenses from "@/pages/Expenses";
+import Lineage from "@/pages/Lineage";
 import Landing from "@/pages/Landing";
 import StripeCallback from "@/pages/StripeCallback";
 
@@ -171,6 +174,33 @@ export default function App() {
           element={
             <ProtectedRoute>
               <KnowledgeBase />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/intake"
+          element={
+            <ProtectedRoute>
+              <Intake />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/expenses"
+          element={
+            <ProtectedRoute>
+              <Expenses />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/lineage"
+          element={
+            <ProtectedRoute>
+              <Lineage />
             </ProtectedRoute>
           }
         />

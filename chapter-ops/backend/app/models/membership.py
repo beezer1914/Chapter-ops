@@ -38,6 +38,24 @@ class ChapterMembership(BaseModel):
         db.String(20), nullable=False, default="not_financial"
     )  # financial, not_financial, neophyte, exempt
 
+    # Member type — collegiate, graduate, or life
+    member_type: Mapped[str] = mapped_column(
+        db.String(20), nullable=False, default="collegiate"
+    )  # collegiate, graduate, life
+
+    # Intake officer flag — grants access to MIP pipeline without role elevation
+    is_intake_officer: Mapped[bool] = mapped_column(
+        db.Boolean, default=False, nullable=False
+    )
+
+    # Lineage / line history fields
+    big_id: Mapped[str | None] = mapped_column(
+        db.String(36), db.ForeignKey("user.id"), nullable=True
+    )
+    line_season: Mapped[str | None] = mapped_column(db.String(100), nullable=True)
+    line_number: Mapped[int | None] = mapped_column(db.Integer, nullable=True)
+    line_name: Mapped[str | None] = mapped_column(db.String(100), nullable=True)
+
     # Membership details
     initiation_date: Mapped[date | None] = mapped_column(db.Date, nullable=True)
     join_date: Mapped[date] = mapped_column(db.Date, nullable=False, default=date.today)
@@ -47,8 +65,9 @@ class ChapterMembership(BaseModel):
     custom_fields: Mapped[dict] = mapped_column(db.JSON, nullable=False, default=dict)
 
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="memberships")
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id], back_populates="memberships")
     chapter: Mapped["Chapter"] = relationship("Chapter", back_populates="memberships")
+    big: Mapped["User | None"] = relationship("User", foreign_keys=[big_id])
 
     # Role hierarchy for permission checks
     ROLE_HIERARCHY = {
@@ -71,6 +90,12 @@ class ChapterMembership(BaseModel):
             "chapter_id": self.chapter_id,
             "role": self.role,
             "financial_status": self.financial_status,
+            "member_type": self.member_type,
+            "is_intake_officer": self.is_intake_officer,
+            "big_id": self.big_id,
+            "line_season": self.line_season,
+            "line_number": self.line_number,
+            "line_name": self.line_name,
             "initiation_date": self.initiation_date.isoformat() if self.initiation_date else None,
             "join_date": self.join_date.isoformat() if self.join_date else None,
             "active": self.active,

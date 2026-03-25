@@ -29,6 +29,9 @@ from app.models.announcement import Announcement
 from app.models.invoice import Invoice
 from app.models.document import Document
 from app.models.knowledge_article import KnowledgeArticle
+from app.models.intake import IntakeCandidate, IntakeDocument
+from app.models.expense import Expense
+from app.models.milestone import ChapterMilestone
 
 __all__ = [
     "BaseModel",
@@ -55,4 +58,8 @@ __all__ = [
     "Invoice",
     "Document",
     "KnowledgeArticle",
+    "IntakeCandidate",
+    "IntakeDocument",
+    "Expense",
+    "ChapterMilestone",
 ]

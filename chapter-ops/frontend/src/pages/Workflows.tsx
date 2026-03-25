@@ -536,7 +536,7 @@ function TemplateBuilderView({
                   className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="document">Document</option>
-                  <option value="expense">Expense Request (coming soon)</option>
+                  <option value="expense">Expense Request</option>
                   <option value="event">Event Proposal</option>
                   <option value="member_application">Member Application</option>
                 </select>

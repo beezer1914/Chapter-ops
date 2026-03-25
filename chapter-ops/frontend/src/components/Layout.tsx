@@ -20,6 +20,9 @@ import {
   FolderOpen,
   BookOpen,
   FileText,
+  Receipt,
+  GitBranch,
+  ShieldCheck,
   Settings as SettingsIcon,
   LogOut,
   Menu,
@@ -48,10 +51,12 @@ const NAV_SECTIONS: NavSection[] = [
       { to: "/payments", label: "Payments", icon: CreditCard, minRole: "member" },
       { to: "/invoices", label: "Invoices", icon: FileText, minRole: "member" },
       { to: "/donations", label: "Donations", icon: HeartHandshake, minRole: "member" },
+      { to: "/expenses", label: "Expenses", icon: Receipt, minRole: "member" },
       { to: "/events", label: "Events", icon: Calendar, minRole: "member" },
       { to: "/communications", label: "Communications", icon: Megaphone, minRole: "member" },
       { to: "/documents", label: "Documents", icon: FolderOpen, minRole: "member" },
       { to: "/knowledge-base", label: "Knowledge Base", icon: BookOpen, minRole: "member" },
+      { to: "/lineage", label: "Lineage & History", icon: GitBranch, minRole: "member" },
     ],
   },
   {
@@ -59,6 +64,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: "/members", label: "Members", icon: Users, minRole: "secretary" },
       { to: "/invites", label: "Invites", icon: UserPlus, minRole: "secretary" },
+      { to: "/intake", label: "Intake / MIP", icon: ShieldCheck, minRole: "secretary" },
       { to: "/regions", label: "Regions", icon: Map, minRole: "member" },
       { to: "/workflows", label: "Workflows", icon: GitMerge, minRole: "secretary" },
       { to: "/settings", label: "Settings", icon: SettingsIcon, minRole: "member" },
@@ -184,12 +190,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const currentMembership = memberships.find((m) => m.chapter_id === user?.active_chapter_id);
   const currentRole = currentMembership?.role ?? "member";
 
-  // Filter nav sections by role
+  const isIntakeOfficer = currentMembership?.is_intake_officer ?? false;
+
+  // Filter nav sections by role (intake officers also see the Intake link)
   const filteredSections = NAV_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter(
-      (item) => ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY[item.minRole]
-    ),
+    items: section.items.filter((item) => {
+      if (item.to === "/intake" && isIntakeOfficer) return true;
+      return ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY[item.minRole];
+    }),
   })).filter((section) => section.items.length > 0);
 
   // Inject Region Dashboard if user is a regional director

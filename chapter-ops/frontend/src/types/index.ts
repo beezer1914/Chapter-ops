@@ -329,12 +329,20 @@ export type FinancialStatus =
   | "neophyte"
   | "exempt";
 
+export type MemberType = "collegiate" | "graduate" | "life";
+
 export interface ChapterMembership {
   id: string;
   user_id: string;
   chapter_id: string;
   role: MemberRole;
   financial_status: FinancialStatus;
+  member_type: MemberType;
+  is_intake_officer: boolean;
+  big_id: string | null;
+  line_season: string | null;
+  line_number: number | null;
+  line_name: string | null;
   initiation_date: string | null;
   join_date: string;
   active: boolean;
@@ -424,7 +432,112 @@ export interface MemberWithUser extends ChapterMembership {
 export interface UpdateMemberRequest {
   role?: MemberRole;
   financial_status?: FinancialStatus;
+  member_type?: MemberType;
+  is_intake_officer?: boolean;
   custom_fields?: Record<string, string | number | null>;
+}
+
+// ============================================================================
+// Intake / MIP types
+// ============================================================================
+
+export type IntakeStage =
+  | "interested"
+  | "applied"
+  | "under_review"
+  | "chapter_vote"
+  | "national_submission"
+  | "approved"
+  | "crossed";
+
+export type IntakeDocType =
+  | "transcript"
+  | "background_check"
+  | "recommendation"
+  | "other";
+
+export interface IntakeCandidate {
+  id: string;
+  chapter_id: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  stage: IntakeStage;
+  semester: string | null;
+  gpa: number | null;
+  notes: string | null;
+  assigned_to_id: string | null;
+  assigned_to: { id: string; full_name: string } | null;
+  line_name: string | null;
+  line_number: number | null;
+  crossed_at: string | null;
+  user_id: string | null;
+  invite_code_id: string | null;
+  active: boolean;
+  document_count: number;
+  documents?: IntakeDocument[];
+  created_at: string;
+}
+
+export interface IntakeDocument {
+  id: string;
+  chapter_id: string;
+  candidate_id: string;
+  uploaded_by_id: string;
+  uploader: { id: string; full_name: string } | null;
+  document_type: IntakeDocType;
+  title: string;
+  file_url: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  created_at: string;
+}
+
+export interface IntakePipelineResponse {
+  candidates: IntakeCandidate[];
+  by_stage: Record<IntakeStage, IntakeCandidate[]>;
+  stages: IntakeStage[];
+}
+
+export interface CreateCandidateRequest {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  stage?: IntakeStage;
+  semester?: string;
+  gpa?: number;
+  notes?: string;
+  assigned_to_id?: string;
+}
+
+export interface UpdateCandidateRequest {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  stage?: IntakeStage;
+  semester?: string;
+  gpa?: number | null;
+  notes?: string;
+  assigned_to_id?: string | null;
+  line_name?: string;
+  line_number?: number | null;
+}
+
+export interface CrossCandidateRequest {
+  line_name?: string;
+  line_number?: number;
+}
+
+export interface CrossCandidateResponse {
+  success: boolean;
+  candidate: IntakeCandidate;
+  invite_code: string;
+  message: string;
 }
 
 // ============================================================================
@@ -1017,6 +1130,153 @@ export interface UpdateArticleRequest {
   status?: KbStatus;
   is_featured?: boolean;
   tags?: string[];
+}
+
+// ============================================================================
+// Expense types
+// ============================================================================
+
+export type ExpenseCategory =
+  | "travel"
+  | "supplies"
+  | "equipment"
+  | "food_beverage"
+  | "venue"
+  | "other";
+
+export type ExpenseStatus = "pending" | "approved" | "paid" | "denied";
+
+export interface Expense {
+  id: string;
+  chapter_id: string;
+  submitted_by_id: string;
+  submitted_by: { id: string; full_name: string; email: string } | null;
+  title: string;
+  amount: string;
+  category: ExpenseCategory;
+  category_label: string;
+  expense_date: string;
+  notes: string | null;
+  status: ExpenseStatus;
+  reviewer_id: string | null;
+  reviewer: { id: string; full_name: string } | null;
+  reviewed_at: string | null;
+  denial_reason: string | null;
+  paid_at: string | null;
+  receipt_url: string | null;
+  receipt_name: string | null;
+  receipt_size: number | null;
+  receipt_mime: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExpenseSummary {
+  pending_count: number;
+  pending_amount: string;
+  approved_amount: string;
+  paid_amount: string;
+}
+
+export interface ExpenseListResponse {
+  expenses: Expense[];
+  is_officer: boolean;
+  summary: ExpenseSummary | null;
+}
+
+export interface CreateExpenseRequest {
+  title: string;
+  amount: number;
+  category: ExpenseCategory;
+  expense_date: string;
+  notes?: string;
+}
+
+export interface UpdateExpenseRequest {
+  title?: string;
+  amount?: number;
+  category?: ExpenseCategory;
+  expense_date?: string;
+  notes?: string;
+  action?: "approve" | "deny" | "mark_paid" | "reopen";
+  denial_reason?: string;
+}
+
+// ============================================================================
+// Lineage & Chapter History types
+// ============================================================================
+
+export type MilestoneType =
+  | "founding"
+  | "charter"
+  | "recharter"
+  | "suspended"
+  | "reactivated"
+  | "award"
+  | "achievement"
+  | "other";
+
+export interface ChapterMilestone {
+  id: string;
+  chapter_id: string;
+  created_by_id: string;
+  created_by: { id: string; full_name: string } | null;
+  title: string;
+  description: string | null;
+  milestone_type: MilestoneType;
+  milestone_type_label: string;
+  date: string;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LineageMember {
+  membership_id: string;
+  user_id: string;
+  full_name: string;
+  first_name: string;
+  last_name: string;
+  profile_picture_url: string | null;
+  role: MemberRole;
+  member_type: MemberType;
+  initiation_date: string | null;
+  big_id: string | null;
+  line_season: string | null;
+  line_number: number | null;
+  line_name: string | null;
+}
+
+export interface LineageResponse {
+  members: LineageMember[];
+  lines: Record<string, LineageMember[]>;
+}
+
+export interface MilestonesResponse {
+  milestones: ChapterMilestone[];
+}
+
+export interface UpdateLineageRequest {
+  big_id?: string | null;
+  line_season?: string | null;
+  line_number?: number | null;
+  line_name?: string | null;
+}
+
+export interface CreateMilestoneRequest {
+  title: string;
+  date: string;
+  milestone_type: MilestoneType;
+  description?: string;
+  is_public?: boolean;
+}
+
+export interface UpdateMilestoneRequest {
+  title?: string;
+  date?: string;
+  milestone_type?: MilestoneType;
+  description?: string;
+  is_public?: boolean;
 }
 
 // ============================================================================

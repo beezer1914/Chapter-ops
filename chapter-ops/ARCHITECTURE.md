@@ -47,7 +47,7 @@ chr# ChapterOps — System Architecture
 | Rate Limiting | Flask-Limiter (Redis-backed)                        |
 | Auth          | Flask-Login (session-based) + bcrypt                |
 | Payments      | Stripe (Connect per chapter)                        |
-| Email         | SendGrid                                            |
+| Email         | SendGrid or resend                                  |
 | File Storage  | Cloudflare R2 (S3-compatible)                       |
 | Testing       | pytest (backend), Vitest + RTL (frontend)           |
 

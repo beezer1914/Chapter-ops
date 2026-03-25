@@ -1,0 +1,684 @@
+import { useEffect, useState, useRef } from "react";
+import Layout from "@/components/Layout";
+import { useAuthStore } from "@/stores/authStore";
+import {
+  fetchExpenses,
+  submitExpense,
+  updateExpense,
+  deleteExpense,
+  uploadReceipt,
+  getExportUrl,
+} from "@/services/expenseService";
+import type {
+  Expense,
+  ExpenseStatus,
+  ExpenseCategory,
+  ExpenseSummary,
+  CreateExpenseRequest,
+} from "@/types";
+import {
+  Receipt,
+  Plus,
+  Check,
+  X,
+  Upload,
+  Download,
+  FileText,
+  AlertCircle,
+  Paperclip,
+  RotateCcw,
+} from "lucide-react";
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const STATUS_TABS: { key: ExpenseStatus | "all"; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
+  { key: "approved", label: "Approved" },
+  { key: "paid", label: "Paid" },
+  { key: "denied", label: "Denied" },
+];
+
+const STATUS_COLORS: Record<ExpenseStatus, string> = {
+  pending: "bg-amber-100 text-amber-700 border-amber-200",
+  approved: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  paid: "bg-blue-100 text-blue-700 border-blue-200",
+  denied: "bg-red-100 text-red-700 border-red-200",
+};
+
+const STATUS_LABELS: Record<ExpenseStatus, string> = {
+  pending: "Pending",
+  approved: "Approved",
+  paid: "Paid",
+  denied: "Denied",
+};
+
+const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
+  { value: "travel", label: "Travel" },
+  { value: "supplies", label: "Supplies" },
+  { value: "equipment", label: "Equipment" },
+  { value: "food_beverage", label: "Food & Beverage" },
+  { value: "venue", label: "Venue" },
+  { value: "other", label: "Other" },
+];
+
+function formatAmount(amount: string) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+    parseFloat(amount)
+  );
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export default function Expenses() {
+  const { memberships, user } = useAuthStore();
+  const currentMembership = memberships.find(
+    (m) => m.chapter_id === user?.active_chapter_id
+  );
+  const roleHierarchy: Record<string, number> = {
+    member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
+  };
+  const isOfficer = roleHierarchy[currentMembership?.role ?? "member"] >= roleHierarchy["treasurer"];
+
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [summary, setSummary] = useState<ExpenseSummary | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ExpenseStatus | "all">("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [detailExpense, setDetailExpense] = useState<Expense | null>(null);
+  const [exportYear, setExportYear] = useState(new Date().getFullYear());
+
+  useEffect(() => { loadExpenses(); }, [statusFilter]);
+
+  async function loadExpenses() {
+    try {
+      setLoading(true);
+      const data = await fetchExpenses(statusFilter === "all" ? undefined : statusFilter);
+      setExpenses(data.expenses);
+      setSummary(data.summary);
+    } catch {
+      setError("Failed to load expenses.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleExpenseUpdated(updated: Expense) {
+    setExpenses((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+    setDetailExpense(updated);
+  }
+
+  async function handleDelete(expense: Expense) {
+    if (!confirm(`Cancel "${expense.title}"?`)) return;
+    try {
+      await deleteExpense(expense.id);
+      setExpenses((prev) => prev.filter((e) => e.id !== expense.id));
+      setDetailExpense(null);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
+      setError(msg || "Failed to cancel expense.");
+    }
+  }
+
+  const currentYear = new Date().getFullYear();
+  const exportYears = [currentYear, currentYear - 1, currentYear - 2];
+
+  return (
+    <Layout>
+      <div className="max-w-6xl mx-auto animate-fade-in">
+
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6 gap-4">
+          <div>
+            <h2 className="text-3xl font-heading font-extrabold text-gray-900 tracking-tight">
+              Expenses
+            </h2>
+            <p className="text-gray-500 mt-1">
+              {isOfficer ? "Manage reimbursement requests" : "Submit and track your reimbursement requests"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {isOfficer && (
+              <div className="flex items-center gap-1">
+                <select
+                  value={exportYear}
+                  onChange={(e) => setExportYear(parseInt(e.target.value))}
+                  className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none"
+                >
+                  {exportYears.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <a
+                  href={getExportUrl(exportYear)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <Download className="w-4 h-4" /> CSV
+                </a>
+              </div>
+            )}
+            <button
+              onClick={() => setSubmitOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary-main text-white rounded-xl text-sm font-semibold hover:bg-brand-primary-dark transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" /> Submit Request
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-5 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg text-sm font-medium flex justify-between items-center">
+            <span className="flex items-center gap-2"><AlertCircle className="w-4 h-4" />{error}</span>
+            <button onClick={() => setError(null)} className="text-lg font-bold px-2">&times;</button>
+          </div>
+        )}
+
+        {/* Summary cards — officer only */}
+        {isOfficer && summary && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <SummaryCard label="Pending Requests" value={String(summary.pending_count)} sub="requests" accent="amber" />
+            <SummaryCard label="Pending Amount" value={formatAmount(summary.pending_amount)} accent="amber" />
+            <SummaryCard label="Approved" value={formatAmount(summary.approved_amount)} accent="emerald" />
+            <SummaryCard label="Total Paid Out" value={formatAmount(summary.paid_amount)} accent="blue" />
+          </div>
+        )}
+
+        {/* Status tabs */}
+        <div className="flex gap-1 mb-5 overflow-x-auto scrollbar-hide">
+          {STATUS_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setStatusFilter(tab.key)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all border ${
+                statusFilter === tab.key
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Expense list */}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-4 border-brand-primary-light border-t-brand-primary-main rounded-full animate-spin" />
+          </div>
+        ) : expenses.length === 0 ? (
+          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/40 p-14 text-center">
+            <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Receipt className="w-7 h-7 text-gray-400" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-800 mb-1">No expenses yet</h3>
+            <p className="text-sm text-gray-500">
+              {statusFilter === "all"
+                ? "Submit a reimbursement request to get started."
+                : `No ${statusFilter} expenses found.`}
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block bg-white rounded-2xl shadow-glass border border-gray-100 overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead className="bg-gray-50/80">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Expense</th>
+                    {isOfficer && <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted By</th>}
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {expenses.map((expense) => (
+                    <tr key={expense.id}
+                      className="hover:bg-brand-primary-50/20 transition-colors cursor-pointer group"
+                      onClick={() => setDetailExpense(expense)}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900 group-hover:text-brand-primary-dark">
+                              {expense.title}
+                            </p>
+                            <p className="text-xs text-gray-400">{expense.category_label}</p>
+                          </div>
+                          {expense.receipt_url && (
+                            <Paperclip className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          )}
+                        </div>
+                      </td>
+                      {isOfficer && (
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {expense.submitted_by?.full_name}
+                        </td>
+                      )}
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {new Date(expense.expense_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                        {formatAmount(expense.amount)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${STATUS_COLORS[expense.status]}`}>
+                          {STATUS_LABELS[expense.status]}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right opacity-0 group-hover:opacity-100">
+                        <span className="text-xs text-brand-primary-main font-medium">View →</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {expenses.map((expense) => (
+                <div key={expense.id}
+                  className="bg-white rounded-2xl shadow-glass border border-gray-100 p-4 cursor-pointer"
+                  onClick={() => setDetailExpense(expense)}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{expense.title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{expense.category_label}</p>
+                    </div>
+                    <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${STATUS_COLORS[expense.status]}`}>
+                      {STATUS_LABELS[expense.status]}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-bold text-gray-900">{formatAmount(expense.amount)}</span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(expense.expense_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                  </div>
+                  {isOfficer && expense.submitted_by && (
+                    <p className="text-xs text-gray-500 mt-1">{expense.submitted_by.full_name}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Submit Modal */}
+      {submitOpen && (
+        <SubmitExpenseModal
+          onClose={() => setSubmitOpen(false)}
+          onSubmitted={(e) => {
+            setExpenses((prev) => [e, ...prev]);
+            setSubmitOpen(false);
+            loadExpenses(); // refresh summary
+          }}
+        />
+      )}
+
+      {/* Detail Modal */}
+      {detailExpense && (
+        <ExpenseDetailModal
+          expense={detailExpense}
+          isOfficer={isOfficer}
+          currentUserId={user?.id ?? ""}
+          onClose={() => setDetailExpense(null)}
+          onUpdated={handleExpenseUpdated}
+          onDeleted={() => handleDelete(detailExpense)}
+        />
+      )}
+    </Layout>
+  );
+}
+
+// ── Summary card ──────────────────────────────────────────────────────────────
+
+function SummaryCard({ label, value, sub, accent }: {
+  label: string; value: string; sub?: string; accent: "amber" | "emerald" | "blue";
+}) {
+  const colors = {
+    amber: "bg-amber-50 border-amber-100 text-amber-700",
+    emerald: "bg-emerald-50 border-emerald-100 text-emerald-700",
+    blue: "bg-blue-50 border-blue-100 text-blue-700",
+  }[accent];
+  return (
+    <div className={`${colors} border rounded-xl p-4`}>
+      <p className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-1">{label}</p>
+      <p className="text-xl font-bold">{value}</p>
+      {sub && <p className="text-xs opacity-60 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+// ── Submit Expense Modal ───────────────────────────────────────────────────────
+
+function SubmitExpenseModal({
+  onClose, onSubmitted,
+}: { onClose: () => void; onSubmitted: (e: Expense) => void }) {
+  const [form, setForm] = useState<CreateExpenseRequest>({
+    title: "", amount: 0, category: "other",
+    expense_date: new Date().toISOString().split("T")[0],
+    notes: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setErr(null);
+    try {
+      const created = await submitExpense({
+        ...form,
+        notes: form.notes?.trim() || undefined,
+      });
+      onSubmitted(created);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
+      setErr(msg || "Failed to submit expense.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 backdrop-blur-sm p-4">
+      <form onSubmit={handleSubmit}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/60 flex justify-between items-center shrink-0">
+          <h3 className="text-lg font-heading font-semibold text-gray-900">Submit Expense Request</h3>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4 overflow-y-auto flex-1">
+          {err && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Description *</label>
+            <input required value={form.title}
+              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              placeholder="e.g. Chapter retreat supplies"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Amount *</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                <input required type="number" min="0.01" step="0.01"
+                  value={form.amount || ""}
+                  onChange={(e) => setForm((f) => ({ ...f, amount: parseFloat(e.target.value) }))}
+                  className="w-full rounded-xl border border-gray-200 pl-7 pr-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Date *</label>
+              <input required type="date" value={form.expense_date}
+                onChange={(e) => setForm((f) => ({ ...f, expense_date: e.target.value }))}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Category *</label>
+            <select value={form.category}
+              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as ExpenseCategory }))}
+              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
+              {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Notes</label>
+            <textarea rows={3} value={form.notes ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              placeholder="Additional context for the treasurer..."
+              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main resize-none" />
+          </div>
+        </div>
+
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 shrink-0">
+          <button type="button" onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">
+            Cancel
+          </button>
+          <button type="submit" disabled={saving}
+            className="px-5 py-2 text-sm font-semibold text-white bg-brand-primary-main rounded-xl hover:bg-brand-primary-dark disabled:opacity-50">
+            {saving ? "Submitting..." : "Submit Request"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ── Expense Detail Modal ───────────────────────────────────────────────────────
+
+function ExpenseDetailModal({
+  expense, isOfficer, currentUserId, onClose, onUpdated, onDeleted,
+}: {
+  expense: Expense;
+  isOfficer: boolean;
+  currentUserId: string;
+  onClose: () => void;
+  onUpdated: (e: Expense) => void;
+  onDeleted: () => void;
+}) {
+  const isOwn = expense.submitted_by_id === currentUserId;
+  const [denialReason, setDenialReason] = useState("");
+  const [denyOpen, setDenyOpen] = useState(false);
+  const [acting, setActing] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const receiptRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function doAction(action: "approve" | "deny" | "mark_paid" | "reopen", extra?: object) {
+    setActing(true);
+    setErr(null);
+    try {
+      const updated = await updateExpense(expense.id, { action, ...extra });
+      onUpdated(updated);
+      setDenyOpen(false);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { error?: string } } }).response?.data?.error;
+      setErr(msg || "Action failed.");
+    } finally {
+      setActing(false);
+    }
+  }
+
+  async function handleReceiptUpload(file: File) {
+    setUploading(true);
+    setErr(null);
+    try {
+      const updated = await uploadReceipt(expense.id, file);
+      onUpdated(updated);
+    } catch {
+      setErr("Failed to upload receipt.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/60 flex items-start justify-between gap-3 shrink-0">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-lg font-heading font-bold text-gray-900">{expense.title}</h3>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_COLORS[expense.status]}`}>
+                {STATUS_LABELS[expense.status]}
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {expense.category_label} ·{" "}
+              {new Date(expense.expense_date).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 shrink-0">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          {err && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
+
+          {/* Amount */}
+          <div className="text-center py-4 bg-gray-50 rounded-xl border border-gray-100">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Amount Requested</p>
+            <p className="text-3xl font-bold text-gray-900">{formatAmount(expense.amount)}</p>
+          </div>
+
+          {/* Info grid */}
+          <div className="grid grid-cols-2 gap-3">
+            {isOfficer && expense.submitted_by && (
+              <InfoPill label="Submitted By" value={expense.submitted_by.full_name} />
+            )}
+            {expense.reviewer && (
+              <InfoPill label="Reviewed By" value={expense.reviewer.full_name} />
+            )}
+            {expense.paid_at && (
+              <InfoPill label="Paid On" value={new Date(expense.paid_at).toLocaleDateString()} />
+            )}
+          </div>
+
+          {/* Notes */}
+          {expense.notes && (
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <p className="text-xs font-semibold text-gray-400 mb-1">Notes</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{expense.notes}</p>
+            </div>
+          )}
+
+          {/* Denial reason */}
+          {expense.denial_reason && (
+            <div className="bg-red-50 rounded-xl p-3 border border-red-100">
+              <p className="text-xs font-semibold text-red-500 mb-1">Denial Reason</p>
+              <p className="text-sm text-red-800">{expense.denial_reason}</p>
+            </div>
+          )}
+
+          {/* Receipt */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-gray-700">Receipt</p>
+              {(isOwn || isOfficer) && expense.status === "pending" && (
+                <>
+                  <button onClick={() => receiptRef.current?.click()}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary-main hover:text-brand-primary-dark">
+                    <Upload className="w-3.5 h-3.5" />
+                    {expense.receipt_url ? "Replace" : "Upload"}
+                  </button>
+                  <input ref={receiptRef} type="file" className="hidden"
+                    accept=".pdf,.jpg,.jpeg,.png,.heic,.webp"
+                    onChange={(e) => e.target.files?.[0] && handleReceiptUpload(e.target.files[0])} />
+                </>
+              )}
+            </div>
+            {expense.receipt_url ? (
+              <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors group">
+                <FileText className="w-5 h-5 text-gray-400 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-gray-800 truncate group-hover:text-brand-primary-main">
+                    {expense.receipt_name || "Receipt"}
+                  </p>
+                  {expense.receipt_size && (
+                    <p className="text-xs text-gray-400">{formatFileSize(expense.receipt_size)}</p>
+                  )}
+                </div>
+                <Download className="w-4 h-4 text-gray-400 group-hover:text-brand-primary-main shrink-0" />
+              </a>
+            ) : (
+              <p className="text-sm text-gray-400 italic">No receipt attached.</p>
+            )}
+            {uploading && <p className="text-xs text-brand-primary-main mt-1">Uploading...</p>}
+          </div>
+
+          {/* Deny input */}
+          {denyOpen && (
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-gray-600">Reason for denial (optional)</label>
+              <textarea rows={2} value={denialReason}
+                onChange={(e) => setDenialReason(e.target.value)}
+                placeholder="Provide context to the member..."
+                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-400 resize-none" />
+              <div className="flex gap-2">
+                <button onClick={() => setDenyOpen(false)}
+                  className="px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onClick={() => doAction("deny", { denial_reason: denialReason || null })}
+                  disabled={acting}
+                  className="px-4 py-1.5 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50">
+                  {acting ? "Denying..." : "Confirm Deny"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex gap-2 flex-wrap">
+            {/* Officer actions */}
+            {isOfficer && expense.status === "pending" && !denyOpen && (
+              <>
+                <button onClick={() => doAction("approve")} disabled={acting}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 disabled:opacity-50">
+                  <Check className="w-4 h-4" /> Approve
+                </button>
+                <button onClick={() => setDenyOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600">
+                  <X className="w-4 h-4" /> Deny
+                </button>
+              </>
+            )}
+            {isOfficer && expense.status === "approved" && (
+              <button onClick={() => doAction("mark_paid")} disabled={acting}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50">
+                <Check className="w-4 h-4" /> Mark Paid
+              </button>
+            )}
+            {isOfficer && (expense.status === "denied" || expense.status === "approved") && (
+              <button onClick={() => doAction("reopen")} disabled={acting}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
+                <RotateCcw className="w-3.5 h-3.5" /> Reopen
+              </button>
+            )}
+          </div>
+          {/* Delete/cancel */}
+          {(isOwn && expense.status === "pending") || isOfficer ? (
+            <button onClick={onDeleted}
+              className="text-sm text-red-500 hover:text-red-700 font-medium">
+              {expense.status === "pending" ? "Cancel request" : "Delete"}
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+      <p className="text-sm font-medium text-gray-800 mt-0.5">{value}</p>
+    </div>
+  );
+}

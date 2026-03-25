@@ -35,7 +35,7 @@ def _generate_invoice_number(scope: str, offset: int = 0) -> str:
     last = (
         db.session.query(Invoice)
         .filter(Invoice.invoice_number.like(f"{prefix}-{year}-%"))
-        .order_by(Invoice.created_at.desc())
+        .order_by(Invoice.invoice_number.desc())
         .first()
     )
     if last:
@@ -195,6 +195,9 @@ def bulk_create_invoices():
     exclude_statuses = set(data.get("exclude_statuses", []))
     if exclude_statuses:
         members = [m for m in members if m.financial_status not in exclude_statuses]
+
+    # Life members are permanently exempt — never include them in bulk dues invoices
+    members = [m for m in members if m.member_type != "life"]
 
     # Generate the first invoice number outside the loop, then use offset
     # to avoid duplicate numbers within the batch.

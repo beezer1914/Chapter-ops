@@ -11,6 +11,7 @@ import type {
   MemberWithUser,
   MemberRole,
   FinancialStatus,
+  MemberType,
   CustomFieldDefinition,
 } from "@/types";
 import { Edit2, UserX } from "lucide-react";
@@ -47,6 +48,18 @@ const ROLE_HIERARCHY: Record<MemberRole, number> = {
   admin: 5,
 };
 
+const MEMBER_TYPE_LABELS: Record<MemberType, string> = {
+  collegiate: "Collegiate",
+  graduate: "Graduate",
+  life: "Life Member",
+};
+
+const MEMBER_TYPE_COLORS: Record<MemberType, string> = {
+  collegiate: "bg-sky-100 text-sky-700",
+  graduate: "bg-amber-100 text-amber-700",
+  life: "bg-emerald-100 text-emerald-700",
+};
+
 export default function Members() {
   const { memberships, user } = useAuthStore();
   const { getRoleLabel, getCustomFields } = useConfigStore();
@@ -59,6 +72,8 @@ export default function Members() {
   const [editingMember, setEditingMember] = useState<MemberWithUser | null>(null);
   const [editRole, setEditRole] = useState<MemberRole>("member");
   const [editFinancial, setEditFinancial] = useState<FinancialStatus>("not_financial");
+  const [editMemberType, setEditMemberType] = useState<MemberType>("collegiate");
+  const [editIntakeOfficer, setEditIntakeOfficer] = useState(false);
   const [editCustomFields, setEditCustomFields] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -89,6 +104,8 @@ export default function Members() {
     setEditingMember(member);
     setEditRole(member.role);
     setEditFinancial(member.financial_status);
+    setEditMemberType(member.member_type ?? "collegiate");
+    setEditIntakeOfficer(member.is_intake_officer ?? false);
     // Pre-populate custom fields from existing membership data
     const existing: Record<string, string> = {};
     for (const def of customFieldDefs) {
@@ -105,6 +122,8 @@ export default function Members() {
       const updated = await updateMember(editingMember.id, {
         role: editRole,
         financial_status: editFinancial,
+        member_type: editMemberType,
+        is_intake_officer: editIntakeOfficer,
         custom_fields: editCustomFields,
       });
       setMembers((prev) =>
@@ -208,6 +227,9 @@ export default function Members() {
                       <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${FINANCIAL_COLORS[member.financial_status].replace("text-", "bg-").split(" ")[1]}`}></span>
                       {FINANCIAL_LABELS[member.financial_status]}
                     </span>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${MEMBER_TYPE_COLORS[member.member_type ?? "collegiate"]}`}>
+                      {MEMBER_TYPE_LABELS[member.member_type ?? "collegiate"]}
+                    </span>
                     {member.join_date && (
                       <span className="text-xs text-gray-500 flex items-center">
                         Joined {new Date(member.join_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}
@@ -252,6 +274,7 @@ export default function Members() {
                       <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Member</th>
                       <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
                       <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Financial Status</th>
+                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
                       <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
                       {canManage && (
                         <th scope="col" className="px-6 py-5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
@@ -300,6 +323,11 @@ export default function Members() {
                             {FINANCIAL_LABELS[member.financial_status]}
                           </span>
                         </td>
+                        <td className="px-6 py-5 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${MEMBER_TYPE_COLORS[member.member_type ?? "collegiate"]}`}>
+                            {MEMBER_TYPE_LABELS[member.member_type ?? "collegiate"]}
+                          </span>
+                        </td>
                         <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500 font-medium">
                           {member.join_date
                             ? new Date(member.join_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
@@ -341,7 +369,7 @@ export default function Members() {
         {/* Premium Edit Modal */}
         {editingMember && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-primary-950/40 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform animate-slide-up">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform animate-slide-up flex flex-col max-h-[90vh]">
               <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                 <h3 className="text-lg font-heading font-semibold text-gray-900">
                   Edit Role & Status
@@ -351,7 +379,7 @@ export default function Members() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-5">
+              <div className="p-6 space-y-5 overflow-y-auto flex-1">
                 <div className="flex items-center mb-6">
                   {editingMember.user.profile_picture_url ? (
                     <img
@@ -389,6 +417,28 @@ export default function Members() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Member Type
+                  </label>
+                  <select
+                    value={editMemberType}
+                    onChange={(e) => setEditMemberType(e.target.value as MemberType)}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
+                  >
+                    {(Object.keys(MEMBER_TYPE_LABELS) as MemberType[]).map((type) => (
+                      <option key={type} value={type}>
+                        {MEMBER_TYPE_LABELS[type]}
+                      </option>
+                    ))}
+                  </select>
+                  {editMemberType === "life" && (
+                    <p className="mt-1.5 text-xs text-emerald-600 font-medium">
+                      Life members are permanently exempt from dues.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     Financial Status
                   </label>
                   <select
@@ -396,7 +446,8 @@ export default function Members() {
                     onChange={(e) =>
                       setEditFinancial(e.target.value as FinancialStatus)
                     }
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
+                    disabled={editMemberType === "life"}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {(
                       Object.keys(FINANCIAL_LABELS) as FinancialStatus[]
@@ -407,6 +458,20 @@ export default function Members() {
                     ))}
                   </select>
                 </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Intake Officer</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Can access the MIP intake pipeline</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditIntakeOfficer((v) => !v)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editIntakeOfficer ? "bg-brand-primary-main" : "bg-gray-300"}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editIntakeOfficer ? "translate-x-6" : "translate-x-1"}`} />
+                  </button>
+                </div>
+
                 {customFieldDefs.length > 0 && (
                   <div className="border-t border-gray-100 pt-4 space-y-4">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Custom Fields</p>

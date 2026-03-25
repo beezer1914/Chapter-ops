@@ -19,6 +19,7 @@ members_bp = Blueprint("members", __name__, url_prefix="/api/members")
 
 VALID_ROLES = {"member", "secretary", "treasurer", "vice_president", "president"}
 VALID_FINANCIAL_STATUSES = {"financial", "not_financial", "neophyte", "exempt"}
+VALID_MEMBER_TYPES = {"collegiate", "graduate", "life"}
 
 
 @members_bp.route("", methods=["GET"])
@@ -95,18 +96,46 @@ def update_member(membership_id):
             return jsonify({"error": "Cannot assign a role higher than your own."}), 403
         membership.role = new_role
 
+    # Update member type if provided — presidents only
+    new_member_type = data.get("member_type")
+    if new_member_type is not None:
+        if is_self:
+            return jsonify({"error": "You cannot change your own member type."}), 403
+        if not user_membership or not user_membership.has_role("president"):
+            return jsonify({"error": "Only presidents can change member type."}), 403
+        if new_member_type not in VALID_MEMBER_TYPES:
+            return jsonify({
+                "error": f"Invalid member type. Must be one of: {', '.join(sorted(VALID_MEMBER_TYPES))}"
+            }), 400
+        membership.member_type = new_member_type
+        # Life members are always exempt from dues
+        if new_member_type == "life":
+            membership.financial_status = "exempt"
+
     # Update financial status if provided — presidents only
+    # Skip if member_type is being set to life in this same request (already auto-set to exempt above)
     new_status = data.get("financial_status")
-    if new_status is not None:
+    if new_status is not None and new_member_type != "life":
         if is_self:
             return jsonify({"error": "You cannot change your own financial status."}), 403
         if not user_membership or not user_membership.has_role("president"):
             return jsonify({"error": "Only presidents can change financial status."}), 403
+        if membership.member_type == "life":
+            return jsonify({"error": "Life members are permanently exempt from dues."}), 400
         if new_status not in VALID_FINANCIAL_STATUSES:
             return jsonify({
                 "error": f"Invalid financial status. Must be one of: {', '.join(sorted(VALID_FINANCIAL_STATUSES))}"
             }), 400
         membership.financial_status = new_status
+
+    # Toggle intake officer designation — presidents only
+    new_intake_officer = data.get("is_intake_officer")
+    if new_intake_officer is not None:
+        if is_self:
+            return jsonify({"error": "You cannot change your own intake officer status."}), 403
+        if not user_membership or not user_membership.has_role("president"):
+            return jsonify({"error": "Only presidents can designate intake officers."}), 403
+        membership.is_intake_officer = bool(new_intake_officer)
 
     # Update custom fields if provided — members can update own; presidents can update anyone's
     new_custom_fields = data.get("custom_fields")

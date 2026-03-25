@@ -351,6 +351,62 @@ def _apply_trigger_outcome(instance: WorkflowInstance) -> None:
                 except Exception as exc:
                     logger.warning("Failed to send event rejection notification: %s", exc)
 
+    elif trigger_type == "expense":
+        from app.models.expense import Expense
+        from app.services import notification_service
+
+        expense = db.session.get(Expense, instance.trigger_id)
+        if not expense:
+            return
+
+        now = datetime.now(timezone.utc)
+
+        # Find reviewer and rejection comment from step instances
+        reviewer_id = None
+        rejection_comment = None
+        for si in instance.step_instances:
+            if si.action_taken_by:
+                reviewer_id = si.action_taken_by
+            if si.status == "rejected" and si.comments:
+                rejection_comment = si.comments
+
+        if outcome == "approved":
+            expense.status = "approved"
+            expense.reviewer_id = reviewer_id
+            expense.reviewed_at = now
+            db.session.commit()
+            try:
+                notification_service.create_notification(
+                    chapter_id=instance.chapter_id,
+                    notification_type="expense",
+                    title="Expense Approved",
+                    message=f'Your expense "{expense.title}" has been approved.',
+                    recipient_id=expense.submitted_by_id,
+                    link="/expenses",
+                )
+            except Exception as exc:
+                logger.warning("Failed to send expense approval notification: %s", exc)
+        else:
+            expense.status = "denied"
+            expense.reviewer_id = reviewer_id
+            expense.reviewed_at = now
+            expense.denial_reason = rejection_comment
+            db.session.commit()
+            try:
+                notification_service.create_notification(
+                    chapter_id=instance.chapter_id,
+                    notification_type="expense",
+                    title="Expense Not Approved",
+                    message=(
+                        f'Your expense "{expense.title}" was not approved.'
+                        + (f" Reason: {rejection_comment}" if rejection_comment else "")
+                    ),
+                    recipient_id=expense.submitted_by_id,
+                    link="/expenses",
+                )
+            except Exception as exc:
+                logger.warning("Failed to send expense denial notification: %s", exc)
+
     elif trigger_type == "member_application":
         from app.models.membership import ChapterMembership
 

@@ -31,7 +31,10 @@ class User(BaseModel, UserMixin):
     # Relationships
     active_chapter: Mapped["Chapter | None"] = relationship("Chapter", foreign_keys=[active_chapter_id])
     memberships: Mapped[list["ChapterMembership"]] = relationship(
-        "ChapterMembership", back_populates="user", lazy="dynamic"
+        "ChapterMembership",
+        back_populates="user",
+        foreign_keys="ChapterMembership.user_id",
+        lazy="dynamic",
     )
     region_memberships: Mapped[list["RegionMembership"]] = relationship(
         "RegionMembership", back_populates="user", lazy="dynamic"

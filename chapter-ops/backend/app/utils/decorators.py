@@ -64,6 +64,35 @@ def role_required(minimum_role: str):
     return decorator
 
 
+def intake_access_required(f):
+    """
+    Decorator for intake pipeline routes.
+
+    Allows access to users who are either:
+    - Designated intake officers (is_intake_officer=True), OR
+    - Have secretary role or higher
+
+    Must be used AFTER @login_required and @chapter_required.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        chapter = g.get("current_chapter")
+        if not chapter:
+            return jsonify({"error": "No chapter selected."}), 400
+
+        membership = current_user.get_membership(chapter.id)
+        if not membership or not membership.active:
+            return jsonify({"error": "You are not a member of this chapter."}), 403
+
+        if not (membership.is_intake_officer or membership.has_role("secretary")):
+            return jsonify({
+                "error": "Intake pipeline access requires intake officer designation or secretary role."
+            }), 403
+
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 def _is_org_admin(user, organization_id: str) -> bool:
     """Check if user has admin role in the organization via OrganizationMembership."""
     from app.models import OrganizationMembership
