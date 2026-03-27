@@ -217,6 +217,7 @@ export interface RegionDetail {
   chapters: ChapterWithMemberCount[];
   members: RegionMembershipWithUser[];
   is_org_admin: boolean;
+  current_user_region_role: RegionRole | null;
 }
 
 export interface RegionsListResponse {

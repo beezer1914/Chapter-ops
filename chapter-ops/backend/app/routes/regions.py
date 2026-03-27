@@ -129,11 +129,20 @@ def get_region(region_id):
             }
             members_data.append(entry)
 
+    # Current user's role in this specific region (None if not a regional officer)
+    user_region_membership = current_user.get_region_membership(region.id)
+    current_user_role = (
+        user_region_membership.role
+        if user_region_membership and user_region_membership.active
+        else None
+    )
+
     return jsonify({
         "region": region.to_dict(),
         "chapters": chapter_data,
         "members": members_data,
         "is_org_admin": g.is_org_admin,
+        "current_user_region_role": current_user_role,
     }), 200
 
 

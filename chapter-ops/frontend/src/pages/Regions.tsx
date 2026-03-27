@@ -460,9 +460,18 @@ function RegionDetailView({
   onBack: () => void;
   onRefresh: () => void;
 }) {
-  const canEdit = isOrgAdmin || detail.members.some(
-    (m) => m.role === "regional_director",
-  );
+  // Use the current user's role in THIS region (not a global flag)
+  const userRole = detail.current_user_region_role;
+  const isAdmin = detail.is_org_admin || isOrgAdmin;
+  const isDirector = userRole === "regional_director";
+  const isTreasurer = userRole === "regional_treasurer";
+  const isRegionalOfficer = isDirector || userRole === "regional_1st_vice" || isTreasurer;
+
+  const canEdit = isAdmin || isDirector;
+  const canManageChapters = isAdmin;
+  const canManageOfficers = isAdmin;
+  const canManageInvoices = isAdmin || isDirector || isTreasurer;
+  const canViewInvoices = isAdmin || isRegionalOfficer;
 
   return (
     <div className="space-y-6">
@@ -485,22 +494,22 @@ function RegionDetailView({
       <ChaptersSection
         chapters={detail.chapters}
         currentRegionId={detail.region.id}
-        isOrgAdmin={isOrgAdmin}
+        isOrgAdmin={canManageChapters}
         allRegions={allRegions}
         onRefresh={onRefresh}
       />
 
       <RegionalOfficersSection
         detail={detail}
-        isOrgAdmin={isOrgAdmin}
+        isOrgAdmin={canManageOfficers}
         onUpdated={onRefresh}
       />
 
-      {(isOrgAdmin || detail.members.some(m => ["regional_director", "regional_1st_vice", "regional_treasurer"].includes(m.role))) && (
+      {canViewInvoices && (
         <RegionalInvoicesSection
           regionId={detail.region.id}
           chapters={detail.chapters}
-          canManage={isOrgAdmin || detail.members.some(m => ["regional_director", "regional_treasurer"].includes(m.role))}
+          canManage={canManageInvoices}
         />
       )}
     </div>
