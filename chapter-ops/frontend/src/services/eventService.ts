@@ -4,6 +4,7 @@ import type {
   EventAttendance,
   CreateEventRequest,
   RsvpStatus,
+  ServiceHoursReport,
 } from "@/types";
 
 // ── Chapter events (authenticated) ───────────────────────────────────────────
@@ -76,6 +77,13 @@ export async function createEventCheckout(
   id: string
 ): Promise<{ checkout_url: string }> {
   const response = await api.post(`/events/${id}/checkout`);
+  return response.data;
+}
+
+export async function fetchServiceHours(params?: {
+  year?: number;
+}): Promise<ServiceHoursReport> {
+  const response = await api.get("/events/service-hours", { params });
   return response.data;
 }
 

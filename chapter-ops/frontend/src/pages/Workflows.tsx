@@ -32,20 +32,20 @@ import {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<WorkflowStatus, string> = {
-  pending: "bg-gray-100 text-gray-700",
-  in_progress: "bg-blue-100 text-blue-700",
-  approved: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
-  cancelled: "bg-gray-100 text-gray-500",
+  pending: "bg-gray-800/50 text-content-muted",
+  in_progress: "bg-blue-900/30 text-blue-400",
+  approved: "bg-green-900/30 text-green-400",
+  rejected: "bg-red-900/30 text-red-400",
+  cancelled: "bg-gray-800/50 text-content-muted",
 };
 
 const STEP_STATUS_COLORS: Record<WorkflowStepStatus, string> = {
-  pending: "bg-gray-100 text-gray-600",
-  waiting: "bg-gray-100 text-gray-500",
-  in_progress: "bg-blue-100 text-blue-700",
-  approved: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
-  skipped: "bg-yellow-50 text-yellow-600",
+  pending: "bg-gray-800/50 text-content-muted",
+  waiting: "bg-gray-800/50 text-content-muted",
+  in_progress: "bg-blue-900/30 text-blue-400",
+  approved: "bg-green-900/30 text-green-400",
+  rejected: "bg-red-900/30 text-red-400",
+  skipped: "bg-yellow-900/30 text-yellow-400",
 };
 
 const TRIGGER_LABELS: Record<WorkflowTriggerType, string> = {
@@ -163,7 +163,7 @@ export default function Workflows() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Workflows</h1>
+          <h1 className="text-2xl font-bold text-content-primary">Workflows</h1>
           {activeTab === "templates" && canManageTemplates && (
             <button
               onClick={() => setShowCreateModal(true)}
@@ -181,7 +181,7 @@ export default function Workflows() {
         </div>
 
         {/* Tab bar */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-[var(--color-border)]">
           <nav className="flex gap-6">
             {(["templates", "activity"] as const).map((tab) => (
               <button
@@ -190,7 +190,7 @@ export default function Workflows() {
                 className={`pb-3 text-sm font-medium border-b-2 transition capitalize ${
                   activeTab === tab
                     ? "border-brand-primary text-brand-primary"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
+                    : "border-transparent text-content-secondary hover:text-content-secondary"
                 }`}
               >
                 {tab === "activity" ? "Activity" : "Templates"}
@@ -201,11 +201,11 @@ export default function Workflows() {
 
         {/* Error banner */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start justify-between">
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="bg-red-900/20 border border-red-200 rounded-lg p-4 flex items-start justify-between">
+            <p className="text-sm text-red-400">{error}</p>
             <button
               onClick={clearError}
-              className="text-red-400 hover:text-red-600 ml-4 text-xs"
+              className="text-red-400 hover:text-red-300 ml-4 text-xs"
             >
               Dismiss
             </button>
@@ -214,14 +214,14 @@ export default function Workflows() {
 
         {/* Loading */}
         {loading && (
-          <p className="text-sm text-gray-500">Loading...</p>
+          <p className="text-sm text-content-secondary">Loading...</p>
         )}
 
         {/* Templates tab */}
         {!loading && activeTab === "templates" && (
           <>
             {templates.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-content-secondary">
                 <p className="text-lg font-medium mb-1">No workflow templates yet</p>
                 {canManageTemplates && (
                   <p className="text-sm">
@@ -247,7 +247,7 @@ export default function Workflows() {
         {!loading && activeTab === "activity" && (
           <>
             {instances.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-content-secondary">
                 <p className="text-lg font-medium mb-1">No workflow activity</p>
                 <p className="text-sm">Start a workflow to begin an approval process.</p>
               </div>
@@ -292,32 +292,32 @@ function WorkflowTemplateCard({
   return (
     <button
       onClick={onClick}
-      className="bg-white rounded-lg shadow p-5 text-left hover:shadow-md border border-gray-200 transition w-full"
+      className="bg-surface-card-solid rounded-lg shadow p-5 text-left hover:shadow-glass border border-[var(--color-border)] transition w-full"
     >
       <div className="flex justify-between items-start mb-2">
-        <h3 className="font-semibold text-gray-900 truncate pr-2">{template.name}</h3>
+        <h3 className="font-semibold text-content-primary truncate pr-2">{template.name}</h3>
         <span
           className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
             template.is_active
-              ? "bg-green-100 text-green-700"
-              : "bg-gray-100 text-gray-500"
+              ? "bg-green-900/30 text-green-400"
+              : "bg-gray-800/50 text-content-muted"
           }`}
         >
           {template.is_active ? "Active" : "Inactive"}
         </span>
       </div>
-      <p className="text-xs text-gray-500 capitalize mb-1">
+      <p className="text-xs text-content-secondary capitalize mb-1">
         Trigger: {TRIGGER_LABELS[template.trigger_type]}
       </p>
       {template.chapter_id === null && (
         <p className="text-xs text-brand-primary font-medium mb-1">Org-wide</p>
       )}
       {template.description && (
-        <p className="text-xs text-gray-500 mb-2 line-clamp-2">
+        <p className="text-xs text-content-secondary mb-2 line-clamp-2">
           {template.description}
         </p>
       )}
-      <div className="mt-2 text-sm text-gray-600">
+      <div className="mt-2 text-sm text-content-secondary">
         {template.step_count} step{template.step_count !== 1 ? "s" : ""} &bull;{" "}
         {template.active_instance_count} active
       </div>
@@ -335,13 +335,13 @@ function WorkflowInstanceCard({
   return (
     <button
       onClick={onClick}
-      className="bg-white rounded-lg shadow px-5 py-4 text-left hover:shadow-md border border-gray-200 transition w-full flex items-center justify-between"
+      className="bg-surface-card-solid rounded-lg shadow px-5 py-4 text-left hover:shadow-glass border border-[var(--color-border)] transition w-full flex items-center justify-between"
     >
       <div>
-        <p className="text-sm font-medium text-gray-900 capitalize">
+        <p className="text-sm font-medium text-content-primary capitalize">
           {TRIGGER_LABELS[instance.trigger_type]} — {instance.trigger_title || instance.trigger_id}
         </p>
-        <p className="text-xs text-gray-500 mt-0.5">
+        <p className="text-xs text-content-secondary mt-0.5">
           Started {new Date(instance.created_at).toLocaleDateString()}
         </p>
       </div>
@@ -460,12 +460,12 @@ function TemplateBuilderView({
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+            className="text-sm text-content-secondary hover:text-content-secondary flex items-center gap-1"
           >
             ← Back
           </button>
-          <span className="text-gray-300">|</span>
-          <h1 className="text-xl font-bold text-gray-900">{template.name}</h1>
+          <span className="text-content-muted">|</span>
+          <h1 className="text-xl font-bold text-content-primary">{template.name}</h1>
           {template.chapter_id === null && (
             <span className="text-xs bg-brand-primary-light text-brand-primary-dark px-2 py-0.5 rounded-full">
               Org-wide
@@ -474,11 +474,11 @@ function TemplateBuilderView({
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start justify-between">
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="bg-red-900/20 border border-red-200 rounded-lg p-4 flex items-start justify-between">
+            <p className="text-sm text-red-400">{error}</p>
             <button
               onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-600 ml-4 text-xs"
+              className="text-red-400 hover:text-red-300 ml-4 text-xs"
             >
               Dismiss
             </button>
@@ -486,9 +486,9 @@ function TemplateBuilderView({
         )}
 
         {/* Template info section */}
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <div className="bg-surface-card-solid rounded-lg shadow border border-[var(--color-border)] p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-800">
+            <h2 className="text-base font-semibold text-content-primary">
               Template Details
             </h2>
             {canManage && !editMode && (
@@ -504,28 +504,28 @@ function TemplateBuilderView({
           {editMode ? (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
+                <label className="block text-xs font-medium text-content-secondary mb-1">
                   Name
                 </label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
+                <label className="block text-xs font-medium text-content-secondary mb-1">
                   Description
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
+                <label className="block text-xs font-medium text-content-secondary mb-1">
                   Trigger Type
                 </label>
                 <select
@@ -533,7 +533,7 @@ function TemplateBuilderView({
                   onChange={(e) =>
                     setTriggerType(e.target.value as WorkflowTriggerType)
                   }
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="document">Document</option>
                   <option value="expense">Expense Request</option>
@@ -549,7 +549,7 @@ function TemplateBuilderView({
                   onChange={(e) => setIsActive(e.target.checked)}
                   className="rounded"
                 />
-                <label htmlFor="is_active" className="text-sm text-gray-700">
+                <label htmlFor="is_active" className="text-sm text-content-secondary">
                   Active
                 </label>
               </div>
@@ -563,7 +563,7 @@ function TemplateBuilderView({
                 </button>
                 <button
                   onClick={() => setEditMode(false)}
-                  className="text-sm text-gray-500 hover:text-gray-700 px-4 py-2"
+                  className="text-sm text-content-secondary hover:text-content-secondary px-4 py-2"
                 >
                   Cancel
                 </button>
@@ -572,32 +572,32 @@ function TemplateBuilderView({
           ) : (
             <dl className="grid grid-cols-2 gap-4">
               <div>
-                <dt className="text-xs text-gray-500">Trigger</dt>
-                <dd className="text-sm font-medium text-gray-900">
+                <dt className="text-xs text-content-secondary">Trigger</dt>
+                <dd className="text-sm font-medium text-content-primary">
                   {TRIGGER_LABELS[template.trigger_type]}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-500">Status</dt>
-                <dd className="text-sm font-medium text-gray-900">
+                <dt className="text-xs text-content-secondary">Status</dt>
+                <dd className="text-sm font-medium text-content-primary">
                   {template.is_active ? "Active" : "Inactive"}
                 </dd>
               </div>
               {template.description && (
                 <div className="col-span-2">
-                  <dt className="text-xs text-gray-500">Description</dt>
-                  <dd className="text-sm text-gray-700">{template.description}</dd>
+                  <dt className="text-xs text-content-secondary">Description</dt>
+                  <dd className="text-sm text-content-secondary">{template.description}</dd>
                 </div>
               )}
             </dl>
           )}
 
           {canManage && !editMode && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
               <button
                 onClick={handleDeactivate}
                 disabled={saving}
-                className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50"
+                className="text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
               >
                 Deactivate template
               </button>
@@ -606,9 +606,9 @@ function TemplateBuilderView({
         </div>
 
         {/* Steps section */}
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <div className="bg-surface-card-solid rounded-lg shadow border border-[var(--color-border)] p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-800">
+            <h2 className="text-base font-semibold text-content-primary">
               Steps ({template.step_count})
             </h2>
             {canManage && (
@@ -622,7 +622,7 @@ function TemplateBuilderView({
           </div>
 
           {sortedSteps.length === 0 ? (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-content-secondary">
               No steps yet. Add a step to define who needs to approve.
             </p>
           ) : (
@@ -688,7 +688,7 @@ function StepCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+    <div className="flex items-start gap-3 p-4 border border-[var(--color-border)] rounded-lg bg-white/5">
       {/* Order number */}
       <div className="shrink-0 w-7 h-7 rounded-full bg-brand-primary-light text-brand-primary-dark text-xs font-bold flex items-center justify-center mt-0.5">
         {step.step_order}
@@ -696,31 +696,31 @@ function StepCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">{step.name}</p>
+        <p className="text-sm font-medium text-content-primary">{step.name}</p>
         {step.description && (
-          <p className="text-xs text-gray-500 mt-0.5">{step.description}</p>
+          <p className="text-xs text-content-secondary mt-0.5">{step.description}</p>
         )}
         <div className="flex flex-wrap gap-2 mt-2">
           {/* Approver badge */}
           {step.approver_type === "role" && step.approver_role && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full">
               {step.approver_role}
             </span>
           )}
           {step.approver_type === "specific_user" && (
-            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-purple-900/30 text-purple-400 px-2 py-0.5 rounded-full">
               Specific user
             </span>
           )}
           {/* Parallel group badge */}
           {step.parallel_group && (
-            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-amber-900/30 text-amber-400 px-2 py-0.5 rounded-full">
               Parallel: {step.parallel_group}
             </span>
           )}
           {/* Condition badge */}
           {step.condition_json && (
-            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-gray-800/50 text-content-muted px-2 py-0.5 rounded-full">
               Conditional
             </span>
           )}
@@ -733,7 +733,7 @@ function StepCard({
           <button
             onClick={onMoveUp}
             disabled={isFirst}
-            className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+            className="p-1 text-content-muted hover:text-content-secondary disabled:opacity-30"
             title="Move up"
           >
             ▲
@@ -741,7 +741,7 @@ function StepCard({
           <button
             onClick={onMoveDown}
             disabled={isLast}
-            className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+            className="p-1 text-content-muted hover:text-content-secondary disabled:opacity-30"
             title="Move down"
           >
             ▼
@@ -754,7 +754,7 @@ function StepCard({
           </button>
           <button
             onClick={onDelete}
-            className="text-xs text-red-500 hover:text-red-700 px-2"
+            className="text-xs text-red-400 hover:text-red-300 px-2"
           >
             Delete
           </button>
@@ -807,12 +807,12 @@ function InstanceDetailView({
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="text-sm text-gray-500 hover:text-gray-700"
+            className="text-sm text-content-secondary hover:text-content-secondary"
           >
             ← Back
           </button>
-          <span className="text-gray-300">|</span>
-          <h1 className="text-xl font-bold text-gray-900">Workflow Instance</h1>
+          <span className="text-content-muted">|</span>
+          <h1 className="text-xl font-bold text-content-primary">Workflow Instance</h1>
           <span
             className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_COLORS[instance.status]}`}
           >
@@ -821,11 +821,11 @@ function InstanceDetailView({
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start justify-between">
-            <p className="text-sm text-red-700">{error}</p>
+          <div className="bg-red-900/20 border border-red-200 rounded-lg p-4 flex items-start justify-between">
+            <p className="text-sm text-red-400">{error}</p>
             <button
               onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-600 ml-4 text-xs"
+              className="text-red-400 hover:text-red-300 ml-4 text-xs"
             >
               Dismiss
             </button>
@@ -833,37 +833,37 @@ function InstanceDetailView({
         )}
 
         {/* Trigger info */}
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">
+        <div className="bg-surface-card-solid rounded-lg shadow border border-[var(--color-border)] p-6">
+          <h2 className="text-base font-semibold text-content-primary mb-4">
             Trigger Information
           </h2>
           <dl className="grid grid-cols-2 gap-4">
             <div>
-              <dt className="text-xs text-gray-500">Type</dt>
-              <dd className="text-sm font-medium text-gray-900">
+              <dt className="text-xs text-content-secondary">Type</dt>
+              <dd className="text-sm font-medium text-content-primary">
                 {TRIGGER_LABELS[instance.trigger_type]}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-gray-500">Subject</dt>
-              <dd className="text-sm text-gray-700 truncate">
+              <dt className="text-xs text-content-secondary">Subject</dt>
+              <dd className="text-sm text-content-secondary truncate">
                 {instance.trigger_title || instance.trigger_id}
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-gray-500">Template</dt>
-              <dd className="text-sm text-gray-900">{instance.template.name}</dd>
+              <dt className="text-xs text-content-secondary">Template</dt>
+              <dd className="text-sm text-content-primary">{instance.template.name}</dd>
             </div>
             <div>
-              <dt className="text-xs text-gray-500">Started</dt>
-              <dd className="text-sm text-gray-700">
+              <dt className="text-xs text-content-secondary">Started</dt>
+              <dd className="text-sm text-content-secondary">
                 {new Date(instance.created_at).toLocaleString()}
               </dd>
             </div>
             {instance.completed_at && (
               <div>
-                <dt className="text-xs text-gray-500">Completed</dt>
-                <dd className="text-sm text-gray-700">
+                <dt className="text-xs text-content-secondary">Completed</dt>
+                <dd className="text-sm text-content-secondary">
                   {new Date(instance.completed_at).toLocaleString()}
                 </dd>
               </div>
@@ -871,11 +871,11 @@ function InstanceDetailView({
           </dl>
 
           {canCancel && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
               <button
                 onClick={handleCancel}
                 disabled={cancelling}
-                className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50"
+                className="text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
               >
                 {cancelling ? "Cancelling..." : "Cancel workflow"}
               </button>
@@ -884,8 +884,8 @@ function InstanceDetailView({
         </div>
 
         {/* Step timeline */}
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-          <h2 className="text-base font-semibold text-gray-800 mb-4">
+        <div className="bg-surface-card-solid rounded-lg shadow border border-[var(--color-border)] p-6">
+          <h2 className="text-base font-semibold text-content-primary mb-4">
             Approval Steps
           </h2>
           <div className="space-y-4">
@@ -962,29 +962,29 @@ function StepInstanceRow({
   return (
     <div
       className={`border rounded-lg p-4 ${
-        isSkipped ? "opacity-50 border-dashed border-gray-300 bg-gray-50" : "border-gray-200"
+        isSkipped ? "opacity-50 border-dashed border-[var(--color-border-brand)] bg-white/5" : "border-[var(--color-border)]"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-content-primary">
               {step?.name ?? `Step ${stepInstance.step_id.slice(0, 8)}`}
             </p>
             {stepInstance.assigned_to_role && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded-full">
                 {stepInstance.assigned_to_role}
               </span>
             )}
             {stepInstance.step?.parallel_group && (
-              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-amber-900/30 text-amber-400 px-2 py-0.5 rounded-full">
                 Parallel: {stepInstance.step.parallel_group}
               </span>
             )}
           </div>
 
           {isSkipped && (
-            <p className="text-xs text-gray-400 italic mt-1">
+            <p className="text-xs text-content-muted italic mt-1">
               Skipped (condition not met)
             </p>
           )}
@@ -993,8 +993,8 @@ function StepInstanceRow({
             <div
               className={`mt-2 p-2 rounded text-xs ${
                 stepInstance.status === "rejected"
-                  ? "bg-red-50 text-red-700"
-                  : "bg-gray-50 text-gray-600"
+                  ? "bg-red-900/20 text-red-400"
+                  : "bg-white/5 text-content-secondary"
               }`}
             >
               <span className="font-medium">Note: </span>
@@ -1003,7 +1003,7 @@ function StepInstanceRow({
           )}
 
           {stepInstance.action_taken_at && (
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-content-muted mt-1">
               {new Date(stepInstance.action_taken_at).toLocaleString()}
             </p>
           )}
@@ -1018,8 +1018,8 @@ function StepInstanceRow({
 
       {/* Action buttons */}
       {canAct && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+        <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
+          {error && <p className="text-xs text-red-400 mb-2">{error}</p>}
 
           {showComments && (
             <textarea
@@ -1027,7 +1027,7 @@ function StepInstanceRow({
               onChange={(e) => setComments(e.target.value)}
               placeholder="Optional comments..."
               rows={2}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm mb-2"
             />
           )}
 
@@ -1048,7 +1048,7 @@ function StepInstanceRow({
             </button>
             <button
               onClick={() => setShowComments((v) => !v)}
-              className="text-xs text-gray-500 hover:text-gray-700"
+              className="text-xs text-content-secondary hover:text-content-secondary"
             >
               {showComments ? "Hide comments" : "Add comment"}
             </button>
@@ -1099,40 +1099,40 @@ function CreateTemplateModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-surface-card-solid rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+        <h2 className="text-lg font-semibold text-content-primary mb-4">
           New Workflow Template
         </h2>
 
         {error && (
-          <p className="text-sm text-red-600 mb-3">{error}</p>
+          <p className="text-sm text-red-400 mb-3">{error}</p>
         )}
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Name *
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Document Review Process"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Trigger Type
             </label>
             <select
@@ -1140,7 +1140,7 @@ function CreateTemplateModal({
               onChange={(e) =>
                 setTriggerType(e.target.value as WorkflowTriggerType)
               }
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
             >
               <option value="document">Document</option>
               <option value="expense">Expense Request (coming soon)</option>
@@ -1160,7 +1160,7 @@ function CreateTemplateModal({
           </button>
           <button
             onClick={onClose}
-            className="text-sm text-gray-500 hover:text-gray-700 px-4 py-2"
+            className="text-sm text-content-secondary hover:text-content-secondary px-4 py-2"
           >
             Cancel
           </button>
@@ -1256,41 +1256,41 @@ function StepModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg mx-4 max-h-screen overflow-y-auto">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-surface-card-solid rounded-lg shadow-xl p-6 w-full max-w-lg mx-4 max-h-screen overflow-y-auto">
+        <h2 className="text-lg font-semibold text-content-primary mb-4">
           {isEditing ? "Edit Step" : "Add Step"}
         </h2>
 
         {error && (
-          <p className="text-sm text-red-600 mb-3">{error}</p>
+          <p className="text-sm text-red-400 mb-3">{error}</p>
         )}
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Step Name *
             </label>
             <input
               value={stepName}
               onChange={(e) => setStepName(e.target.value)}
               placeholder="e.g. Treasurer Approval"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Description
             </label>
             <input
               value={stepDesc}
               onChange={(e) => setStepDesc(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Approver Type
             </label>
             <select
@@ -1298,7 +1298,7 @@ function StepModal({
               onChange={(e) =>
                 setApproverType(e.target.value as WorkflowApproverType)
               }
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
             >
               <option value="role">By Role</option>
               <option value="specific_user">Specific User</option>
@@ -1307,13 +1307,13 @@ function StepModal({
 
           {approverType === "role" && (
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
+              <label className="block text-xs font-medium text-content-secondary mb-1">
                 Required Role
               </label>
               <select
                 value={approverRole}
                 onChange={(e) => setApproverRole(e.target.value as MemberRole)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
               >
                 <option value="member">Member</option>
                 <option value="secretary">Secretary</option>
@@ -1329,9 +1329,9 @@ function StepModal({
           )}
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Parallel Group{" "}
-              <span className="text-gray-400 font-normal">
+              <span className="text-content-muted font-normal">
                 (optional — steps sharing a group run simultaneously)
               </span>
             </label>
@@ -1339,15 +1339,15 @@ function StepModal({
               value={parallelGroup}
               onChange={(e) => setParallelGroup(e.target.value)}
               placeholder="e.g. group-a"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
             />
           </div>
 
           {/* Condition builder */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Condition{" "}
-              <span className="text-gray-400 font-normal">
+              <span className="text-content-muted font-normal">
                 (optional — skip this step when condition is false)
               </span>
             </label>
@@ -1356,12 +1356,12 @@ function StepModal({
                 value={condField}
                 onChange={(e) => setCondField(e.target.value)}
                 placeholder="field"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="flex-1 border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
               />
               <select
                 value={condOp}
                 onChange={(e) => setCondOp(e.target.value as WorkflowCondition["operator"])}
-                className="border border-gray-300 rounded-lg px-2 py-2 text-sm"
+                className="border border-[var(--color-border-brand)] rounded-lg px-2 py-2 text-sm"
               >
                 {[">", "<", ">=", "<=", "==", "!="].map((op) => (
                   <option key={op} value={op}>
@@ -1373,10 +1373,10 @@ function StepModal({
                 value={condValue}
                 onChange={(e) => setCondValue(e.target.value)}
                 placeholder="value"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="flex-1 border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
               />
             </div>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-content-muted mt-1">
               Leave all three blank for no condition.
             </p>
           </div>
@@ -1392,7 +1392,7 @@ function StepModal({
           </button>
           <button
             onClick={onClose}
-            className="text-sm text-gray-500 hover:text-gray-700 px-4 py-2"
+            className="text-sm text-content-secondary hover:text-content-secondary px-4 py-2"
           >
             Cancel
           </button>
@@ -1476,22 +1476,22 @@ function StartWorkflowModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-surface-card-solid rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+        <h2 className="text-lg font-semibold text-content-primary mb-4">
           Start Workflow
         </h2>
 
-        {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+        {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Workflow Template
             </label>
             <select
               value={templateId}
               onChange={(e) => setTemplateId(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
             >
               {templates.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -1502,16 +1502,16 @@ function StartWorkflowModal({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-content-secondary mb-1">
               Trigger ID
             </label>
             <input
               value={triggerId}
               onChange={(e) => setTriggerId(e.target.value)}
               placeholder="ID of the document or item being reviewed"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
             />
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-content-muted mt-1">
               In Phase 2 this will be a document picker. For now, paste the
               item's ID.
             </p>
@@ -1528,7 +1528,7 @@ function StartWorkflowModal({
           </button>
           <button
             onClick={onClose}
-            className="text-sm text-gray-500 hover:text-gray-700 px-4 py-2"
+            className="text-sm text-content-secondary hover:text-content-secondary px-4 py-2"
           >
             Cancel
           </button>

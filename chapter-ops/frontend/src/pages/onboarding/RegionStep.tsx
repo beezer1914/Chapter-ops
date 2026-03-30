@@ -76,17 +76,17 @@ export default function RegionStep() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-surface-card-solid rounded-lg shadow-glass p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-1">Select Your Region</h2>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-content-muted mb-6">
         Choose the region your chapter belongs to, or create a new one.
       </p>
 
       {/* Selected org banner */}
-      <div className="mb-6 p-3 bg-gray-50 border border-gray-200 rounded-md flex items-center justify-between">
+      <div className="mb-6 p-3 bg-white/5 border border-[var(--color-border)] rounded-md flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-900">{selectedOrganization?.name}</p>
-          <p className="text-xs text-gray-500">{selectedOrganization?.abbreviation}</p>
+          <p className="text-xs text-content-muted">{selectedOrganization?.abbreviation}</p>
         </div>
         <button
           type="button"
@@ -104,14 +104,14 @@ export default function RegionStep() {
       )}
 
       {/* Mode tabs */}
-      <div className="flex border-b border-gray-200 mb-6">
+      <div className="flex border-b border-[var(--color-border)] mb-6">
         <button
           type="button"
           onClick={() => { setMode("select"); clearError(); }}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
             mode === "select"
               ? "border-primary-600 text-primary-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              : "border-transparent text-content-muted hover:text-content-secondary"
           }`}
         >
           Select Existing
@@ -122,7 +122,7 @@ export default function RegionStep() {
           className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
             mode === "create"
               ? "border-primary-600 text-primary-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              : "border-transparent text-content-muted hover:text-content-secondary"
           }`}
         >
           Create New
@@ -136,14 +136,14 @@ export default function RegionStep() {
             placeholder="Search regions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="mb-4 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="mb-4 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
 
           {isLoading ? (
-            <p className="text-gray-500 text-sm py-8 text-center">Loading regions...</p>
+            <p className="text-content-muted text-sm py-8 text-center">Loading regions...</p>
           ) : filteredRegions.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 text-sm">
+              <p className="text-content-muted text-sm">
                 {search ? "No regions match your search." : "No regions yet for this organization."}
               </p>
               <button
@@ -161,12 +161,12 @@ export default function RegionStep() {
                   key={region.id}
                   type="button"
                   onClick={() => handleSelectRegion(region)}
-                  className="w-full text-left p-4 rounded-md border border-gray-200 hover:border-primary-500 hover:bg-primary-50 transition"
+                  className="w-full text-left p-4 rounded-md border border-[var(--color-border)] hover:border-primary-500 hover:bg-white/5 transition"
                 >
                   <div>
                     <p className="font-medium text-gray-900">{region.name}</p>
                     {region.description && (
-                      <p className="text-sm text-gray-500 mt-1">{region.description}</p>
+                      <p className="text-sm text-content-muted mt-1">{region.description}</p>
                     )}
                   </div>
                 </button>
@@ -178,7 +178,7 @@ export default function RegionStep() {
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="w-full bg-white text-gray-700 py-2 px-4 rounded-md border border-gray-300 hover:bg-gray-50 transition"
+              className="w-full bg-surface-card-solid text-content-secondary py-2 px-4 rounded-md border border-[var(--color-border)] hover:bg-white/5 transition"
             >
               Back
             </button>
@@ -187,7 +187,7 @@ export default function RegionStep() {
       ) : (
         <form onSubmit={handleSubmit(onCreateSubmit)} className="space-y-4">
           <div>
-            <label htmlFor="region_name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="region_name" className="block text-sm font-medium text-content-secondary">
               Region Name
             </label>
             <input
@@ -195,7 +195,7 @@ export default function RegionStep() {
               type="text"
               placeholder="e.g., Southern Region"
               {...register("name")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
             {formErrors.name && (
               <p className="mt-1 text-xs text-red-600">{formErrors.name.message}</p>
@@ -203,15 +203,15 @@ export default function RegionStep() {
           </div>
 
           <div>
-            <label htmlFor="abbreviation" className="block text-sm font-medium text-gray-700">
-              Abbreviation <span className="text-gray-400 font-normal">(optional)</span>
+            <label htmlFor="abbreviation" className="block text-sm font-medium text-content-secondary">
+              Abbreviation <span className="text-content-muted font-normal">(optional)</span>
             </label>
             <input
               id="abbreviation"
               type="text"
               placeholder="e.g., SR"
               {...register("abbreviation")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
             {formErrors.abbreviation && (
               <p className="mt-1 text-xs text-red-600">{formErrors.abbreviation.message}</p>
@@ -219,15 +219,15 @@ export default function RegionStep() {
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description <span className="text-gray-400 font-normal">(optional)</span>
+            <label htmlFor="description" className="block text-sm font-medium text-content-secondary">
+              Description <span className="text-content-muted font-normal">(optional)</span>
             </label>
             <textarea
               id="description"
               rows={3}
               placeholder="Brief description of this region..."
               {...register("description")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
             {formErrors.description && (
               <p className="mt-1 text-xs text-red-600">{formErrors.description.message}</p>
@@ -238,7 +238,7 @@ export default function RegionStep() {
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="flex-1 bg-white text-gray-700 py-2 px-4 rounded-md border border-gray-300 hover:bg-gray-50 transition"
+              className="flex-1 bg-surface-card-solid text-content-secondary py-2 px-4 rounded-md border border-[var(--color-border)] hover:bg-white/5 transition"
             >
               Back
             </button>

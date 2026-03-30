@@ -88,29 +88,29 @@ export default function Settings() {
   return (
     <Layout>
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Settings</h2>
+        <h2 className="text-2xl font-bold text-content-primary mb-6">Settings</h2>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-red-900/20 text-red-400 rounded-lg text-sm">
             {error}
             <button onClick={() => setError(null)} className="ml-2 font-medium underline">Dismiss</button>
           </div>
         )}
         {success && (
-          <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-green-900/20 text-green-400 rounded-lg text-sm">
             {success}
             <button onClick={() => setSuccess(null)} className="ml-2 font-medium underline">Dismiss</button>
           </div>
         )}
 
         {isOfficer && !isAdmin && tab !== "profile" && (
-          <div className="mb-4 p-3 bg-yellow-50 text-yellow-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-yellow-900/20 text-yellow-400 rounded-lg text-sm">
             You are viewing settings in read-only mode. Only admins can edit configuration.
           </div>
         )}
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-[var(--color-border)] mb-6">
           <nav className="flex gap-6">
             {visibleTabs.map((t) => (
               <button
@@ -118,7 +118,7 @@ export default function Settings() {
                 onClick={() => setTab(t)}
                 className={`pb-3 text-sm font-medium border-b-2 transition-colors ${tab === t
                   ? "border-brand-primary text-brand-primary"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  : "border-transparent text-content-secondary hover:text-content-secondary"
                   }`}
               >
                 {TAB_LABELS[t]}
@@ -321,10 +321,10 @@ function ProfileTab({
   }
 
   const TRANSFER_STATUS_STYLE: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-700",
-    approved_by_from: "bg-blue-100 text-blue-700",
-    approved: "bg-green-100 text-green-700",
-    denied: "bg-red-100 text-red-700",
+    pending: "bg-yellow-900/30 text-yellow-400",
+    approved_by_from: "bg-blue-900/30 text-blue-400",
+    approved: "bg-green-900/30 text-green-400",
+    denied: "bg-red-900/30 text-red-400",
   };
   const TRANSFER_STATUS_LABEL: Record<string, string> = {
     pending: "Pending",
@@ -345,9 +345,9 @@ function ProfileTab({
   return (
     <div className="space-y-8">
       {/* Profile Picture */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Profile Picture</h3>
-        <p className="text-sm text-gray-500 mb-4">Upload a photo to personalize your account.</p>
+      <div className="bg-surface-card-solid rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-content-primary mb-1">Profile Picture</h3>
+        <p className="text-sm text-content-secondary mb-4">Upload a photo to personalize your account.</p>
         <ImageUpload
           label="Profile picture"
           currentImageUrl={authUser?.profile_picture_url}
@@ -358,40 +358,40 @@ function ProfileTab({
       </div>
 
       {/* Name & Email */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Personal Information</h3>
-        <p className="text-sm text-gray-500 mb-4">Update your name and email address.</p>
+      <div className="bg-surface-card-solid rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-content-primary mb-1">Personal Information</h3>
+        <p className="text-sm text-content-secondary mb-4">Update your name and email address.</p>
         <form onSubmit={handleSaveProfile} className="space-y-4 max-w-md">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">First Name</label>
               <input
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Last Name</label>
               <input
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
             />
           </div>
           <button
@@ -405,23 +405,23 @@ function ProfileTab({
       </div>
 
       {/* Password */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Change Password</h3>
-        <p className="text-sm text-gray-500 mb-4">Choose a strong password (12+ characters, mixed case, number, symbol).</p>
+      <div className="bg-surface-card-solid rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-content-primary mb-1">Change Password</h3>
+        <p className="text-sm text-content-secondary mb-4">Choose a strong password (12+ characters, mixed case, number, symbol).</p>
         <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Current Password</label>
             <input
               type="password"
               value={currentPw}
               onChange={(e) => setCurrentPw(e.target.value)}
               required
               autoComplete="current-password"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">New Password</label>
             <input
               type="password"
               value={newPw}
@@ -429,18 +429,18 @@ function ProfileTab({
               required
               minLength={12}
               autoComplete="new-password"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Confirm New Password</label>
             <input
               type="password"
               value={confirmPw}
               onChange={(e) => setConfirmPw(e.target.value)}
               required
               autoComplete="new-password"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
             />
           </div>
           <button
@@ -455,13 +455,13 @@ function ProfileTab({
 
       {/* Custom Member Fields */}
       {customFieldDefs.length > 0 && activeMembership && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Chapter Profile</h3>
-          <p className="text-sm text-gray-500 mb-4">Additional information tracked by your chapter.</p>
+        <div className="bg-surface-card-solid rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-content-primary mb-1">Chapter Profile</h3>
+          <p className="text-sm text-content-secondary mb-4">Additional information tracked by your chapter.</p>
           <form onSubmit={handleSaveCustomFields} className="space-y-4 max-w-md">
             {customFieldDefs.map((field) => (
               <div key={field.key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-content-secondary mb-1">
                   {field.label}
                   {field.required && <span className="text-red-500 ml-0.5">*</span>}
                 </label>
@@ -470,7 +470,7 @@ function ProfileTab({
                   value={customFieldValues[field.key] ?? ""}
                   onChange={(e) => setCustomFieldValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
                   required={field.required}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
             ))}
@@ -487,21 +487,21 @@ function ProfileTab({
 
       {/* Chapter Transfer — hide for presidents (they manage transfers, not request them) */}
       {!isPresident && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Transfer to Another Chapter</h3>
-          <p className="text-sm text-gray-500 mb-4">
+        <div className="bg-surface-card-solid rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-content-primary mb-1">Transfer to Another Chapter</h3>
+          <p className="text-sm text-content-secondary mb-4">
             Request to move to a different chapter in your organization. Both chapter presidents must approve before the transfer is completed.
           </p>
 
           {!hasPending && availableChapters.length > 0 && (
             <form onSubmit={handleSubmitTransfer} className="space-y-4 max-w-md mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Destination Chapter</label>
+                <label className="block text-sm font-medium text-content-secondary mb-1">Destination Chapter</label>
                 <select
                   value={toChapterId}
                   onChange={(e) => setToChapterId(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   <option value="">Select a chapter...</option>
                   {availableChapters.map((c) => (
@@ -512,15 +512,15 @@ function ProfileTab({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Reason <span className="text-gray-400 font-normal">(optional)</span>
+                <label className="block text-sm font-medium text-content-secondary mb-1">
+                  Reason <span className="text-content-muted font-normal">(optional)</span>
                 </label>
                 <textarea
                   value={transferReason}
                   onChange={(e) => setTransferReason(e.target.value)}
                   rows={3}
                   placeholder="Why are you transferring? (e.g., relocating for work)"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none"
+                  className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary resize-none"
                 />
               </div>
               <button
@@ -534,30 +534,30 @@ function ProfileTab({
           )}
 
           {hasPending && (
-            <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-blue-900/20 text-blue-400 rounded-lg text-sm">
               You have a pending transfer request. You cannot submit another until it is resolved.
             </div>
           )}
 
           {availableChapters.length === 0 && !hasPending && (
-            <p className="text-sm text-gray-400 mb-4">No other chapters available in your organization.</p>
+            <p className="text-sm text-content-muted mb-4">No other chapters available in your organization.</p>
           )}
 
           {myTransfers.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">Your Transfer History</h4>
+              <h4 className="text-sm font-semibold text-content-secondary mb-2">Your Transfer History</h4>
               <div className="space-y-2">
                 {myTransfers.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between border border-gray-100 rounded-lg px-4 py-3 text-sm">
+                  <div key={t.id} className="flex items-center justify-between border border-[var(--color-border)] rounded-lg px-4 py-3 text-sm">
                     <div>
                       <span className="font-medium">{t.from_chapter_name}</span>
-                      <span className="text-gray-400 mx-2">→</span>
+                      <span className="text-content-muted mx-2">→</span>
                       <span className="font-medium">{t.to_chapter_name}</span>
                       {t.denial_reason && (
-                        <p className="text-xs text-red-600 mt-0.5">Denied: {t.denial_reason}</p>
+                        <p className="text-xs text-red-400 mt-0.5">Denied: {t.denial_reason}</p>
                       )}
                     </div>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${TRANSFER_STATUS_STYLE[t.status] ?? "bg-gray-100 text-gray-600"}`}>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${TRANSFER_STATUS_STYLE[t.status] ?? "bg-gray-800/50 text-gray-400"}`}>
                       {TRANSFER_STATUS_LABEL[t.status] ?? t.status}
                     </span>
                   </div>
@@ -648,15 +648,15 @@ function OrgConfigTab({
   return (
     <div className="space-y-8">
       {/* Role Titles */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Role Titles</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div className="bg-surface-card-solid rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-content-primary mb-1">Role Titles</h3>
+        <p className="text-sm text-content-secondary mb-4">
           Customize how role names appear throughout the platform. Internal permissions remain unchanged.
         </p>
         <div className="space-y-3">
           {INTERNAL_ROLES.map((role) => (
             <div key={role} className="flex items-center gap-4">
-              <span className="text-sm text-gray-500 w-32 capitalize">
+              <span className="text-sm text-content-secondary w-32 capitalize">
                 {role.replace("_", " ")}
               </span>
               <input
@@ -667,7 +667,7 @@ function OrgConfigTab({
                 }
                 disabled={!isAdmin}
                 placeholder={role.replace("_", " ")}
-                className="flex-1 max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50 disabled:text-gray-500"
+                className="flex-1 max-w-xs rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)] disabled:text-content-secondary"
               />
             </div>
           ))}
@@ -684,13 +684,13 @@ function OrgConfigTab({
       </div>
 
       {/* Custom Member Fields */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Custom Member Fields</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div className="bg-surface-card-solid rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-content-primary mb-1">Custom Member Fields</h3>
+        <p className="text-sm text-content-secondary mb-4">
           Define additional fields for member profiles (e.g., line number, crossing date).
         </p>
         {customFields.length === 0 ? (
-          <p className="text-sm text-gray-400 mb-4">No custom fields defined.</p>
+          <p className="text-sm text-content-muted mb-4">No custom fields defined.</p>
         ) : (
           <div className="space-y-3 mb-4">
             {customFields.map((field, i) => (
@@ -701,7 +701,7 @@ function OrgConfigTab({
                   onChange={(e) => updateField(i, { key: e.target.value.replace(/\s/g, "_").toLowerCase() })}
                   disabled={!isAdmin}
                   placeholder="key"
-                  className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50"
+                  className="w-32 rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
                 />
                 <input
                   type="text"
@@ -709,19 +709,19 @@ function OrgConfigTab({
                   onChange={(e) => updateField(i, { label: e.target.value })}
                   disabled={!isAdmin}
                   placeholder="Label"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50"
+                  className="flex-1 rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
                 />
                 <select
                   value={field.type}
                   onChange={(e) => updateField(i, { type: e.target.value as "text" | "number" | "date" })}
                   disabled={!isAdmin}
-                  className="w-28 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50"
+                  className="w-28 rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
                 >
                   <option value="text">Text</option>
                   <option value="number">Number</option>
                   <option value="date">Date</option>
                 </select>
-                <label className="flex items-center gap-1 text-sm text-gray-600">
+                <label className="flex items-center gap-1 text-sm text-content-secondary">
                   <input
                     type="checkbox"
                     checked={field.required}
@@ -734,7 +734,7 @@ function OrgConfigTab({
                 {isAdmin && (
                   <button
                     onClick={() => removeField(i)}
-                    className="text-red-500 hover:text-red-700 text-sm"
+                    className="text-red-400 hover:text-red-300 text-sm"
                   >
                     Remove
                   </button>
@@ -747,7 +747,7 @@ function OrgConfigTab({
           <div className="flex gap-3">
             <button
               onClick={addField}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              className="px-4 py-2 text-sm font-medium text-content-secondary bg-white/10 rounded-lg hover:bg-white/10"
             >
               Add Field
             </button>
@@ -837,13 +837,13 @@ function ChapterConfigTab({
   return (
     <div className="space-y-8">
       {/* Fee Types */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Fee Types</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div className="bg-surface-card-solid rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-content-primary mb-1">Fee Types</h3>
+        <p className="text-sm text-content-secondary mb-4">
           Define the types of fees your chapter collects (dues, initiation fees, etc.).
         </p>
         {feeTypes.length === 0 ? (
-          <p className="text-sm text-gray-400 mb-4">No fee types defined.</p>
+          <p className="text-sm text-content-muted mb-4">No fee types defined.</p>
         ) : (
           <div className="space-y-3 mb-4">
             {feeTypes.map((ft, i) => (
@@ -854,7 +854,7 @@ function ChapterConfigTab({
                   onChange={(e) => updateFeeType(i, { id: e.target.value.replace(/\s/g, "_").toLowerCase() })}
                   disabled={!isAdmin}
                   placeholder="id"
-                  className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50"
+                  className="w-32 rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
                 />
                 <input
                   type="text"
@@ -862,10 +862,10 @@ function ChapterConfigTab({
                   onChange={(e) => updateFeeType(i, { label: e.target.value })}
                   disabled={!isAdmin}
                   placeholder="Label"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50"
+                  className="flex-1 rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
                 />
                 <div className="flex items-center gap-1">
-                  <span className="text-sm text-gray-500">$</span>
+                  <span className="text-sm text-content-secondary">$</span>
                   <input
                     type="number"
                     step="0.01"
@@ -873,13 +873,13 @@ function ChapterConfigTab({
                     value={ft.default_amount}
                     onChange={(e) => updateFeeType(i, { default_amount: parseFloat(e.target.value) || 0 })}
                     disabled={!isAdmin}
-                    className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50"
+                    className="w-24 rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
                   />
                 </div>
                 {isAdmin && (
                   <button
                     onClick={() => removeFeeType(i)}
-                    className="text-red-500 hover:text-red-700 text-sm"
+                    className="text-red-400 hover:text-red-300 text-sm"
                   >
                     Remove
                   </button>
@@ -892,7 +892,7 @@ function ChapterConfigTab({
           <div className="flex gap-3">
             <button
               onClick={addFeeType}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              className="px-4 py-2 text-sm font-medium text-content-secondary bg-white/10 rounded-lg hover:bg-white/10"
             >
               Add Fee Type
             </button>
@@ -908,14 +908,14 @@ function ChapterConfigTab({
       </div>
 
       {/* Chapter Settings */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Chapter Settings</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div className="bg-surface-card-solid rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-content-primary mb-1">Chapter Settings</h3>
+        <p className="text-sm text-content-secondary mb-4">
           Operational configuration for your chapter.
         </p>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-content-secondary mb-1">
               Default Dues Amount ($)
             </label>
             <input
@@ -930,11 +930,11 @@ function ChapterConfigTab({
                 }))
               }
               disabled={!isAdmin}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50"
+              className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-content-secondary mb-1">
               Fiscal Year Start Month
             </label>
             <select
@@ -946,7 +946,7 @@ function ChapterConfigTab({
                 }))
               }
               disabled={!isAdmin}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50"
+              className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
             >
               {["January", "February", "March", "April", "May", "June",
                 "July", "August", "September", "October", "November", "December",
@@ -956,7 +956,7 @@ function ChapterConfigTab({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-content-secondary mb-1">
               Payment Deadline Day
             </label>
             <input
@@ -972,11 +972,11 @@ function ChapterConfigTab({
               }
               disabled={!isAdmin}
               placeholder="Day of month (1-28)"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-gray-50"
+              className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
             />
           </div>
           <div className="flex items-center">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-content-secondary">
               <input
                 type="checkbox"
                 checked={settings.allow_payment_plans ?? true}
@@ -1075,33 +1075,33 @@ function TransferApprovalsSection({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">Chapter Transfer Requests</h3>
-      <p className="text-sm text-gray-500 mb-4">
+    <div className="bg-surface-card-solid rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold text-content-primary mb-1">Chapter Transfer Requests</h3>
+      <p className="text-sm text-content-secondary mb-4">
         Pending transfer requests involving your chapter. Both chapter presidents must approve.
       </p>
 
       {loading ? (
-        <p className="text-sm text-gray-400">Loading...</p>
+        <p className="text-sm text-content-muted">Loading...</p>
       ) : transfers.length === 0 ? (
-        <p className="text-sm text-gray-400">No pending transfer requests.</p>
+        <p className="text-sm text-content-muted">No pending transfer requests.</p>
       ) : (
         <div className="space-y-4">
           {transfers.map((t) => (
-            <div key={t.id} className="border border-gray-200 rounded-lg p-4">
+            <div key={t.id} className="border border-[var(--color-border)] rounded-lg p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-medium text-gray-900">{t.requesting_user_name}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <p className="font-medium text-content-primary">{t.requesting_user_name}</p>
+                  <p className="text-sm text-content-secondary mt-0.5">
                     {t.from_chapter_name} → {t.to_chapter_name}
                   </p>
                   {t.reason && (
-                    <p className="text-sm text-gray-600 mt-1 italic">"{t.reason}"</p>
+                    <p className="text-sm text-content-secondary mt-1 italic">"{t.reason}"</p>
                   )}
                   <span className={`inline-block mt-2 text-xs font-medium px-2 py-0.5 rounded-full ${
                     t.status === "approved_by_from"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-yellow-100 text-yellow-700"
+                      ? "bg-blue-900/30 text-blue-400"
+                      : "bg-yellow-900/30 text-yellow-400"
                   }`}>
                     {STATUS_LABELS[t.status] ?? t.status}
                   </span>
@@ -1125,8 +1125,8 @@ function TransferApprovalsSection({
               </div>
 
               {denyId === t.id && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
+                  <label className="block text-sm font-medium text-content-secondary mb-1">
                     Reason for denial (optional)
                   </label>
                   <input
@@ -1134,7 +1134,7 @@ function TransferApprovalsSection({
                     value={denyReason}
                     onChange={(e) => setDenyReason(e.target.value)}
                     placeholder="e.g. Dues outstanding"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 mb-2"
+                    className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 mb-2"
                   />
                   <div className="flex gap-2">
                     <button
@@ -1146,7 +1146,7 @@ function TransferApprovalsSection({
                     </button>
                     <button
                       onClick={() => { setDenyId(null); setDenyReason(""); }}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      className="px-3 py-1.5 text-xs font-medium text-content-secondary bg-white/10 rounded-lg hover:bg-white/10"
                     >
                       Cancel
                     </button>
@@ -1223,7 +1223,7 @@ function StripeConnectSection({
 
   if (!isTreasurer) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 text-gray-500">
+      <div className="bg-surface-card-solid rounded-lg shadow p-6 text-content-secondary">
         You need Treasurer permissions or higher to manage payment settings.
       </div>
     );
@@ -1231,38 +1231,38 @@ function StripeConnectSection({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Stripe Connect</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div className="bg-surface-card-solid rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-content-primary mb-1">Stripe Connect</h3>
+        <p className="text-sm text-content-secondary mb-4">
           Connect your chapter's Stripe account to accept online dues payments and donations.
           Members pay directly — funds go straight to your chapter's bank account.
         </p>
 
         {loading ? (
-          <div className="text-sm text-gray-400">Loading Stripe status...</div>
+          <div className="text-sm text-content-muted">Loading Stripe status...</div>
         ) : status?.connected ? (
           <div className="space-y-4">
             {/* Connected status */}
-            <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
+            <div className="flex items-center gap-3 p-4 bg-emerald-900/20 rounded-lg">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0" />
               <div className="flex-1">
-                <div className="font-medium text-green-800 text-sm">
+                <div className="font-medium text-emerald-400 text-sm">
                   {status.display_name ?? "Stripe account"} connected
                 </div>
                 <div className="flex gap-4 mt-1">
-                  <span className={`text-xs ${status.charges_enabled ? "text-green-700" : "text-yellow-700"}`}>
+                  <span className={`text-xs ${status.charges_enabled ? "text-green-400" : "text-yellow-400"}`}>
                     {status.charges_enabled ? "✓ Charges enabled" : "⚠ Charges not yet enabled"}
                   </span>
-                  <span className={`text-xs ${status.payouts_enabled ? "text-green-700" : "text-yellow-700"}`}>
+                  <span className={`text-xs ${status.payouts_enabled ? "text-green-400" : "text-yellow-400"}`}>
                     {status.payouts_enabled ? "✓ Payouts enabled" : "⚠ Payouts not yet enabled"}
                   </span>
                 </div>
               </div>
-              <span className="text-xs text-gray-400 font-mono">{status.stripe_account_id}</span>
+              <span className="text-xs text-content-muted font-mono">{status.stripe_account_id}</span>
             </div>
 
             {!status.charges_enabled && (
-              <div className="p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg">
+              <div className="p-3 bg-yellow-900/20 text-yellow-400 text-sm rounded-lg">
                 Your Stripe account needs additional verification before charges are enabled.
                 Log into your Stripe Dashboard to complete onboarding.
               </div>
@@ -1272,7 +1272,7 @@ function StripeConnectSection({
               <button
                 onClick={handleDisconnect}
                 disabled={disconnecting}
-                className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-red-400 bg-red-900/20 rounded-lg hover:bg-red-900/30 disabled:opacity-50"
               >
                 {disconnecting ? "Disconnecting..." : "Disconnect Stripe"}
               </button>
@@ -1280,9 +1280,9 @@ function StripeConnectSection({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-3 p-4 bg-white/5 rounded-lg">
               <div className="w-2.5 h-2.5 rounded-full bg-gray-400 flex-shrink-0" />
-              <span className="text-sm text-gray-600">No Stripe account connected</span>
+              <span className="text-sm text-content-secondary">No Stripe account connected</span>
             </div>
             <button
               onClick={handleConnect}
@@ -1291,7 +1291,7 @@ function StripeConnectSection({
             >
               {connecting ? "Redirecting to Stripe..." : "Connect Stripe Account"}
             </button>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-content-muted">
               You'll be redirected to Stripe to authorize the connection. You can connect an existing
               Stripe account or create a new one.
             </p>
@@ -1614,14 +1614,14 @@ function BrandingTab({
   return (
     <div className="space-y-6">
       {/* Preset Selector */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+      <div className="bg-surface-card-solid p-4 rounded-lg border border-[var(--color-border)]">
+        <label className="block text-sm font-medium text-content-secondary mb-3">
           Quick Start Presets (Optional)
         </label>
         <select
           value={selectedPreset}
           onChange={handlePresetSelect}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary"
+          className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary"
         >
           <option value="">-- Choose a palette or customize below --</option>
           {BRANDING_PRESETS.map((preset) => (
@@ -1630,14 +1630,14 @@ function BrandingTab({
             </option>
           ))}
         </select>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-content-secondary mt-2">
           Select your organization to auto-fill official brand colors. You can customize them after applying.
         </p>
       </div>
 
       {/* Scope Selector */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+      <div className="bg-surface-card-solid p-4 rounded-lg border border-[var(--color-border)]">
+        <label className="block text-sm font-medium text-content-secondary mb-3">
           Branding Scope
         </label>
         <div className="flex gap-3">
@@ -1646,7 +1646,7 @@ function BrandingTab({
             disabled={!canEditOrg}
             className={`px-4 py-2 text-sm font-medium rounded-lg ${scope === "organization"
               ? "bg-brand-primary text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              : "bg-white/10 text-content-secondary hover:bg-white/10"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             Organization
@@ -1656,7 +1656,7 @@ function BrandingTab({
             disabled={!canEditChapter}
             className={`px-4 py-2 text-sm font-medium rounded-lg ${scope === "chapter"
               ? "bg-brand-primary text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              : "bg-white/10 text-content-secondary hover:bg-white/10"
               } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             Chapter Override
@@ -1669,9 +1669,9 @@ function BrandingTab({
               id="chapter-override-enabled"
               checked={chapterOverrideEnabled}
               onChange={(e) => setChapterOverrideEnabled(e.target.checked)}
-              className="w-4 h-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary"
+              className="w-4 h-4 text-brand-primary border-[var(--color-border-brand)] rounded focus:ring-brand-primary"
             />
-            <label htmlFor="chapter-override-enabled" className="text-sm text-gray-700">
+            <label htmlFor="chapter-override-enabled" className="text-sm text-content-secondary">
               Enable chapter branding override (if disabled, organization branding will be used)
             </label>
           </div>
@@ -1679,30 +1679,30 @@ function BrandingTab({
       </div>
 
       {/* Logo Upload */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+      <div className="bg-surface-card-solid p-4 rounded-lg border border-[var(--color-border)]">
+        <label className="block text-sm font-medium text-content-secondary mb-1">
           Logo
         </label>
-        <p className="text-xs text-gray-500 mb-3">Displayed in the sidebar next to your organization name.</p>
+        <p className="text-xs text-content-secondary mb-3">Displayed in the sidebar next to your organization name.</p>
         <div className="flex items-center gap-4">
           {logoPreview ? (
             <div className="flex items-center gap-3">
               <img
                 src={logoPreview}
                 alt="Logo preview"
-                className="w-12 h-12 object-contain rounded border border-gray-200"
+                className="w-12 h-12 object-contain rounded border border-[var(--color-border)]"
               />
               <button
                 onClick={handleLogoDelete}
-                className="text-sm text-red-600 hover:text-red-700"
+                className="text-sm text-red-400 hover:text-red-300"
               >
                 Remove
               </button>
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No logo uploaded</p>
+            <p className="text-sm text-content-secondary">No logo uploaded</p>
           )}
-          <label className={`cursor-pointer inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 ${logoUploading ? "opacity-50 cursor-not-allowed" : ""}`}>
+          <label className={`cursor-pointer inline-flex items-center px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5 ${logoUploading ? "opacity-50 cursor-not-allowed" : ""}`}>
             <input
               type="file"
               accept="image/png,image/jpeg,image/svg+xml,image/webp"
@@ -1716,12 +1716,12 @@ function BrandingTab({
             {logoUploading ? "Uploading…" : (logoPreview ? "Change Logo" : "Upload Logo")}
           </label>
         </div>
-        <p className="text-xs text-gray-500 mt-2">Accepted: PNG, JPG, SVG, WebP (max 5MB)</p>
+        <p className="text-xs text-content-secondary mt-2">Accepted: PNG, JPG, SVG, WebP (max 5MB)</p>
       </div>
 
       {/* Favicon Upload */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+      <div className="bg-surface-card-solid p-4 rounded-lg border border-[var(--color-border)]">
+        <label className="block text-sm font-medium text-content-secondary mb-3">
           Favicon
         </label>
         <div className="flex items-center gap-4">
@@ -1734,15 +1734,15 @@ function BrandingTab({
               />
               <button
                 onClick={handleFaviconDelete}
-                className="text-sm text-red-600 hover:text-red-700"
+                className="text-sm text-red-400 hover:text-red-300"
               >
                 Remove
               </button>
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No favicon uploaded</p>
+            <p className="text-sm text-content-secondary">No favicon uploaded</p>
           )}
-          <label className="cursor-pointer inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+          <label className="cursor-pointer inline-flex items-center px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5">
             <input
               type="file"
               accept=".ico,.png"
@@ -1752,24 +1752,24 @@ function BrandingTab({
             {faviconPreview ? "Change" : "Upload"} Favicon
           </label>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-content-secondary mt-2">
           Accepted formats: .ico or .png (max 1MB)
         </p>
       </div>
 
       {/* Color Pickers */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700 mb-4">Brand Colors</h3>
+      <div className="bg-surface-card-solid p-4 rounded-lg border border-[var(--color-border)]">
+        <h3 className="text-sm font-medium text-content-secondary mb-4">Brand Colors</h3>
         <div className="space-y-6">
           {(["primary", "secondary", "accent"] as const).map((palette) => (
             <div key={palette}>
-              <h4 className="text-xs font-medium text-gray-600 uppercase mb-3 tracking-wide">
+              <h4 className="text-xs font-medium text-content-secondary uppercase mb-3 tracking-wide">
                 {palette}
               </h4>
               <div className="grid grid-cols-3 gap-4">
                 {(["light", "main", "dark"] as const).map((shade) => (
                   <div key={shade}>
-                    <label className="block text-xs text-gray-600 mb-2 capitalize">
+                    <label className="block text-xs text-content-secondary mb-2 capitalize">
                       {shade}
                     </label>
                     <div className="flex items-center gap-2">
@@ -1777,13 +1777,13 @@ function BrandingTab({
                         type="color"
                         value={colors[palette][shade]}
                         onChange={(e) => handleColorChange(palette, shade, e.target.value)}
-                        className="w-12 h-12 rounded border border-gray-300 cursor-pointer"
+                        className="w-12 h-12 rounded border border-[var(--color-border-brand)] cursor-pointer"
                       />
                       <input
                         type="text"
                         value={colors[palette][shade]}
                         onChange={(e) => handleColorChange(palette, shade, e.target.value)}
-                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary"
+                        className="flex-1 px-3 py-2 text-sm border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary"
                         placeholder="#000000"
                       />
                     </div>
@@ -1796,11 +1796,11 @@ function BrandingTab({
       </div>
 
       {/* Typography */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700 mb-4">Typography</h3>
+      <div className="bg-surface-card-solid p-4 rounded-lg border border-[var(--color-border)]">
+        <h3 className="text-sm font-medium text-content-secondary mb-4">Typography</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-700 mb-2">Font Source</label>
+            <label className="block text-sm text-content-secondary mb-2">Font Source</label>
             <select
               value={typography.font_source}
               onChange={(e) =>
@@ -1809,20 +1809,20 @@ function BrandingTab({
                   font_source: e.target.value as "google" | "system",
                 }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary"
+              className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary"
             >
               <option value="google">Google Fonts</option>
               <option value="system">System Fonts</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-2">Heading Font</label>
+            <label className="block text-sm text-content-secondary mb-2">Heading Font</label>
             <select
               value={typography.heading_font}
               onChange={(e) =>
                 setTypography((prev) => ({ ...prev, heading_font: e.target.value }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary"
+              className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary"
             >
               {(typography.font_source === "google" ? GOOGLE_FONTS : SYSTEM_FONTS).map(
                 (font) => (
@@ -1834,13 +1834,13 @@ function BrandingTab({
             </select>
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-2">Body Font</label>
+            <label className="block text-sm text-content-secondary mb-2">Body Font</label>
             <select
               value={typography.body_font}
               onChange={(e) =>
                 setTypography((prev) => ({ ...prev, body_font: e.target.value }))
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary"
+              className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary"
             >
               {(typography.font_source === "google" ? GOOGLE_FONTS : SYSTEM_FONTS).map(
                 (font) => (
@@ -1855,9 +1855,9 @@ function BrandingTab({
       </div>
 
       {/* Live Preview */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700 mb-4">Preview</h3>
-        <div className="border border-gray-200 rounded-lg p-6 space-y-4">
+      <div className="bg-surface-card-solid p-4 rounded-lg border border-[var(--color-border)]">
+        <h3 className="text-sm font-medium text-content-secondary mb-4">Preview</h3>
+        <div className="border border-[var(--color-border)] rounded-lg p-6 space-y-4">
           <div
             className="p-4 rounded-lg"
             style={{
@@ -1900,7 +1900,7 @@ function BrandingTab({
       <div className="flex justify-end gap-3">
         <button
           onClick={handleReset}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5"
         >
           Reset
         </button>

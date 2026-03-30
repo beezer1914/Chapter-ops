@@ -22,6 +22,22 @@ ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp', 'ico'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 MAX_FAVICON_SIZE = 1 * 1024 * 1024  # 1MB for favicons
 
+# Magic byte signatures keyed by extension; each entry is a list of (offset, bytes) checks
+_IMAGE_MAGIC: dict[str, list[tuple[int, bytes]]] = {
+    'jpg':  [(0, b'\xff\xd8\xff')],
+    'jpeg': [(0, b'\xff\xd8\xff')],
+    'png':  [(0, b'\x89PNG\r\n\x1a\n')],
+    'webp': [(0, b'RIFF'), (8, b'WEBP')],
+    'ico':  [(0, b'\x00\x00\x01\x00')],
+}
+
+
+def _check_image_magic(data: bytes, ext: str) -> bool:
+    checks = _IMAGE_MAGIC.get(ext)
+    if not checks:
+        return False
+    return all(data[offset:offset + len(magic)] == magic for offset, magic in checks)
+
 
 def get_s3_client():
     """Create boto3 S3 client from config."""
@@ -58,6 +74,12 @@ def validate_image_file(file: FileStorage) -> Tuple[bool, Optional[str]]:
     if size > MAX_FILE_SIZE:
         return False, f"File too large. Maximum size: {MAX_FILE_SIZE / 1024 / 1024}MB"
 
+    # Validate magic bytes match declared extension
+    header = file.read(16)
+    file.seek(0)
+    if not _check_image_magic(header, ext):
+        return False, "File content does not match the declared image type."
+
     return True, None
 
 
@@ -84,6 +106,12 @@ def validate_favicon_file(file: FileStorage) -> Tuple[bool, Optional[str]]:
 
     if size > MAX_FAVICON_SIZE:
         return False, f"Favicon too large. Maximum size: {MAX_FAVICON_SIZE / 1024 / 1024}MB"
+
+    # Validate magic bytes match declared extension
+    header = file.read(16)
+    file.seek(0)
+    if not _check_image_magic(header, ext):
+        return False, "File content does not match the declared favicon type."
 
     return True, None
 
@@ -122,12 +150,19 @@ def upload_file(
         s3 = get_s3_client()
         bucket = current_app.config['S3_BUCKET_NAME']
 
+        # Derive ContentType from validated extension (never trust client-supplied value)
+        _ext_to_mime = {
+            'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+            'webp': 'image/webp', 'ico': 'image/x-icon',
+        }
+        content_type = _ext_to_mime.get(ext, 'application/octet-stream')
+
         # Upload to R2 (public access controlled at bucket level)
         s3.put_object(
             Bucket=bucket,
             Key=filename,
             Body=file.read(),
-            ContentType=file.content_type or f'image/{ext}'
+            ContentType=content_type,
         )
 
         # Generate public URL (using R2.dev public domain, not API endpoint)

@@ -1370,6 +1370,32 @@ export interface BulkRegionalInvoiceRequest {
   notes?: string;
 }
 
+// ============================================================================
+// Service Hours types
+// ============================================================================
+
+export interface MemberServiceHours {
+  user_id: string;
+  full_name: string;
+  profile_picture_url: string | null;
+  total_hours: number;
+  events_count: number;
+  events: {
+    id: string;
+    title: string;
+    date: string;
+    hours: number;
+    checked_in: boolean;
+  }[];
+}
+
+export interface ServiceHoursReport {
+  chapter_total_hours: number;
+  total_events: number;
+  members: MemberServiceHours[];
+  available_years: number[];
+}
+
 export interface InvoiceSummary {
   total_invoiced: string;
   total_count: number;

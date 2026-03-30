@@ -3,26 +3,57 @@
 @tailwind utilities;
 
 :root {
-  /* Brand colors - Default ChapterOps branding (Phi Beta Sigma colors: Royal Blue & Pure White) */
-  --color-primary-light: #e0f2fe;
-  /* Light Blue */
-  --color-primary-main: #0f52ba;
-  /* Royal Blue */
-  --color-primary-dark: #003380;
-  /* Deep Blue */
+  /*
+    THEMING SYSTEM
+    Organizations customize --color-primary-* to match their brand.
+    The dark surface palette adapts automatically.
+  */
 
-  --color-secondary-light: #f8fafc;
-  --color-secondary-main: #ffffff;
-  /* Pure White */
-  --color-secondary-dark: #e2e8f0;
+  /* Brand colors (org-customizable) */
+  --color-primary-light: #3b7ddb;
+  --color-primary-main: #0f52ba;   /* Royal Blue */
+  --color-primary-dark: #0a3d8a;
+  --color-primary-glow: rgba(15, 82, 186, 0.14);
 
-  --color-accent-light: #fef3c7;
-  --color-accent-main: #f59e0b;
+  /* Dark surface palette */
+  --color-bg-deep: #060b18;
+  --color-bg-primary: #0a1128;
+  --color-bg-card: rgba(12, 20, 45, 0.6);
+  --color-bg-card-solid: #0f1a3a;
+  --color-bg-card-hover: #132248;
+  --color-bg-sidebar: rgba(8, 14, 32, 0.75);
+  --color-bg-surface: #0d1630;
+  --color-bg-input: #0c1530;
+
+  /* Text hierarchy */
+  --color-text-primary: #f0f4fa;
+  --color-text-secondary: #94a3c0;
+  --color-text-muted: #5c6d8a;
+  --color-text-heading: #e4ecf7;
+
+  /* Borders */
+  --color-border: rgba(15, 82, 186, 0.1);
+  --color-border-brand: rgba(15, 82, 186, 0.22);
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+
+  /* Status colors */
+  --color-status-paid: #34d399;
+  --color-status-pending: #fbbf24;
+  --color-status-overdue: #f87171;
+
+  /* Accent (kept for backward compat) */
+  --color-accent-light: rgba(251, 191, 36, 0.1);
+  --color-accent-main: #fbbf24;
   --color-accent-dark: #d97706;
 
-  /* Typography - Distinctive fonts */
-  --font-heading: "Sora", system-ui, -apple-system, sans-serif;
-  --font-body: "DM Sans", system-ui, -apple-system, sans-serif;
+  /* Secondary (mapped to dark surfaces for compat) */
+  --color-secondary-light: var(--color-bg-surface);
+  --color-secondary-main: var(--color-bg-card-solid);
+  --color-secondary-dark: var(--color-border);
+
+  /* Typography */
+  --font-heading: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Outfit", system-ui, -apple-system, sans-serif;
 }
 
 html {
@@ -31,6 +62,8 @@ html {
 
 body {
   font-family: var(--font-body);
+  background: var(--color-bg-deep);
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -42,6 +75,20 @@ h4,
 h5,
 h6 {
   font-family: var(--font-heading);
+}
+
+/* ── Noise Texture Overlay ─────────────────────────────────── */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
 /* ── Background Patterns ─────────────────────────────────────── */
@@ -57,8 +104,8 @@ h6 {
 
 .bg-mesh-diagonal {
   background-image:
-    linear-gradient(45deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(-45deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(45deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -75,6 +122,45 @@ h6 {
   background-size: 256px 256px;
   pointer-events: none;
   z-index: 0;
+}
+
+/* ── Form Input Base Styles ─────────────────────────────────── */
+
+input,
+textarea,
+select {
+  background-color: var(--color-bg-input);
+  color: var(--color-text-primary);
+  caret-color: var(--color-primary-light);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Restore white toggle knobs */
+input[type="checkbox"],
+input[type="radio"] {
+  background-color: revert;
+  color: revert;
+}
+
+/* Fix browser autofill dark background on Webkit */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--color-text-primary);
+  -webkit-box-shadow: 0 0 0px 1000px var(--color-bg-input) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Select option dark background */
+option {
+  background-color: var(--color-bg-card-solid);
+  color: var(--color-text-primary);
 }
 
 /* ── Staggered Card Reveals ──────────────────────────────────── */
@@ -127,8 +213,8 @@ h6 {
 .card-lift:hover {
   transform: translateY(-3px);
   box-shadow:
-    0 16px 48px -12px rgba(0, 0, 0, 0.1),
-    0 4px 12px -2px rgba(0, 0, 0, 0.04);
+    0 16px 48px -12px rgba(0, 0, 0, 0.25),
+    0 4px 12px -2px rgba(0, 0, 0, 0.1);
 }
 
 .row-slide {
@@ -198,7 +284,7 @@ h6 {
   animation: pulseDot 2s ease-in-out infinite;
 }
 
-/* ── Base Animations (keep existing) ─────────────────────────── */
+/* ── Base Animations ─────────────────────────────────────────── */
 
 @keyframes fadeIn {
   0% { opacity: 0; }
@@ -208,4 +294,19 @@ h6 {
 @keyframes slideUp {
   0% { opacity: 0; transform: translateY(20px); }
   100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Dark Theme Utility Overrides ────────────────────────────── */
+
+/* Glass card utility for dark theme */
+.glass-card {
+  background: var(--color-bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+}
+
+.glass-card:hover {
+  border-color: var(--color-border-brand);
 }

@@ -82,14 +82,14 @@ export default function ImageUpload({
 
   return (
     <div className="space-y-4">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label className="block text-sm font-medium text-content-secondary">{label}</label>
 
       {preview && (
         <div className="relative inline-block">
           <img
             src={preview}
             alt="Preview"
-            className="h-32 w-32 rounded-lg object-cover border-2 border-gray-200"
+            className="h-32 w-32 rounded-lg object-cover border-2 border-[var(--color-border)]"
           />
           {onDelete && (
             <button
@@ -123,15 +123,15 @@ export default function ImageUpload({
           accept={acceptedFormats.map((f) => `.${f}`).join(",")}
           onChange={handleFileSelect}
           disabled={uploading}
-          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+          className="block w-full text-sm text-content-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brand-primary-main/20 file:text-brand-primary-light hover:file:bg-brand-primary-main/30 disabled:opacity-50"
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-content-muted">
           Accepted formats: {acceptedFormats.join(", ")} (max {maxSizeMB}MB)
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-900/20 border border-red-900/30 text-red-400 px-4 py-3 rounded">
           {error}
         </div>
       )}

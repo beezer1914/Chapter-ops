@@ -49,15 +49,15 @@ const ROLE_HIERARCHY: Record<MemberRole, number> = {
 
 const CATEGORIES: { value: KbCategory | "all"; label: string; color: string }[] = [
   { value: "all", label: "All", color: "" },
-  { value: "general", label: "General", color: "bg-gray-100 text-gray-700" },
-  { value: "policy", label: "Policy", color: "bg-purple-100 text-purple-700" },
-  { value: "procedure", label: "Procedure", color: "bg-blue-100 text-blue-700" },
-  { value: "faq", label: "FAQ", color: "bg-amber-100 text-amber-700" },
-  { value: "how_to", label: "How-To", color: "bg-emerald-100 text-emerald-700" },
+  { value: "general", label: "General", color: "bg-white/10 text-content-secondary" },
+  { value: "policy", label: "Policy", color: "bg-purple-900/30 text-purple-400" },
+  { value: "procedure", label: "Procedure", color: "bg-blue-900/30 text-blue-400" },
+  { value: "faq", label: "FAQ", color: "bg-amber-900/30 text-amber-400" },
+  { value: "how_to", label: "How-To", color: "bg-emerald-900/30 text-emerald-400" },
 ];
 
 function getCategoryColor(cat: KbCategory): string {
-  return CATEGORIES.find((c) => c.value === cat)?.color ?? "bg-gray-100 text-gray-700";
+  return CATEGORIES.find((c) => c.value === cat)?.color ?? "bg-white/10 text-content-secondary";
 }
 
 function formatDate(iso: string): string {
@@ -75,7 +75,7 @@ function EditorToolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
       title={title}
       onClick={onClick}
       className={`p-1.5 rounded transition-colors ${
-        active ? "bg-brand-primary-main text-white" : "text-gray-600 hover:bg-gray-100"
+        active ? "bg-brand-primary-main text-white" : "text-content-secondary hover:bg-white/10"
       }`}
     >
       {icon}
@@ -83,19 +83,19 @@ function EditorToolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
   );
 
   return (
-    <div className="flex flex-wrap gap-0.5 px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+    <div className="flex flex-wrap gap-0.5 px-3 py-2 border-b border-[var(--color-border)] bg-white/5 rounded-t-xl">
       {btn(editor.isActive("bold"), () => editor.chain().focus().toggleBold().run(), <Bold className="w-4 h-4" />, "Bold")}
       {btn(editor.isActive("italic"), () => editor.chain().focus().toggleItalic().run(), <Italic className="w-4 h-4" />, "Italic")}
       {btn(editor.isActive("underline"), () => editor.chain().focus().toggleUnderline().run(), <UnderlineIcon className="w-4 h-4" />, "Underline")}
       {btn(editor.isActive("code"), () => editor.chain().focus().toggleCode().run(), <Code className="w-4 h-4" />, "Inline code")}
-      <div className="w-px bg-gray-200 mx-1 self-stretch" />
+      <div className="w-px bg-white/10 mx-1 self-stretch" />
       {btn(editor.isActive("heading", { level: 2 }), () => editor.chain().focus().toggleHeading({ level: 2 }).run(), <Heading2 className="w-4 h-4" />, "Heading 2")}
       {btn(editor.isActive("heading", { level: 3 }), () => editor.chain().focus().toggleHeading({ level: 3 }).run(), <Heading3 className="w-4 h-4" />, "Heading 3")}
-      <div className="w-px bg-gray-200 mx-1 self-stretch" />
+      <div className="w-px bg-white/10 mx-1 self-stretch" />
       {btn(editor.isActive("bulletList"), () => editor.chain().focus().toggleBulletList().run(), <List className="w-4 h-4" />, "Bullet list")}
       {btn(editor.isActive("orderedList"), () => editor.chain().focus().toggleOrderedList().run(), <ListOrdered className="w-4 h-4" />, "Numbered list")}
       {btn(editor.isActive("blockquote"), () => editor.chain().focus().toggleBlockquote().run(), <span className="text-sm font-bold px-0.5">"</span>, "Blockquote")}
-      <div className="w-px bg-gray-200 mx-1 self-stretch" />
+      <div className="w-px bg-white/10 mx-1 self-stretch" />
       <button
         type="button"
         title="Insert link"
@@ -104,7 +104,7 @@ function EditorToolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
           if (url) editor.chain().focus().setLink({ href: url }).run();
         }}
         className={`p-1.5 rounded transition-colors ${
-          editor.isActive("link") ? "bg-brand-primary-main text-white" : "text-gray-600 hover:bg-gray-100"
+          editor.isActive("link") ? "bg-brand-primary-main text-white" : "text-content-secondary hover:bg-white/10"
         }`}
       >
         <LinkIcon className="w-4 h-4" />
@@ -113,7 +113,7 @@ function EditorToolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
         type="button"
         title="Horizontal rule"
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        className="p-1.5 rounded text-gray-600 hover:bg-gray-100 transition-colors"
+        className="p-1.5 rounded text-content-secondary hover:bg-white/10 transition-colors"
       >
         <Minus className="w-4 h-4" />
       </button>
@@ -177,28 +177,28 @@ function ArticleEditorModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl my-8">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-3xl my-8">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{isEdit ? "Edit Article" : "New Article"}</h2>
-            {isEdit && <p className="text-xs text-gray-400 mt-0.5">{article.article_number}</p>}
+            <h2 className="text-lg font-semibold text-content-primary">{isEdit ? "Edit Article" : "New Article"}</h2>
+            {isEdit && <p className="text-xs text-content-muted mt-0.5">{article.article_number}</p>}
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-            <X className="w-5 h-5 text-gray-500" />
+          <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
+            <X className="w-5 h-5 text-content-secondary" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2.5">{error}</div>
+            <div className="bg-red-900/20 border border-red-900/30 text-red-400 text-sm rounded-lg px-4 py-2.5">{error}</div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Title <span className="text-red-500">*</span></label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main"
               placeholder="Article title"
               required
             />
@@ -207,11 +207,11 @@ function ArticleEditorModal({
           <div className="grid grid-cols-2 gap-4">
             {!isEdit && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Scope</label>
+                <label className="block text-sm font-medium text-content-secondary mb-1">Scope</label>
                 <select
                   value={scope}
                   onChange={(e) => setScope(e.target.value as KbScope)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
                 >
                   <option value="organization">Organization-wide</option>
                   <option value="chapter">This Chapter</option>
@@ -219,11 +219,11 @@ function ArticleEditorModal({
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Category</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as KbCategory)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
+                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
               >
                 {CATEGORIES.filter((c) => c.value !== "all").map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -231,11 +231,11 @@ function ArticleEditorModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as KbStatus)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
+                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -245,11 +245,11 @@ function ArticleEditorModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tags <span className="text-gray-400">(comma-separated)</span></label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Tags <span className="text-content-muted">(comma-separated)</span></label>
             <input
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
               placeholder="dues, financial, onboarding"
             />
           </div>
@@ -260,27 +260,27 @@ function ArticleEditorModal({
               type="checkbox"
               checked={isFeatured}
               onChange={(e) => setIsFeatured(e.target.checked)}
-              className="rounded border-gray-300 text-brand-primary-main focus:ring-brand-primary-main"
+              className="rounded border-[var(--color-border-brand)] text-brand-primary-main focus:ring-brand-primary-main"
             />
-            <label htmlFor="featured" className="text-sm text-gray-700 cursor-pointer">
+            <label htmlFor="featured" className="text-sm text-content-secondary cursor-pointer">
               Featured article (pinned to top)
             </label>
           </div>
 
           {/* Rich text editor */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <label className="block text-sm font-medium text-content-secondary mb-1">Content</label>
+            <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
               <EditorToolbar editor={editor} />
               <EditorContent
                 editor={editor}
-                className="prose prose-sm max-w-none px-4 py-3 min-h-48 focus-within:outline-none text-gray-800"
+                className="prose prose-sm max-w-none px-4 py-3 min-h-48 focus-within:outline-none text-content-primary"
               />
             </div>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] text-content-secondary text-sm font-medium rounded-lg hover:bg-white/5 transition-colors">
               Cancel
             </button>
             <button
@@ -316,9 +316,9 @@ function ArticleReader({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex justify-end z-50">
-      <div className="bg-white w-full max-w-2xl h-full flex flex-col shadow-2xl overflow-hidden animate-slide-in-right">
+      <div className="bg-surface-card-solid w-full max-w-2xl h-full flex flex-col shadow-2xl overflow-hidden animate-slide-in-right">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex items-start justify-between shrink-0">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-start justify-between shrink-0">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="text-xs font-mono font-bold text-brand-primary-main bg-brand-primary-light/30 px-2 py-0.5 rounded">
@@ -328,22 +328,22 @@ function ArticleReader({
                 {CATEGORIES.find((c) => c.value === article.category)?.label}
               </span>
               {article.scope === "organization" ? (
-                <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-xs font-medium text-indigo-400 bg-indigo-900/20 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Building2 className="w-3 h-3" /> Org-wide
                 </span>
               ) : (
-                <span className="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-xs font-medium text-teal-400 bg-teal-900/20 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Home className="w-3 h-3" /> Chapter
                 </span>
               )}
               {article.is_featured && (
-                <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-xs font-medium text-amber-400 bg-amber-900/20 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Star className="w-3 h-3" /> Featured
                 </span>
               )}
             </div>
-            <h2 className="text-lg font-bold text-gray-900 leading-snug">{article.title}</h2>
-            <p className="text-xs text-gray-400 mt-1">
+            <h2 className="text-lg font-bold text-content-primary leading-snug">{article.title}</h2>
+            <p className="text-xs text-content-muted mt-1">
               {article.author ? `${article.author.first_name} ${article.author.last_name}` : "Unknown"}
               {" · "}Updated {formatDate(article.updated_at)}
               {" · "}
@@ -353,7 +353,7 @@ function ArticleReader({
           <div className="flex items-center gap-1 ml-3 shrink-0">
             {isOfficer && (
               <>
-                <button onClick={onEdit} className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" title="Edit">
+                <button onClick={onEdit} className="p-2 text-content-muted hover:text-content-secondary hover:bg-white/10 rounded-lg transition-colors" title="Edit">
                   <Pencil className="w-4 h-4" />
                 </button>
                 {deleteConfirm ? (
@@ -361,18 +361,18 @@ function ArticleReader({
                     <button onClick={onDelete} className="p-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors" title="Confirm delete">
                       <Check className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setDeleteConfirm(false)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors">
+                    <button onClick={() => setDeleteConfirm(false)} className="p-2 text-content-muted hover:bg-white/10 rounded-lg transition-colors">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
-                  <button onClick={() => setDeleteConfirm(true)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                  <button onClick={() => setDeleteConfirm(true)} className="p-2 text-content-muted hover:text-red-500 hover:bg-red-900/20 rounded-lg transition-colors" title="Delete">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </>
             )}
-            <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors ml-1">
+            <button onClick={onClose} className="p-2 text-content-muted hover:bg-white/10 rounded-lg transition-colors ml-1">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -380,10 +380,10 @@ function ArticleReader({
 
         {/* Tags */}
         {article.tags.length > 0 && (
-          <div className="px-6 py-2 border-b border-gray-50 flex flex-wrap gap-1.5 shrink-0">
-            <Tag className="w-3.5 h-3.5 text-gray-400 mt-0.5" />
+          <div className="px-6 py-2 border-b border-white/5 flex flex-wrap gap-1.5 shrink-0">
+            <Tag className="w-3.5 h-3.5 text-content-muted mt-0.5" />
             {article.tags.map((t) => (
-              <span key={t} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{t}</span>
+              <span key={t} className="text-xs bg-white/10 text-content-secondary px-2 py-0.5 rounded-full">{t}</span>
             ))}
           </div>
         )}
@@ -465,13 +465,13 @@ export default function KnowledgeBase() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-heading font-extrabold text-gray-900">Knowledge Base</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{articles.length} article{articles.length !== 1 ? "s" : ""}</p>
+            <h1 className="text-2xl font-heading font-extrabold text-content-primary">Knowledge Base</h1>
+            <p className="text-sm text-content-secondary mt-0.5">{articles.length} article{articles.length !== 1 ? "s" : ""}</p>
           </div>
           {isOfficer && (
             <button
               onClick={() => { setEditingArticle(undefined); setShowEditor(true); }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary-main text-white text-sm font-semibold rounded-xl hover:bg-brand-primary-dark shadow-md transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary-main text-white text-sm font-semibold rounded-xl hover:bg-brand-primary-dark shadow-glass transition-colors"
             >
               <Plus className="w-4 h-4" />
               New Article
@@ -481,11 +481,11 @@ export default function KnowledgeBase() {
 
         {/* Search */}
         <div className="relative mb-5">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 border border-[var(--color-border)] rounded-xl text-sm bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main shadow-glass"
             placeholder="Search articles by title, content, or tags..."
           />
         </div>
@@ -493,7 +493,7 @@ export default function KnowledgeBase() {
         {/* Scope + Category filters */}
         <div className="flex flex-wrap gap-3 mb-6">
           {/* Scope tabs */}
-          <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
+          <div className="flex gap-1 bg-white/10 p-1 rounded-xl">
             {([
               { value: "all", label: "All" },
               { value: "organization", label: organization?.abbreviation ?? "Org", icon: Building2 },
@@ -503,7 +503,7 @@ export default function KnowledgeBase() {
                 key={s.value}
                 onClick={() => setActiveScope(s.value as KbScope | "all")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                  activeScope === s.value ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                  activeScope === s.value ? "bg-surface-card-solid text-content-primary shadow-glass" : "text-content-secondary hover:text-content-secondary"
                 }`}
               >
                 {"icon" in s && s.icon && <s.icon className="w-3.5 h-3.5" />}
@@ -521,7 +521,7 @@ export default function KnowledgeBase() {
                 className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all border ${
                   activeCategory === cat.value
                     ? "bg-brand-primary-main text-white border-brand-primary-main"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    : "bg-surface-card-solid text-content-secondary border-[var(--color-border)] hover:border-[var(--color-border-brand)]"
                 }`}
               >
                 {cat.label}
@@ -536,8 +536,8 @@ export default function KnowledgeBase() {
           </div>
         ) : articles.length === 0 ? (
           <div className="text-center py-24">
-            <BookOpen className="w-14 h-14 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">
+            <BookOpen className="w-14 h-14 text-content-muted mx-auto mb-4" />
+            <p className="text-content-secondary font-medium">
               {debouncedQuery ? `No results for "${debouncedQuery}"` : "No articles yet"}
             </p>
             {isOfficer && !debouncedQuery && (
@@ -554,7 +554,7 @@ export default function KnowledgeBase() {
             {/* Featured articles */}
             {featured.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <h3 className="text-xs font-semibold text-content-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
                   <Star className="w-3.5 h-3.5 text-amber-500" /> Featured
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -567,7 +567,7 @@ export default function KnowledgeBase() {
             {regular.length > 0 && (
               <div>
                 {featured.length > 0 && (
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Articles</h3>
+                  <h3 className="text-xs font-semibold text-content-muted uppercase tracking-wider mb-3">Articles</h3>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {regular.map((a) => <ArticleCard key={a.id} article={a} onClick={() => handleOpenArticle(a)} />)}
@@ -615,7 +615,7 @@ function ArticleCard({ article, onClick }: { article: KnowledgeArticle; onClick:
   return (
     <button
       onClick={onClick}
-      className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 text-left hover:shadow-md hover:border-brand-primary-main/20 transition-all w-full group"
+      className="bg-surface-card-solid border border-[var(--color-border)] rounded-2xl shadow-glass p-5 text-left hover:shadow-glass hover:border-brand-primary-main/20 transition-all w-full group"
     >
       {/* Number + badges */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -632,12 +632,12 @@ function ArticleCard({ article, onClick }: { article: KnowledgeArticle; onClick:
         )}
         {article.is_featured && <Star className="w-3.5 h-3.5 text-amber-400" />}
         {article.status === "draft" && (
-          <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Draft</span>
+          <span className="text-xs font-medium text-content-muted bg-white/10 px-2 py-0.5 rounded-full">Draft</span>
         )}
       </div>
 
       {/* Title */}
-      <h3 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 group-hover:text-brand-primary-main transition-colors mb-2">
+      <h3 className="text-sm font-semibold text-content-primary leading-snug line-clamp-2 group-hover:text-brand-primary-main transition-colors mb-2">
         {article.title}
       </h3>
 
@@ -645,14 +645,14 @@ function ArticleCard({ article, onClick }: { article: KnowledgeArticle; onClick:
       {article.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {article.tags.slice(0, 3).map((t) => (
-            <span key={t} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{t}</span>
+            <span key={t} className="text-xs bg-white/10 text-content-secondary px-1.5 py-0.5 rounded">{t}</span>
           ))}
-          {article.tags.length > 3 && <span className="text-xs text-gray-400">+{article.tags.length - 3}</span>}
+          {article.tags.length > 3 && <span className="text-xs text-content-muted">+{article.tags.length - 3}</span>}
         </div>
       )}
 
       {/* Meta */}
-      <div className="flex items-center gap-3 text-xs text-gray-400 mt-auto">
+      <div className="flex items-center gap-3 text-xs text-content-muted mt-auto">
         <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatDate(article.updated_at)}</span>
         <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{article.view_count}</span>
       </div>

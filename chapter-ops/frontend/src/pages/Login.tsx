@@ -29,7 +29,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex font-body bg-[#f8f9fb]">
+    <div className="min-h-screen flex font-body bg-[var(--color-bg-page)]">
       {/* Left Pane — Immersive brand panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-brand-primary-dark relative overflow-hidden items-center justify-center">
         {/* Base gradient */}
@@ -67,31 +67,31 @@ export default function Login() {
       {/* Right Pane — Form */}
       <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 relative">
         {/* Soft radial gradient background */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-brand-primary-light/30 via-[#f8f9fb] to-[#f8f9fb]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-brand-primary-light/30 via-[var(--color-bg-page)] to-[var(--color-bg-page)]" />
 
         <div className="relative z-10 mx-auto w-full max-w-sm lg:max-w-md anim-card-reveal" style={{ animationDelay: "200ms" }}>
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-heading font-bold text-gray-900">
+            <h1 className="text-3xl font-heading font-bold text-content-primary">
               Chapter<span className="text-brand-primary-main">Ops</span>
             </h1>
           </div>
 
-          <div className="bg-white py-10 px-8 lg:px-12 shadow-xl shadow-gray-200/50 rounded-2xl">
+          <div className="bg-surface-card-solid py-10 px-8 lg:px-12 shadow-xl shadow-black/20 rounded-2xl">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-heading font-bold text-gray-900 mb-1">Welcome back</h2>
-              <p className="text-sm text-gray-400">Sign in to your workspace</p>
+              <h2 className="text-2xl font-heading font-bold text-content-primary mb-1">Welcome back</h2>
+              <p className="text-sm text-content-muted">Sign in to your workspace</p>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg text-sm font-medium anim-card-reveal">
+              <div className="mb-6 p-4 bg-red-900/30 border-l-4 border-red-500 text-red-400 rounded-lg text-sm font-medium anim-card-reveal">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="anim-card-reveal" style={{ animationDelay: "300ms" }}>
-                <label htmlFor="email" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                <label htmlFor="email" className="block text-xs font-semibold text-content-secondary uppercase tracking-wider mb-1.5">
                   Email
                 </label>
                 <input
@@ -100,13 +100,13 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-3 bg-gray-50/80 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-brand-primary-main focus:ring-2 focus:ring-brand-primary-light/50 transition-all duration-200 outline-none"
+                  className="block w-full rounded-xl border border-[var(--color-border)] px-4 py-3 bg-[var(--color-bg-input)] text-content-primary placeholder-content-muted focus:bg-[var(--color-bg-input)] focus:border-brand-primary-main focus:ring-2 focus:ring-brand-primary-light/50 transition-all duration-200 outline-none"
                   placeholder="name@example.com"
                 />
               </div>
 
               <div className="anim-card-reveal" style={{ animationDelay: "380ms" }}>
-                <label htmlFor="password" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                <label htmlFor="password" className="block text-xs font-semibold text-content-secondary uppercase tracking-wider mb-1.5">
                   Password
                 </label>
                 <input
@@ -115,7 +115,7 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-xl border border-gray-200 px-4 py-3 bg-gray-50/80 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-brand-primary-main focus:ring-2 focus:ring-brand-primary-light/50 transition-all duration-200 outline-none"
+                  className="block w-full rounded-xl border border-[var(--color-border)] px-4 py-3 bg-[var(--color-bg-input)] text-content-primary placeholder-content-muted focus:bg-[var(--color-bg-input)] focus:border-brand-primary-main focus:ring-2 focus:ring-brand-primary-light/50 transition-all duration-200 outline-none"
                   placeholder="Enter your password"
                 />
               </div>
@@ -139,7 +139,7 @@ export default function Login() {
             </form>
 
             <div className="mt-8 text-center anim-card-reveal" style={{ animationDelay: "540ms" }}>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-content-muted">
                 Don't have an account?{" "}
                 <Link to="/register" className="font-semibold text-brand-primary-main hover:text-brand-primary-dark transition-colors">
                   Create one

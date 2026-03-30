@@ -4,6 +4,8 @@ Communications Hub routes.
 Announcements (all members read, secretary+ write) and email blasts (secretary+).
 """
 
+import html
+import re
 from datetime import datetime, timezone
 
 from flask import Blueprint, g, jsonify, request
@@ -19,6 +21,13 @@ from app.utils.email import send_email
 comms_bp = Blueprint("comms", __name__, url_prefix="/api/comms")
 
 OFFICER_ROLES = {"secretary", "treasurer", "vice_president", "president", "admin"}
+
+_HEADER_CONTROL_RE = re.compile(r'[\r\n\x00]')
+
+
+def _sanitize_header(value: str) -> str:
+    """Strip newline and null characters to prevent email header injection."""
+    return _HEADER_CONTROL_RE.sub('', value)
 
 
 # ── Announcements ─────────────────────────────────────────────────────────────
@@ -188,20 +197,21 @@ def send_email_blast():
     if not recipients:
         return jsonify({"error": "No recipients found for this audience"}), 400
 
-    chapter_name = g.current_chapter.name
-    sender_name = f"{current_user.first_name} {current_user.last_name}"
+    chapter_name = _sanitize_header(g.current_chapter.name)
+    sender_name = _sanitize_header(f"{current_user.first_name} {current_user.last_name}")
+    subject = _sanitize_header(subject)
 
-    html = f"""
+    html_body = f"""
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;">
       <div style="background:#0f52ba; padding:24px 32px; border-radius:8px 8px 0 0;">
-        <h1 style="color:#ffffff; margin:0; font-size:22px;">{chapter_name}</h1>
+        <h1 style="color:#ffffff; margin:0; font-size:22px;">{html.escape(chapter_name)}</h1>
       </div>
       <div style="background:#ffffff; padding:32px; border:1px solid #e5e7eb; border-top:none; border-radius:0 0 8px 8px;">
-        <h2 style="margin-top:0; color:#111827;">{subject}</h2>
-        <div style="white-space:pre-wrap; line-height:1.6; color:#374151;">{body}</div>
+        <h2 style="margin-top:0; color:#111827;">{html.escape(subject)}</h2>
+        <div style="white-space:pre-wrap; line-height:1.6; color:#374151;">{html.escape(body)}</div>
         <hr style="margin:32px 0; border:none; border-top:1px solid #e5e7eb;" />
         <p style="font-size:12px; color:#9ca3af; margin:0;">
-          Sent by {sender_name} on behalf of {chapter_name} via ChapterOps.
+          Sent by {html.escape(sender_name)} on behalf of {html.escape(chapter_name)} via ChapterOps.
         </p>
       </div>
     </div>
@@ -210,7 +220,7 @@ def send_email_blast():
     sent = 0
     failed = 0
     for user in recipients:
-        ok = send_email(to=user.email, subject=f"[{chapter_name}] {subject}", html=html)
+        ok = send_email(to=user.email, subject=f"[{chapter_name}] {subject}", html=html_body)
         if ok:
             sent += 1
         else:

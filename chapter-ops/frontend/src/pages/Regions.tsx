@@ -41,12 +41,12 @@ const REGION_ROLE_LABELS: Record<RegionRole, string> = {
 };
 
 const REGION_ROLE_COLORS: Record<RegionRole, string> = {
-  regional_director: "bg-amber-100 text-amber-700",
-  regional_1st_vice: "bg-orange-100 text-orange-700",
-  regional_2nd_vice: "bg-yellow-100 text-yellow-700",
-  regional_secretary: "bg-blue-100 text-blue-700",
-  regional_treasurer: "bg-green-100 text-green-700",
-  member: "bg-gray-100 text-gray-700",
+  regional_director: "bg-amber-900/30 text-amber-400",
+  regional_1st_vice: "bg-orange-900/30 text-orange-400",
+  regional_2nd_vice: "bg-yellow-900/30 text-yellow-400",
+  regional_secretary: "bg-blue-900/30 text-blue-400",
+  regional_treasurer: "bg-green-900/30 text-green-400",
+  member: "bg-gray-800/50 text-gray-400",
 };
 
 export default function Regions() {
@@ -89,8 +89,8 @@ export default function Regions() {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Regions</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-content-primary">Regions</h1>
+          <p className="text-sm text-content-secondary mt-1">
             {isOrgAdmin
               ? "Manage regions, chapters, and regional officers."
               : "Browse your organization's regions and search across chapters."}
@@ -98,7 +98,7 @@ export default function Regions() {
         </div>
 
         {/* Tab bar */}
-        <div className="flex gap-1 border-b border-gray-200">
+        <div className="flex gap-1 border-b border-[var(--color-border)]">
           {(["regions", "directory"] as const).map((tab) => (
             <button
               key={tab}
@@ -106,7 +106,7 @@ export default function Regions() {
               className={`px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${
                 activeTab === tab
                   ? "border-brand-primary text-brand-primary-dark"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  : "border-transparent text-content-secondary hover:text-content-secondary"
               }`}
             >
               {tab === "directory" ? "Directory" : "Regions"}
@@ -115,9 +115,9 @@ export default function Regions() {
         </div>
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm flex justify-between">
+          <div className="p-3 bg-red-900/20 border border-red-900/30 text-red-400 rounded-md text-sm flex justify-between">
             {error}
-            <button onClick={clearError} className="text-red-500 hover:text-red-700 font-medium">
+            <button onClick={clearError} className="text-red-400 hover:text-red-300 font-medium">
               Dismiss
             </button>
           </div>
@@ -126,10 +126,10 @@ export default function Regions() {
         {activeTab === "directory" ? (
           <DirectoryView />
         ) : loading ? (
-          <p className="text-gray-500 text-sm py-8 text-center">Loading regions...</p>
+          <p className="text-content-secondary text-sm py-8 text-center">Loading regions...</p>
         ) : regions.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-500">No regions found for your organization.</p>
+          <div className="bg-surface-card-solid rounded-lg shadow p-8 text-center">
+            <p className="text-content-secondary">No regions found for your organization.</p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -160,16 +160,16 @@ function RegionCard({
     <button
       type="button"
       onClick={onClick}
-      className="bg-white rounded-lg shadow p-5 text-left hover:shadow-md hover:border-brand-primary border border-gray-200 transition w-full"
+      className="bg-surface-card-solid rounded-lg shadow p-5 text-left hover:shadow-glass hover:border-brand-primary border border-[var(--color-border)] transition w-full"
     >
-      <h3 className="font-semibold text-gray-900 text-lg">{region.name}</h3>
+      <h3 className="font-semibold text-content-primary text-lg">{region.name}</h3>
       {region.abbreviation && (
-        <p className="text-sm text-gray-500">{region.abbreviation}</p>
+        <p className="text-sm text-content-secondary">{region.abbreviation}</p>
       )}
       {region.description && (
-        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{region.description}</p>
+        <p className="text-sm text-content-secondary mt-1 line-clamp-2">{region.description}</p>
       )}
-      <div className="mt-3 flex gap-4 text-sm text-gray-600">
+      <div className="mt-3 flex gap-4 text-sm text-content-secondary">
         <span>{region.chapter_count} chapter{region.chapter_count !== 1 ? "s" : ""}</span>
         <span>{region.member_count} officer{region.member_count !== 1 ? "s" : ""}</span>
       </div>
@@ -210,28 +210,28 @@ function DirectoryView() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search chapters or members across your organization…"
-        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+        className="w-full border border-[var(--color-border-brand)] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
       />
 
-      {loading && <p className="text-sm text-gray-400 text-center py-4">Searching…</p>}
+      {loading && <p className="text-sm text-content-muted text-center py-4">Searching…</p>}
 
       {!loading && chapters.length === 0 && members.length === 0 && (
-        <p className="text-sm text-gray-500 text-center py-8">
+        <p className="text-sm text-content-secondary text-center py-8">
           {query ? "No results found." : "Start typing to search chapters and members."}
         </p>
       )}
 
       {chapters.length > 0 && (
         <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h3 className="text-xs font-semibold text-content-secondary uppercase tracking-wide mb-3">
             Chapters ({chapters.length})
           </h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {chapters.map((ch) => (
-              <div key={ch.id} className="bg-white rounded-lg shadow border border-gray-200 p-4">
-                <p className="font-semibold text-gray-900">{ch.name}</p>
-                {ch.abbreviation && <p className="text-xs text-gray-500">{ch.abbreviation}</p>}
-                <p className="text-sm text-gray-500 mt-1">{ch.member_count} member{ch.member_count !== 1 ? "s" : ""}</p>
+              <div key={ch.id} className="bg-surface-card-solid rounded-lg shadow border border-[var(--color-border)] p-4">
+                <p className="font-semibold text-content-primary">{ch.name}</p>
+                {ch.abbreviation && <p className="text-xs text-content-secondary">{ch.abbreviation}</p>}
+                <p className="text-sm text-content-secondary mt-1">{ch.member_count} member{ch.member_count !== 1 ? "s" : ""}</p>
               </div>
             ))}
           </div>
@@ -240,15 +240,15 @@ function DirectoryView() {
 
       {members.length > 0 && (
         <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h3 className="text-xs font-semibold text-content-secondary uppercase tracking-wide mb-3">
             Members ({members.length})
           </h3>
-          <div className="bg-white rounded-lg shadow border border-gray-200 divide-y divide-gray-100">
+          <div className="bg-surface-card-solid rounded-lg shadow border border-[var(--color-border)] divide-y divide-white/5">
             {members.map((m) => (
               <button
                 key={`${m.id}-${m.chapter_id}`}
                 onClick={() => setSelectedMember({ userId: m.id, chapterId: m.chapter_id })}
-                className="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-white/5 transition-colors"
               >
                 {m.profile_picture_url ? (
                   <img src={m.profile_picture_url} alt={m.full_name} className="w-9 h-9 rounded-full object-cover shrink-0" />
@@ -259,9 +259,9 @@ function DirectoryView() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-brand-primary-dark hover:underline truncate">{m.full_name}</p>
-                  <p className="text-xs text-gray-500 truncate">{m.chapter_name} · <span className="capitalize">{m.role.replace("_", " ")}</span></p>
+                  <p className="text-xs text-content-secondary truncate">{m.chapter_name} · <span className="capitalize">{m.role.replace("_", " ")}</span></p>
                 </div>
-                <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <svg className="w-4 h-4 text-content-muted shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
               </button>
@@ -293,10 +293,10 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const FINANCIAL_STATUS_STYLES: Record<string, string> = {
-  financial: "bg-green-100 text-green-700",
-  not_financial: "bg-red-100 text-red-700",
-  neophyte: "bg-purple-100 text-purple-700",
-  exempt: "bg-gray-100 text-gray-600",
+  financial: "bg-green-900/30 text-green-400",
+  not_financial: "bg-red-900/30 text-red-400",
+  neophyte: "bg-purple-900/30 text-purple-400",
+  exempt: "bg-gray-800/50 text-gray-400",
 };
 
 function MemberDetailModal({
@@ -341,20 +341,20 @@ function MemberDetailModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-surface-card-solid rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
-          <div className="p-8 text-center text-gray-500 text-sm">Loading member details...</div>
+          <div className="p-8 text-center text-content-secondary text-sm">Loading member details...</div>
         ) : error ? (
           <div className="p-8 text-center">
-            <p className="text-red-600 text-sm">{error}</p>
-            <button onClick={onClose} className="mt-4 text-sm text-gray-500 hover:text-gray-700">Close</button>
+            <p className="text-red-400 text-sm">{error}</p>
+            <button onClick={onClose} className="mt-4 text-sm text-content-secondary hover:text-content-secondary">Close</button>
           </div>
         ) : member ? (
           <>
             {/* Header */}
-            <div className="p-6 pb-4 border-b border-gray-100">
+            <div className="p-6 pb-4 border-b border-[var(--color-border)]">
               <div className="flex items-center gap-4">
                 {member.profile_picture_url ? (
                   <img
@@ -368,19 +368,19 @@ function MemberDetailModal({
                   </div>
                 )}
                 <div className="min-w-0">
-                  <h3 className="text-lg font-bold text-gray-900 truncate">{member.full_name}</h3>
-                  <p className="text-sm text-gray-500 truncate">{member.chapter_name}</p>
+                  <h3 className="text-lg font-bold text-content-primary truncate">{member.full_name}</h3>
+                  <p className="text-sm text-content-secondary truncate">{member.chapter_name}</p>
                   {member.chapter_designation && (
-                    <p className="text-xs text-gray-400">{member.chapter_designation}</p>
+                    <p className="text-xs text-content-muted">{member.chapter_designation}</p>
                   )}
                 </div>
               </div>
 
               <div className="flex gap-2 mt-3">
-                <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 capitalize">
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900/30 text-blue-400 capitalize">
                   {ROLE_LABELS[member.role] || member.role.replace("_", " ")}
                 </span>
-                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${FINANCIAL_STATUS_STYLES[member.financial_status] || "bg-gray-100 text-gray-600"}`}>
+                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${FINANCIAL_STATUS_STYLES[member.financial_status] || "bg-gray-800/50 text-gray-400"}`}>
                   {member.financial_status.replace("_", " ")}
                 </span>
               </div>
@@ -408,8 +408,8 @@ function MemberDetailModal({
 
               {/* Custom fields */}
               {Object.keys(member.custom_fields).length > 0 && (
-                <div className="pt-3 border-t border-gray-100">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Additional Info</h4>
+                <div className="pt-3 border-t border-[var(--color-border)]">
+                  <h4 className="text-xs font-semibold text-content-secondary uppercase tracking-wide mb-2">Additional Info</h4>
                   {Object.entries(member.custom_fields).map(([key, value]) => {
                     const def = member.custom_field_definitions.find((d) => d.key === key);
                     const label = def?.label || key.replace(/_/g, " ");
@@ -423,7 +423,7 @@ function MemberDetailModal({
             <div className="px-6 pb-6">
               <button
                 onClick={onClose}
-                className="w-full px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="w-full px-4 py-2 text-sm text-content-secondary border border-[var(--color-border-brand)] rounded-md hover:bg-white/5"
               >
                 Close
               </button>
@@ -439,8 +439,8 @@ function DetailRow({ label, value }: { label: string; value: string | null | und
   if (!value) return null;
   return (
     <div>
-      <dt className="text-xs text-gray-500 capitalize">{label}</dt>
-      <dd className="text-sm text-gray-900 mt-0.5">{value}</dd>
+      <dt className="text-xs text-content-secondary capitalize">{label}</dt>
+      <dd className="text-sm text-content-primary mt-0.5">{value}</dd>
     </div>
   );
 }
@@ -519,11 +519,11 @@ function RegionDetailView({
 // ── Regional Invoices Section ───────────────────────────────────────────
 
 const INV_STATUS: Record<string, { label: string; cls: string }> = {
-  draft: { label: "Draft", cls: "bg-gray-100 text-gray-700" },
-  sent: { label: "Sent", cls: "bg-blue-100 text-blue-700" },
-  paid: { label: "Paid", cls: "bg-emerald-100 text-emerald-700" },
-  overdue: { label: "Overdue", cls: "bg-red-100 text-red-700" },
-  cancelled: { label: "Cancelled", cls: "bg-gray-100 text-gray-500" },
+  draft: { label: "Draft", cls: "bg-gray-800/50 text-gray-400" },
+  sent: { label: "Sent", cls: "bg-blue-900/30 text-blue-400" },
+  paid: { label: "Paid", cls: "bg-emerald-900/30 text-emerald-400" },
+  overdue: { label: "Overdue", cls: "bg-red-900/30 text-red-400" },
+  cancelled: { label: "Cancelled", cls: "bg-gray-800/50 text-gray-400" },
 };
 
 function RegionalInvoicesSection({
@@ -631,9 +631,9 @@ function RegionalInvoicesSection({
     iso ? new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "";
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-surface-card-solid rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Head Tax & Regional Invoices</h2>
+        <h2 className="text-xl font-bold text-content-primary">Head Tax & Regional Invoices</h2>
         {canManage && (
           <div className="flex gap-2">
             <button
@@ -644,7 +644,7 @@ function RegionalInvoicesSection({
             </button>
             <button
               onClick={() => setShowForm(showForm === "bulk" ? null : "bulk")}
-              className="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg font-medium hover:bg-gray-50 transition"
+              className="text-sm bg-surface-card-solid border border-[var(--color-border-brand)] text-content-secondary px-3 py-1.5 rounded-lg font-medium hover:bg-white/5 transition"
             >
               Invoice All Chapters
             </button>
@@ -653,21 +653,21 @@ function RegionalInvoicesSection({
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+        <div className="mb-4 p-3 bg-red-900/20 border border-red-900/30 text-red-400 rounded-md text-sm">
           {error}
-          <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
+          <button onClick={() => setError(null)} className="ml-2 underline text-red-400">Dismiss</button>
         </div>
       )}
 
       {/* Single invoice form */}
       {showForm === "single" && canManage && (
-        <form onSubmit={handleCreateSingle} className="border border-gray-200 rounded-lg p-4 mb-4 space-y-3">
-          <h3 className="font-semibold text-gray-900 text-sm">Invoice a Chapter</h3>
+        <form onSubmit={handleCreateSingle} className="border border-[var(--color-border)] rounded-lg p-4 mb-4 space-y-3">
+          <h3 className="font-semibold text-content-primary text-sm">Invoice a Chapter</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Chapter</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">Chapter</label>
               <select value={chapterId} onChange={(e) => setChapterId(e.target.value)} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary">
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary">
                 <option value="">Select chapter...</option>
                 {chapters.map((ch) => (
                   <option key={ch.id} value={ch.id}>{ch.name} ({ch.designation}) — {ch.member_count} members</option>
@@ -675,7 +675,7 @@ function RegionalInvoicesSection({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Billing Method</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">Billing Method</label>
               <div className="flex gap-3 mt-1">
                 <label className="flex items-center gap-1.5 text-sm">
                   <input type="radio" checked={rateOrFlat === "rate"} onChange={() => setRateOrFlat("rate")} className="text-brand-primary" />
@@ -689,33 +689,33 @@ function RegionalInvoicesSection({
             </div>
             {rateOrFlat === "rate" ? (
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Rate per Member ($)</label>
+                <label className="block text-xs font-medium text-content-secondary mb-1">Rate per Member ($)</label>
                 <input type="number" step="0.01" min="0.01" value={rate} onChange={(e) => setRate(e.target.value)} required
                   placeholder="e.g., 10.00"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+                  className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
               </div>
             ) : (
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Amount ($)</label>
+                <label className="block text-xs font-medium text-content-secondary mb-1">Amount ($)</label>
                 <input type="number" step="0.01" min="0.01" value={flatAmount} onChange={(e) => setFlatAmount(e.target.value)} required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+                  className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
               </div>
             )}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Due Date</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">Due Date</label>
               <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">Description</label>
               <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} required
                 placeholder="e.g., Spring 2026 Head Tax"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Notes <span className="text-gray-400">(optional)</span></label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">Notes <span className="text-content-muted">(optional)</span></label>
               <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
             </div>
           </div>
           <div className="flex gap-2 pt-1">
@@ -723,33 +723,33 @@ function RegionalInvoicesSection({
               className="bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-primary-dark transition disabled:opacity-50">
               {submitting ? "Creating..." : "Create Invoice"}
             </button>
-            <button type="button" onClick={() => setShowForm(null)} className="text-gray-500 text-sm font-medium px-3 py-2">Cancel</button>
+            <button type="button" onClick={() => setShowForm(null)} className="text-content-secondary text-sm font-medium px-3 py-2">Cancel</button>
           </div>
         </form>
       )}
 
       {/* Bulk form */}
       {showForm === "bulk" && canManage && (
-        <form onSubmit={handleCreateBulk} className="border border-gray-200 rounded-lg p-4 mb-4 space-y-3">
-          <h3 className="font-semibold text-gray-900 text-sm">Bulk Head Tax — All Chapters</h3>
-          <p className="text-xs text-gray-500">Creates an invoice for every active chapter based on their current member count.</p>
+        <form onSubmit={handleCreateBulk} className="border border-[var(--color-border)] rounded-lg p-4 mb-4 space-y-3">
+          <h3 className="font-semibold text-content-primary text-sm">Bulk Head Tax — All Chapters</h3>
+          <p className="text-xs text-content-secondary">Creates an invoice for every active chapter based on their current member count.</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Rate per Member ($)</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">Rate per Member ($)</label>
               <input type="number" step="0.01" min="0.01" value={bulkRate} onChange={(e) => setBulkRate(e.target.value)} required
                 placeholder="e.g., 10.00"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Due Date</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">Due Date</label>
               <input type="date" value={bulkDueDate} onChange={(e) => setBulkDueDate(e.target.value)} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">Description</label>
               <input type="text" value={bulkDescription} onChange={(e) => setBulkDescription(e.target.value)} required
                 placeholder="e.g., Spring 2026 Head Tax"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary" />
             </div>
           </div>
           <div className="flex gap-2 pt-1">
@@ -757,47 +757,47 @@ function RegionalInvoicesSection({
               className="bg-brand-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-primary-dark transition disabled:opacity-50">
               {submitting ? "Creating..." : `Invoice ${chapters.length} Chapters`}
             </button>
-            <button type="button" onClick={() => setShowForm(null)} className="text-gray-500 text-sm font-medium px-3 py-2">Cancel</button>
+            <button type="button" onClick={() => setShowForm(null)} className="text-content-secondary text-sm font-medium px-3 py-2">Cancel</button>
           </div>
         </form>
       )}
 
       {/* Invoice list */}
       {loading ? (
-        <p className="text-gray-500 text-sm py-6 text-center">Loading invoices...</p>
+        <p className="text-content-secondary text-sm py-6 text-center">Loading invoices...</p>
       ) : invoices.length === 0 ? (
-        <p className="text-gray-400 text-sm py-6 text-center">No regional invoices yet.</p>
+        <p className="text-content-muted text-sm py-6 text-center">No regional invoices yet.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-white/5">
+            <thead className="bg-white/5">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Chapter</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Members</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                {canManage && <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>}
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">Invoice</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">Chapter</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">Members</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">Due</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">Status</th>
+                {canManage && <th className="px-4 py-3 text-right text-xs font-medium text-content-secondary uppercase">Actions</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-white/5">
               {invoices.map((inv) => {
                 const s = INV_STATUS[inv.status] ?? INV_STATUS.draft;
                 return (
-                  <tr key={inv.id} className="hover:bg-gray-50 transition">
+                  <tr key={inv.id} className="hover:bg-white/5 transition">
                     <td className="px-4 py-3">
-                      <p className="text-xs font-mono text-gray-400">{inv.invoice_number}</p>
-                      <p className="text-sm text-gray-900">{inv.description}</p>
+                      <p className="text-xs font-mono text-content-muted">{inv.invoice_number}</p>
+                      <p className="text-sm text-content-primary">{inv.description}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
+                    <td className="px-4 py-3 text-sm text-content-secondary">
                       {inv.billed_chapter ? `${inv.billed_chapter.name} (${inv.billed_chapter.designation})` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-content-secondary">
                       {inv.member_count != null ? `${inv.member_count} × ${fmt(inv.per_member_rate ?? "0")}` : "Flat"}
                     </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">{fmt(inv.amount)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{fmtDate(inv.due_date)}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-content-primary">{fmt(inv.amount)}</td>
+                    <td className="px-4 py-3 text-sm text-content-secondary">{fmtDate(inv.due_date)}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${s.cls}`}>{s.label}</span>
                     </td>
@@ -806,15 +806,15 @@ function RegionalInvoicesSection({
                         <div className="flex items-center justify-end gap-2">
                           {inv.status === "draft" && (
                             <button onClick={() => handleStatusChange(inv.id, "sent")}
-                              className="text-xs text-blue-600 hover:text-blue-800 font-medium">Send</button>
+                              className="text-xs text-blue-400 hover:text-blue-300 font-medium">Send</button>
                           )}
                           {(inv.status === "sent" || inv.status === "overdue") && (
                             <button onClick={() => handleStatusChange(inv.id, "paid")}
-                              className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Mark Paid</button>
+                              className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">Mark Paid</button>
                           )}
                           {inv.status !== "paid" && inv.status !== "cancelled" && (
                             <button onClick={() => handleStatusChange(inv.id, "cancelled")}
-                              className="text-xs text-gray-400 hover:text-red-600 font-medium">Cancel</button>
+                              className="text-xs text-content-muted hover:text-red-400 font-medium">Cancel</button>
                           )}
                         </div>
                       </td>
@@ -873,9 +873,9 @@ function RegionInfoSection({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-surface-card-solid rounded-lg shadow p-6">
       <div className="flex justify-between items-start mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Region Details</h2>
+        <h2 className="text-xl font-bold text-content-primary">Region Details</h2>
         {canEdit && !editing && (
           <button
             onClick={() => setEditing(true)}
@@ -887,12 +887,12 @@ function RegionInfoSection({
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+        <div className="mb-4 p-3 bg-red-900/20 border border-red-900/30 text-red-400 rounded-md text-sm">
           {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md text-sm">
+        <div className="mb-4 p-3 bg-green-900/20 border border-green-900/30 text-green-400 rounded-md text-sm">
           Region updated successfully.
         </div>
       )}
@@ -900,36 +900,36 @@ function RegionInfoSection({
       {editing ? (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+              className="block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Abbreviation</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Abbreviation</label>
             <input
               type="text"
               value={abbreviation}
               onChange={(e) => setAbbreviation(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+              className="block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Description</label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+              className="block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
             />
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => setEditing(false)}
-              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 text-sm text-content-secondary border border-[var(--color-border-brand)] rounded-md hover:bg-white/5"
             >
               Cancel
             </button>
@@ -945,19 +945,19 @@ function RegionInfoSection({
       ) : (
         <div className="space-y-2">
           <div>
-            <span className="text-sm text-gray-500">Name:</span>
-            <span className="ml-2 text-gray-900 font-medium">{detail.region.name}</span>
+            <span className="text-sm text-content-secondary">Name:</span>
+            <span className="ml-2 text-content-primary font-medium">{detail.region.name}</span>
           </div>
           {detail.region.abbreviation && (
             <div>
-              <span className="text-sm text-gray-500">Abbreviation:</span>
-              <span className="ml-2 text-gray-900">{detail.region.abbreviation}</span>
+              <span className="text-sm text-content-secondary">Abbreviation:</span>
+              <span className="ml-2 text-content-primary">{detail.region.abbreviation}</span>
             </div>
           )}
           {detail.region.description && (
             <div>
-              <span className="text-sm text-gray-500">Description:</span>
-              <span className="ml-2 text-gray-900">{detail.region.description}</span>
+              <span className="text-sm text-content-secondary">Description:</span>
+              <span className="ml-2 text-content-primary">{detail.region.description}</span>
             </div>
           )}
         </div>
@@ -1001,61 +1001,61 @@ function ChaptersSection({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">
+    <div className="bg-surface-card-solid rounded-lg shadow p-6">
+      <h2 className="text-xl font-bold text-content-primary mb-4">
         Chapters ({chapters.length})
       </h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+        <div className="mb-4 p-3 bg-red-900/20 border border-red-900/30 text-red-400 rounded-md text-sm">
           {error}
         </div>
       )}
 
       {chapters.length === 0 ? (
-        <p className="text-gray-500 text-sm">No chapters in this region yet.</p>
+        <p className="text-content-secondary text-sm">No chapters in this region yet.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-white/5">
             <thead>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">
                   Name
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">
                   Type
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">
                   Location
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-right text-xs font-medium text-content-secondary uppercase">
                   Members
                 </th>
                 {isOrgAdmin && otherRegions.length > 0 && (
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-content-secondary uppercase">
                     Actions
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-white/5">
               {chapters.map((ch) => (
-                <tr key={ch.id} className="hover:bg-gray-50">
+                <tr key={ch.id} className="hover:bg-white/5">
                   <td className="px-4 py-3">
                     <div>
-                      <p className="font-medium text-gray-900">{ch.name}</p>
+                      <p className="font-medium text-content-primary">{ch.name}</p>
                       {ch.designation && (
-                        <p className="text-sm text-gray-500">{ch.designation}</p>
+                        <p className="text-sm text-content-secondary">{ch.designation}</p>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 capitalize">
+                  <td className="px-4 py-3 text-sm text-content-secondary capitalize">
                     {ch.chapter_type}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
+                  <td className="px-4 py-3 text-sm text-content-secondary">
                     {[ch.city, ch.state].filter(Boolean).join(", ") || "—"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">
+                  <td className="px-4 py-3 text-sm text-content-primary text-right font-medium">
                     {ch.member_count}
                   </td>
                   {isOrgAdmin && otherRegions.length > 0 && (
@@ -1068,7 +1068,7 @@ function ChaptersSection({
                             if (e.target.value) handleMove(ch.id, e.target.value);
                           }}
                           onBlur={() => setMovingChapterId(null)}
-                          className="text-sm border border-gray-300 rounded px-2 py-1"
+                          className="text-sm border border-[var(--color-border-brand)] rounded px-2 py-1"
                         >
                           <option value="" disabled>
                             Select region...
@@ -1146,9 +1146,9 @@ function RegionalOfficersSection({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-surface-card-solid rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-gray-900">
+        <h2 className="text-xl font-bold text-content-primary">
           Regional Officers ({detail.members.length})
         </h2>
         {isOrgAdmin && (
@@ -1162,41 +1162,41 @@ function RegionalOfficersSection({
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+        <div className="mb-4 p-3 bg-red-900/20 border border-red-900/30 text-red-400 rounded-md text-sm">
           {error}
         </div>
       )}
 
       {detail.members.length === 0 ? (
-        <p className="text-gray-500 text-sm">No regional officers assigned yet.</p>
+        <p className="text-content-secondary text-sm">No regional officers assigned yet.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-white/5">
             <thead>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">
                   Name
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">
                   Email
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-content-secondary uppercase">
                   Role
                 </th>
                 {isOrgAdmin && (
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-content-secondary uppercase">
                     Actions
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-white/5">
               {detail.members.map((m) => (
-                <tr key={m.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">
+                <tr key={m.id} className="hover:bg-white/5">
+                  <td className="px-4 py-3 font-medium text-content-primary">
                     {m.user.full_name}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
+                  <td className="px-4 py-3 text-sm text-content-secondary">
                     {m.user.email}
                   </td>
                   <td className="px-4 py-3">
@@ -1213,7 +1213,7 @@ function RegionalOfficersSection({
                         onChange={(e) =>
                           handleUpdateRole(m, e.target.value as RegionRole)
                         }
-                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                        className="text-sm border border-[var(--color-border-brand)] rounded px-2 py-1"
                       >
                         <option value="member">Member</option>
                         <option value="regional_director">Regional Director</option>
@@ -1224,7 +1224,7 @@ function RegionalOfficersSection({
                       </select>
                       <button
                         onClick={() => handleRemove(m)}
-                        className="text-sm text-red-600 hover:underline"
+                        className="text-sm text-red-400 hover:underline"
                       >
                         Remove
                       </button>
@@ -1306,13 +1306,13 @@ function AssignOfficerModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">
+      <div className="bg-surface-card-solid rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+        <h3 className="text-lg font-bold text-content-primary mb-4">
           Assign Regional Officer
         </h3>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-900/30 text-red-400 rounded-md text-sm">
             {error}
           </div>
         )}
@@ -1326,7 +1326,7 @@ function AssignOfficerModal({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                className="flex-1 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                className="flex-1 rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
               />
               <button
                 onClick={handleSearch}
@@ -1343,34 +1343,34 @@ function AssignOfficerModal({
                   <button
                     key={u.id}
                     onClick={() => setSelectedUser(u)}
-                    className="w-full text-left p-3 rounded-md hover:bg-brand-primary-light border border-gray-200 transition"
+                    className="w-full text-left p-3 rounded-md hover:bg-brand-primary-light border border-[var(--color-border)] transition"
                   >
-                    <p className="font-medium text-gray-900">{u.full_name}</p>
-                    <p className="text-sm text-gray-500">{u.email}</p>
+                    <p className="font-medium text-content-primary">{u.full_name}</p>
+                    <p className="text-sm text-content-secondary">{u.email}</p>
                   </button>
                 ))}
               </div>
             ) : query && !searching ? (
-              <p className="text-sm text-gray-500 text-center py-4">
+              <p className="text-sm text-content-secondary text-center py-4">
                 No eligible users found.
               </p>
             ) : null}
           </>
         ) : (
           <div className="space-y-4">
-            <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
-              <p className="font-medium text-gray-900">{selectedUser.full_name}</p>
-              <p className="text-sm text-gray-500">{selectedUser.email}</p>
+            <div className="p-3 bg-white/5 border border-[var(--color-border)] rounded-md">
+              <p className="font-medium text-content-primary">{selectedUser.full_name}</p>
+              <p className="text-sm text-content-secondary">{selectedUser.email}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-content-secondary mb-1">
                 Role
               </label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as RegionRole)}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                className="block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
               >
                 <option value="regional_director">Regional Director</option>
                 <option value="regional_1st_vice">Regional 1st Vice</option>
@@ -1386,7 +1386,7 @@ function AssignOfficerModal({
         <div className="flex gap-3 mt-6">
           <button
             onClick={selectedUser ? () => setSelectedUser(null) : onClose}
-            className="flex-1 px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            className="flex-1 px-4 py-2 text-sm text-content-secondary border border-[var(--color-border-brand)] rounded-md hover:bg-white/5"
           >
             {selectedUser ? "Back" : "Cancel"}
           </button>

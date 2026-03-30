@@ -148,30 +148,30 @@ export default function Donations() {
     return (
       <Layout>
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Donations</h2>
+          <h2 className="text-2xl font-bold text-content-primary mb-6">Donations</h2>
 
           {stripeToast === "success" && (
-            <div className="mb-4 p-3 bg-green-50 text-green-800 rounded-lg text-sm flex justify-between">
+            <div className="mb-4 p-3 bg-emerald-900/20 text-emerald-400 rounded-lg text-sm flex justify-between">
               Thank you for your donation! It is being processed.
               <button onClick={() => setStripeToast(null)} className="ml-2 font-medium underline">Dismiss</button>
             </div>
           )}
           {stripeToast === "cancelled" && (
-            <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-lg text-sm flex justify-between">
+            <div className="mb-4 p-3 bg-yellow-900/20 text-yellow-400 rounded-lg text-sm flex justify-between">
               Donation cancelled. You can try again whenever you're ready.
               <button onClick={() => setStripeToast(null)} className="ml-2 font-medium underline">Dismiss</button>
             </div>
           )}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-red-900/20 text-red-400 rounded-lg text-sm">
               {error}
               <button onClick={() => setError(null)} className="ml-2 font-medium underline">Dismiss</button>
             </div>
           )}
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-1">Make a Donation</h3>
-            <p className="text-sm text-gray-500 mb-4">Support your chapter by making a donation via Stripe's secure checkout.</p>
+          <div className="bg-surface-card-solid rounded-lg shadow p-6">
+            <h3 className="text-base font-semibold text-content-primary mb-1">Make a Donation</h3>
+            <p className="text-sm text-content-secondary mb-4">Support your chapter by making a donation via Stripe's secure checkout.</p>
             <button
               onClick={() => setShowStripeModal(true)}
               className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary-dark"
@@ -182,37 +182,37 @@ export default function Donations() {
 
           {showStripeModal && (
             <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Donate via Stripe</h3>
+              <div className="bg-surface-card-solid rounded-xl shadow-xl p-6 w-full max-w-sm">
+                <h3 className="text-lg font-semibold text-content-primary mb-4">Donate via Stripe</h3>
                 <form onSubmit={handleStripeCheckout} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+                    <label className="block text-sm font-medium text-content-secondary mb-1">Amount ($)</label>
                     <input
                       type="number" step="0.01" min="0.01"
                       value={stripeAmount}
                       onChange={(e) => setStripeAmount(e.target.value)}
                       required placeholder="0.00"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                      className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                    <label className="block text-sm font-medium text-content-secondary mb-1">Notes (optional)</label>
                     <input
                       type="text"
                       value={stripeNotes}
                       onChange={(e) => setStripeNotes(e.target.value)}
                       placeholder="Purpose or message..."
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                      className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                     />
                   </div>
-                  <p className="text-xs text-gray-400">You'll be redirected to Stripe's secure checkout page.</p>
+                  <p className="text-xs text-content-muted">You'll be redirected to Stripe's secure checkout page.</p>
                   <div className="flex gap-3">
                     <button type="submit" disabled={stripeSubmitting}
                       className="flex-1 px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary-dark disabled:opacity-50">
                       {stripeSubmitting ? "Redirecting..." : "Continue to Stripe"}
                     </button>
                     <button type="button" onClick={() => { setShowStripeModal(false); setStripeAmount(""); setStripeNotes(""); }}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                      className="px-4 py-2 text-sm font-medium text-content-secondary bg-white/10 rounded-lg hover:bg-white/10">
                       Cancel
                     </button>
                   </div>
@@ -229,7 +229,7 @@ export default function Donations() {
     <Layout>
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Donations</h2>
+          <h2 className="text-2xl font-bold text-content-primary">Donations</h2>
           <div className="flex gap-3">
             <button
               onClick={() => setShowStripeModal(true)}
@@ -240,7 +240,7 @@ export default function Donations() {
             {canManage && (
               <button
                 onClick={() => setShowForm(!showForm)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 text-sm font-medium text-content-secondary bg-white/10 rounded-lg hover:bg-white/10"
               >
                 {showForm ? "Cancel" : "Record Donation"}
               </button>
@@ -249,13 +249,13 @@ export default function Donations() {
         </div>
 
         {stripeToast === "success" && (
-          <div className="mb-4 p-3 bg-green-50 text-green-800 rounded-lg text-sm flex justify-between">
+          <div className="mb-4 p-3 bg-emerald-900/20 text-emerald-400 rounded-lg text-sm flex justify-between">
             Donation completed! Thank you — your donation will be recorded shortly.
             <button onClick={() => setStripeToast(null)} className="ml-2 font-medium underline">Dismiss</button>
           </div>
         )}
         {stripeToast === "cancelled" && (
-          <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-lg text-sm flex justify-between">
+          <div className="mb-4 p-3 bg-yellow-900/20 text-yellow-400 rounded-lg text-sm flex justify-between">
             Donation was cancelled. You can try again whenever you're ready.
             <button onClick={() => setStripeToast(null)} className="ml-2 font-medium underline">Dismiss</button>
           </div>
@@ -263,11 +263,11 @@ export default function Donations() {
 
         {showStripeModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Donate via Stripe</h3>
+            <div className="bg-surface-card-solid rounded-xl shadow-xl p-6 w-full max-w-sm">
+              <h3 className="text-lg font-semibold text-content-primary mb-4">Donate via Stripe</h3>
               <form onSubmit={handleStripeCheckout} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+                  <label className="block text-sm font-medium text-content-secondary mb-1">Amount ($)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -276,22 +276,22 @@ export default function Donations() {
                     onChange={(e) => setStripeAmount(e.target.value)}
                     required
                     placeholder="0.00"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notes <span className="text-gray-400">(optional)</span>
+                  <label className="block text-sm font-medium text-content-secondary mb-1">
+                    Notes <span className="text-content-muted">(optional)</span>
                   </label>
                   <input
                     type="text"
                     value={stripeNotes}
                     onChange={(e) => setStripeNotes(e.target.value)}
                     placeholder="e.g., In memory of..."
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   />
                 </div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-content-muted">
                   You'll be redirected to Stripe's secure checkout. Your name will be recorded automatically.
                 </p>
                 <div className="flex gap-3">
@@ -305,7 +305,7 @@ export default function Donations() {
                   <button
                     type="button"
                     onClick={() => { setShowStripeModal(false); setStripeAmount(""); setStripeNotes(""); }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    className="px-4 py-2 text-sm font-medium text-content-secondary bg-white/10 rounded-lg hover:bg-white/10"
                   >
                     Cancel
                   </button>
@@ -316,7 +316,7 @@ export default function Donations() {
         )}
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-red-900/20 text-red-400 rounded-lg text-sm">
             {error}
             <button onClick={() => setError(null)} className="ml-2 font-medium underline">Dismiss</button>
           </div>
@@ -324,9 +324,9 @@ export default function Donations() {
 
         {/* Summary */}
         {donations.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-4 mb-6">
-            <span className="text-sm text-gray-500">Total Donations: </span>
-            <span className="text-lg font-bold text-gray-900">
+          <div className="bg-surface-card-solid rounded-lg shadow p-4 mb-6">
+            <span className="text-sm text-content-secondary">Total Donations: </span>
+            <span className="text-lg font-bold text-content-primary">
               ${totalDonations.toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </span>
           </div>
@@ -334,10 +334,10 @@ export default function Donations() {
 
         {/* Form */}
         {showForm && (
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 mb-6 space-y-4">
+          <form onSubmit={handleSubmit} className="bg-surface-card-solid rounded-lg shadow p-6 mb-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-content-secondary mb-1">
                   Donor Name
                 </label>
                 <input
@@ -345,22 +345,22 @@ export default function Donations() {
                   value={donorName}
                   onChange={(e) => setDonorName(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Donor Email <span className="text-gray-400">(optional)</span>
+                <label className="block text-sm font-medium text-content-secondary mb-1">
+                  Donor Email <span className="text-content-muted">(optional)</span>
                 </label>
                 <input
                   type="email"
                   value={donorEmail}
                   onChange={(e) => setDonorEmail(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+                <label className="block text-sm font-medium text-content-secondary mb-1">Amount ($)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -368,15 +368,15 @@ export default function Donations() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
+                <label className="block text-sm font-medium text-content-secondary mb-1">Method</label>
                 <select
                   value={method}
                   onChange={(e) => setMethod(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   {Object.entries(METHOD_LABELS).map(([val, label]) => (
                     <option key={val} value={val}>{label}</option>
@@ -384,13 +384,13 @@ export default function Donations() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Link to Member <span className="text-gray-400">(optional)</span>
+                <label className="block text-sm font-medium text-content-secondary mb-1">
+                  Link to Member <span className="text-content-muted">(optional)</span>
                 </label>
                 <select
                   value={linkedUser}
                   onChange={(e) => setLinkedUser(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 >
                   <option value="">None (external donor)</option>
                   {members.map((m) => (
@@ -401,15 +401,15 @@ export default function Donations() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes <span className="text-gray-400">(optional)</span>
+                <label className="block text-sm font-medium text-content-secondary mb-1">
+                  Notes <span className="text-content-muted">(optional)</span>
                 </label>
                 <input
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g., Fundraiser event"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
             </div>
@@ -425,46 +425,46 @@ export default function Donations() {
 
         {/* Table */}
         {loading ? (
-          <div className="text-gray-500">Loading donations...</div>
+          <div className="text-content-secondary">Loading donations...</div>
         ) : donations.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-6 text-gray-500">
+          <div className="bg-surface-card-solid rounded-lg shadow p-6 text-content-secondary">
             No donations recorded yet.
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-surface-card-solid rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-white/5">
+              <thead className="bg-white/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Donor</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase">Donor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase">Method</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase">Notes</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-surface-card-solid divide-y divide-white/5">
                 {donations.map((d) => (
-                  <tr key={d.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                  <tr key={d.id} className="hover:bg-white/5">
+                    <td className="px-6 py-4 text-sm text-content-secondary">
                       {new Date(d.created_at).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 text-sm font-medium text-content-primary">
                       {d.donor_name}
                       {d.user && (
                         <span className="ml-1 text-xs text-brand-primary">(member)</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-content-secondary">
                       {d.donor_email ?? "—"}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 text-sm font-medium text-content-primary">
                       ${parseFloat(d.amount).toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-content-secondary">
                       {METHOD_LABELS[d.method] ?? d.method}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-400 truncate max-w-[200px]">
+                    <td className="px-6 py-4 text-sm text-content-muted truncate max-w-[200px]">
                       {d.notes ?? "—"}
                     </td>
                   </tr>

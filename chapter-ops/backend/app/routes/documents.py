@@ -26,6 +26,32 @@ from app.utils.decorators import chapter_required, role_required
 
 documents_bp = Blueprint("documents", __name__, url_prefix="/api/documents")
 
+# Magic byte signatures for document types; None means no reliable signature (skip check)
+_DOC_MAGIC: dict[str, list[tuple[int, bytes]] | None] = {
+    'pdf':  [(0, b'%PDF')],
+    'docx': [(0, b'PK\x03\x04')],
+    'xlsx': [(0, b'PK\x03\x04')],
+    'pptx': [(0, b'PK\x03\x04')],
+    'doc':  [(0, b'\xd0\xcf\x11\xe0')],
+    'xls':  [(0, b'\xd0\xcf\x11\xe0')],
+    'ppt':  [(0, b'\xd0\xcf\x11\xe0')],
+    'jpg':  [(0, b'\xff\xd8\xff')],
+    'jpeg': [(0, b'\xff\xd8\xff')],
+    'png':  [(0, b'\x89PNG\r\n\x1a\n')],
+    'gif':  [(0, b'GIF8')],
+    'webp': [(0, b'RIFF'), (8, b'WEBP')],
+    'txt':  None,
+    'csv':  None,
+}
+
+
+def _check_doc_magic(data: bytes, ext: str) -> bool:
+    checks = _DOC_MAGIC.get(ext)
+    if checks is None:
+        return True  # txt/csv: no reliable signature, extension check is sufficient
+    return all(data[offset:offset + len(magic)] == magic for offset, magic in checks)
+
+
 # Allowed document MIME types and extensions
 ALLOWED_DOC_EXTENSIONS = {
     "pdf": "application/pdf",
@@ -108,6 +134,12 @@ def upload_document():
     file.seek(0)
     if size > MAX_DOC_SIZE:
         return jsonify({"error": f"File too large. Maximum size is {MAX_DOC_SIZE // 1024 // 1024}MB."}), 400
+
+    # Validate magic bytes match declared extension
+    header = file.read(16)
+    file.seek(0)
+    if not _check_doc_magic(header, ext):
+        return jsonify({"error": "File content does not match the declared file type."}), 400
 
     # Build S3 key
     timestamp = int(time.time())

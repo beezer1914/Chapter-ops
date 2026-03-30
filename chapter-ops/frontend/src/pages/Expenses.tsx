@@ -40,10 +40,10 @@ const STATUS_TABS: { key: ExpenseStatus | "all"; label: string }[] = [
 ];
 
 const STATUS_COLORS: Record<ExpenseStatus, string> = {
-  pending: "bg-amber-100 text-amber-700 border-amber-200",
-  approved: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  paid: "bg-blue-100 text-blue-700 border-blue-200",
-  denied: "bg-red-100 text-red-700 border-red-200",
+  pending: "bg-amber-900/30 text-amber-400 border-amber-700",
+  approved: "bg-emerald-900/30 text-emerald-400 border-emerald-700",
+  paid: "bg-blue-900/30 text-blue-400 border-blue-700",
+  denied: "bg-red-900/30 text-red-400 border-red-700",
 };
 
 const STATUS_LABELS: Record<ExpenseStatus, string> = {
@@ -137,10 +137,10 @@ export default function Expenses() {
         {/* Header */}
         <div className="flex items-start justify-between mb-6 gap-4">
           <div>
-            <h2 className="text-3xl font-heading font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-3xl font-heading font-extrabold text-content-primary tracking-tight">
               Expenses
             </h2>
-            <p className="text-gray-500 mt-1">
+            <p className="text-content-secondary mt-1">
               {isOfficer ? "Manage reimbursement requests" : "Submit and track your reimbursement requests"}
             </p>
           </div>
@@ -150,13 +150,13 @@ export default function Expenses() {
                 <select
                   value={exportYear}
                   onChange={(e) => setExportYear(parseInt(e.target.value))}
-                  className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none"
+                  className="text-sm border border-[var(--color-border)] rounded-lg px-2 py-1.5 bg-surface-card-solid text-content-secondary focus:outline-none"
                 >
                   {exportYears.map((y) => <option key={y} value={y}>{y}</option>)}
                 </select>
                 <a
                   href={getExportUrl(exportYear)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border)] rounded-lg hover:bg-white/5 transition-colors"
                 >
                   <Download className="w-4 h-4" /> CSV
                 </a>
@@ -164,7 +164,7 @@ export default function Expenses() {
             )}
             <button
               onClick={() => setSubmitOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary-main text-white rounded-xl text-sm font-semibold hover:bg-brand-primary-dark transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary-main text-white rounded-xl text-sm font-semibold hover:bg-brand-primary-dark transition-colors shadow-glass"
             >
               <Plus className="w-4 h-4" /> Submit Request
             </button>
@@ -172,7 +172,7 @@ export default function Expenses() {
         </div>
 
         {error && (
-          <div className="mb-5 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg text-sm font-medium flex justify-between items-center">
+          <div className="mb-5 p-4 bg-red-900/20 border-l-4 border-red-500 text-red-400 rounded-lg text-sm font-medium flex justify-between items-center">
             <span className="flex items-center gap-2"><AlertCircle className="w-4 h-4" />{error}</span>
             <button onClick={() => setError(null)} className="text-lg font-bold px-2">&times;</button>
           </div>
@@ -196,8 +196,8 @@ export default function Expenses() {
               onClick={() => setStatusFilter(tab.key)}
               className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all border ${
                 statusFilter === tab.key
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                  ? "bg-white/10 text-white border-white/20"
+                  : "bg-surface-card-solid text-content-secondary border-[var(--color-border)] hover:bg-white/5"
               }`}
             >
               {tab.label}
@@ -211,12 +211,12 @@ export default function Expenses() {
             <div className="w-8 h-8 border-4 border-brand-primary-light border-t-brand-primary-main rounded-full animate-spin" />
           </div>
         ) : expenses.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/40 p-14 text-center">
-            <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Receipt className="w-7 h-7 text-gray-400" />
+          <div className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] p-14 text-center">
+            <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Receipt className="w-7 h-7 text-content-muted" />
             </div>
-            <h3 className="text-base font-semibold text-gray-800 mb-1">No expenses yet</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="text-base font-semibold text-content-primary mb-1">No expenses yet</h3>
+            <p className="text-sm text-content-secondary">
               {statusFilter === "all"
                 ? "Submit a reimbursement request to get started."
                 : `No ${statusFilter} expenses found.`}
@@ -225,46 +225,46 @@ export default function Expenses() {
         ) : (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block bg-white rounded-2xl shadow-glass border border-gray-100 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-100">
-                <thead className="bg-gray-50/80">
+            <div className="hidden md:block bg-surface-card-solid rounded-2xl shadow-glass border border-[var(--color-border)] overflow-hidden">
+              <table className="min-w-full divide-y divide-white/5">
+                <thead className="bg-white/5">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Expense</th>
-                    {isOfficer && <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted By</th>}
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Expense</th>
+                    {isOfficer && <th className="px-6 py-4 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Submitted By</th>}
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Status</th>
                     <th className="px-6 py-4" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-white/5">
                   {expenses.map((expense) => (
                     <tr key={expense.id}
-                      className="hover:bg-brand-primary-50/20 transition-colors cursor-pointer group"
+                      className="hover:bg-white/5 transition-colors cursor-pointer group"
                       onClick={() => setDetailExpense(expense)}
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div>
-                            <p className="text-sm font-semibold text-gray-900 group-hover:text-brand-primary-dark">
+                            <p className="text-sm font-semibold text-content-primary group-hover:text-brand-primary-dark">
                               {expense.title}
                             </p>
-                            <p className="text-xs text-gray-400">{expense.category_label}</p>
+                            <p className="text-xs text-content-muted">{expense.category_label}</p>
                           </div>
                           {expense.receipt_url && (
-                            <Paperclip className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                            <Paperclip className="w-3.5 h-3.5 text-content-muted shrink-0" />
                           )}
                         </div>
                       </td>
                       {isOfficer && (
-                        <td className="px-6 py-4 text-sm text-gray-600">
+                        <td className="px-6 py-4 text-sm text-content-secondary">
                           {expense.submitted_by?.full_name}
                         </td>
                       )}
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-content-secondary">
                         {new Date(expense.expense_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                       </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                      <td className="px-6 py-4 text-sm font-semibold text-content-primary">
                         {formatAmount(expense.amount)}
                       </td>
                       <td className="px-6 py-4">
@@ -285,26 +285,26 @@ export default function Expenses() {
             <div className="md:hidden space-y-3">
               {expenses.map((expense) => (
                 <div key={expense.id}
-                  className="bg-white rounded-2xl shadow-glass border border-gray-100 p-4 cursor-pointer"
+                  className="bg-surface-card-solid rounded-2xl shadow-glass border border-[var(--color-border)] p-4 cursor-pointer"
                   onClick={() => setDetailExpense(expense)}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">{expense.title}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{expense.category_label}</p>
+                      <p className="font-semibold text-content-primary text-sm">{expense.title}</p>
+                      <p className="text-xs text-content-muted mt-0.5">{expense.category_label}</p>
                     </div>
                     <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${STATUS_COLORS[expense.status]}`}>
                       {STATUS_LABELS[expense.status]}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-bold text-gray-900">{formatAmount(expense.amount)}</span>
-                    <span className="text-xs text-gray-400">
+                    <span className="font-bold text-content-primary">{formatAmount(expense.amount)}</span>
+                    <span className="text-xs text-content-muted">
                       {new Date(expense.expense_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                     </span>
                   </div>
                   {isOfficer && expense.submitted_by && (
-                    <p className="text-xs text-gray-500 mt-1">{expense.submitted_by.full_name}</p>
+                    <p className="text-xs text-content-secondary mt-1">{expense.submitted_by.full_name}</p>
                   )}
                 </div>
               ))}
@@ -346,9 +346,9 @@ function SummaryCard({ label, value, sub, accent }: {
   label: string; value: string; sub?: string; accent: "amber" | "emerald" | "blue";
 }) {
   const colors = {
-    amber: "bg-amber-50 border-amber-100 text-amber-700",
-    emerald: "bg-emerald-50 border-emerald-100 text-emerald-700",
-    blue: "bg-blue-50 border-blue-100 text-blue-700",
+    amber: "bg-amber-900/20 border-amber-700 text-amber-400",
+    emerald: "bg-emerald-900/20 border-emerald-700 text-emerald-400",
+    blue: "bg-blue-900/20 border-blue-700 text-blue-400",
   }[accent];
   return (
     <div className={`${colors} border rounded-xl p-4`}>
@@ -393,65 +393,65 @@ function SubmitExpenseModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 backdrop-blur-sm p-4">
       <form onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/60 flex justify-between items-center shrink-0">
-          <h3 className="text-lg font-heading font-semibold text-gray-900">Submit Expense Request</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+        className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="px-6 py-5 border-b border-[var(--color-border)] bg-white/5 flex justify-between items-center shrink-0">
+          <h3 className="text-lg font-heading font-semibold text-content-primary">Submit Expense Request</h3>
+          <button type="button" onClick={onClose} className="text-content-muted hover:text-content-secondary">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-4 overflow-y-auto flex-1">
-          {err && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
+          {err && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-lg">{err}</p>}
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Description *</label>
+            <label className="block text-xs font-semibold text-content-secondary mb-1">Description *</label>
             <input required value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               placeholder="e.g. Chapter retreat supplies"
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+              className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Amount *</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">Amount *</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-content-muted text-sm">$</span>
                 <input required type="number" min="0.01" step="0.01"
                   value={form.amount || ""}
                   onChange={(e) => setForm((f) => ({ ...f, amount: parseFloat(e.target.value) }))}
-                  className="w-full rounded-xl border border-gray-200 pl-7 pr-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                  className="w-full rounded-xl border border-[var(--color-border)] pl-7 pr-3 py-2 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Date *</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">Date *</label>
               <input required type="date" value={form.expense_date}
                 onChange={(e) => setForm((f) => ({ ...f, expense_date: e.target.value }))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Category *</label>
+            <label className="block text-xs font-semibold text-content-secondary mb-1">Category *</label>
             <select value={form.category}
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as ExpenseCategory }))}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
+              className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
               {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Notes</label>
+            <label className="block text-xs font-semibold text-content-secondary mb-1">Notes</label>
             <textarea rows={3} value={form.notes ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               placeholder="Additional context for the treasurer..."
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main resize-none" />
+              className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main resize-none" />
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 shrink-0">
+        <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex justify-end gap-3 shrink-0">
           <button type="button" onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">
+            className="px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border)] rounded-xl hover:bg-white/5">
             Cancel
           </button>
           <button type="submit" disabled={saving}
@@ -514,35 +514,35 @@ function ExpenseDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
 
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/60 flex items-start justify-between gap-3 shrink-0">
+        <div className="px-6 py-5 border-b border-[var(--color-border)] bg-white/5 flex items-start justify-between gap-3 shrink-0">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-heading font-bold text-gray-900">{expense.title}</h3>
+              <h3 className="text-lg font-heading font-bold text-content-primary">{expense.title}</h3>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_COLORS[expense.status]}`}>
                 {STATUS_LABELS[expense.status]}
               </span>
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-content-secondary mt-0.5">
               {expense.category_label} ·{" "}
               {new Date(expense.expense_date).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 shrink-0">
+          <button onClick={onClose} className="text-content-muted hover:text-content-secondary shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {err && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
+          {err && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-lg">{err}</p>}
 
           {/* Amount */}
-          <div className="text-center py-4 bg-gray-50 rounded-xl border border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Amount Requested</p>
-            <p className="text-3xl font-bold text-gray-900">{formatAmount(expense.amount)}</p>
+          <div className="text-center py-4 bg-white/5 rounded-xl border border-[var(--color-border)]">
+            <p className="text-xs font-semibold text-content-muted uppercase tracking-wide mb-1">Amount Requested</p>
+            <p className="text-3xl font-bold text-content-primary">{formatAmount(expense.amount)}</p>
           </div>
 
           {/* Info grid */}
@@ -560,24 +560,24 @@ function ExpenseDetailModal({
 
           {/* Notes */}
           {expense.notes && (
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-              <p className="text-xs font-semibold text-gray-400 mb-1">Notes</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{expense.notes}</p>
+            <div className="bg-white/5 rounded-xl p-3 border border-[var(--color-border)]">
+              <p className="text-xs font-semibold text-content-muted mb-1">Notes</p>
+              <p className="text-sm text-content-secondary whitespace-pre-wrap">{expense.notes}</p>
             </div>
           )}
 
           {/* Denial reason */}
           {expense.denial_reason && (
-            <div className="bg-red-50 rounded-xl p-3 border border-red-100">
-              <p className="text-xs font-semibold text-red-500 mb-1">Denial Reason</p>
-              <p className="text-sm text-red-800">{expense.denial_reason}</p>
+            <div className="bg-red-900/20 rounded-xl p-3 border border-red-900/30">
+              <p className="text-xs font-semibold text-red-400 mb-1">Denial Reason</p>
+              <p className="text-sm text-red-400">{expense.denial_reason}</p>
             </div>
           )}
 
           {/* Receipt */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-gray-700">Receipt</p>
+              <p className="text-sm font-semibold text-content-secondary">Receipt</p>
               {(isOwn || isOfficer) && expense.status === "pending" && (
                 <>
                   <button onClick={() => receiptRef.current?.click()}
@@ -593,20 +593,20 @@ function ExpenseDetailModal({
             </div>
             {expense.receipt_url ? (
               <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors group">
-                <FileText className="w-5 h-5 text-gray-400 shrink-0" />
+                className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-[var(--color-border)] hover:bg-white/10 transition-colors group">
+                <FileText className="w-5 h-5 text-content-muted shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-800 truncate group-hover:text-brand-primary-main">
+                  <p className="text-sm font-medium text-content-primary truncate group-hover:text-brand-primary-main">
                     {expense.receipt_name || "Receipt"}
                   </p>
                   {expense.receipt_size && (
-                    <p className="text-xs text-gray-400">{formatFileSize(expense.receipt_size)}</p>
+                    <p className="text-xs text-content-muted">{formatFileSize(expense.receipt_size)}</p>
                   )}
                 </div>
-                <Download className="w-4 h-4 text-gray-400 group-hover:text-brand-primary-main shrink-0" />
+                <Download className="w-4 h-4 text-content-muted group-hover:text-brand-primary-main shrink-0" />
               </a>
             ) : (
-              <p className="text-sm text-gray-400 italic">No receipt attached.</p>
+              <p className="text-sm text-content-muted italic">No receipt attached.</p>
             )}
             {uploading && <p className="text-xs text-brand-primary-main mt-1">Uploading...</p>}
           </div>
@@ -614,14 +614,14 @@ function ExpenseDetailModal({
           {/* Deny input */}
           {denyOpen && (
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-gray-600">Reason for denial (optional)</label>
+              <label className="block text-xs font-semibold text-content-secondary">Reason for denial (optional)</label>
               <textarea rows={2} value={denialReason}
                 onChange={(e) => setDenialReason(e.target.value)}
                 placeholder="Provide context to the member..."
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-400 resize-none" />
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-red-400 resize-none" />
               <div className="flex gap-2">
                 <button onClick={() => setDenyOpen(false)}
-                  className="px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+                  className="px-3 py-1.5 text-sm text-content-secondary bg-surface-card-solid border border-[var(--color-border)] rounded-lg hover:bg-white/5">Cancel</button>
                 <button onClick={() => doAction("deny", { denial_reason: denialReason || null })}
                   disabled={acting}
                   className="px-4 py-1.5 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50">
@@ -633,7 +633,7 @@ function ExpenseDetailModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex flex-wrap items-center justify-between gap-3 shrink-0">
           <div className="flex gap-2 flex-wrap">
             {/* Officer actions */}
             {isOfficer && expense.status === "pending" && !denyOpen && (
@@ -650,13 +650,13 @@ function ExpenseDetailModal({
             )}
             {isOfficer && expense.status === "approved" && (
               <button onClick={() => doAction("mark_paid")} disabled={acting}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50">
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-brand-primary-main rounded-xl hover:bg-brand-primary-dark disabled:opacity-50">
                 <Check className="w-4 h-4" /> Mark Paid
               </button>
             )}
             {isOfficer && (expense.status === "denied" || expense.status === "approved") && (
               <button onClick={() => doAction("reopen")} disabled={acting}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-content-secondary bg-surface-card-solid border border-[var(--color-border)] rounded-xl hover:bg-white/5">
                 <RotateCcw className="w-3.5 h-3.5" /> Reopen
               </button>
             )}
@@ -664,7 +664,7 @@ function ExpenseDetailModal({
           {/* Delete/cancel */}
           {(isOwn && expense.status === "pending") || isOfficer ? (
             <button onClick={onDeleted}
-              className="text-sm text-red-500 hover:text-red-700 font-medium">
+              className="text-sm text-red-400 hover:text-red-300 font-medium">
               {expense.status === "pending" ? "Cancel request" : "Delete"}
             </button>
           ) : null}
@@ -676,9 +676,9 @@ function ExpenseDetailModal({
 
 function InfoPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
-      <p className="text-sm font-medium text-gray-800 mt-0.5">{value}</p>
+    <div className="bg-white/5 rounded-xl px-3 py-2 border border-[var(--color-border)]">
+      <p className="text-[10px] font-semibold text-content-muted uppercase tracking-wide">{label}</p>
+      <p className="text-sm font-medium text-content-primary mt-0.5">{value}</p>
     </div>
   );
 }

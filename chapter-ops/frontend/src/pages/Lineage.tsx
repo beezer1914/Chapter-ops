@@ -41,14 +41,14 @@ const MILESTONE_TYPE_CONFIG: Record<
   MilestoneType,
   { label: string; icon: typeof Flag; color: string; bg: string }
 > = {
-  founding: { label: "Founding", icon: Star, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
-  charter: { label: "Charter Granted", icon: ScrollText, color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
-  recharter: { label: "Re-Charted", icon: RefreshCw, color: "text-teal-600", bg: "bg-teal-50 border-teal-200" },
-  suspended: { label: "Suspended", icon: AlertTriangle, color: "text-red-600", bg: "bg-red-50 border-red-200" },
-  reactivated: { label: "Reactivated", icon: Zap, color: "text-green-600", bg: "bg-green-50 border-green-200" },
-  award: { label: "Award", icon: Award, color: "text-purple-600", bg: "bg-purple-50 border-purple-200" },
-  achievement: { label: "Achievement", icon: Star, color: "text-indigo-600", bg: "bg-indigo-50 border-indigo-200" },
-  other: { label: "Other", icon: Flag, color: "text-gray-600", bg: "bg-gray-50 border-gray-200" },
+  founding: { label: "Founding", icon: Star, color: "text-amber-400", bg: "bg-amber-900/20 border-amber-200" },
+  charter: { label: "Charter Granted", icon: ScrollText, color: "text-blue-400", bg: "bg-blue-900/20 border-blue-200" },
+  recharter: { label: "Re-Charted", icon: RefreshCw, color: "text-teal-600", bg: "bg-teal-900/20 border-teal-200" },
+  suspended: { label: "Suspended", icon: AlertTriangle, color: "text-red-400", bg: "bg-red-900/20 border-red-200" },
+  reactivated: { label: "Reactivated", icon: Zap, color: "text-green-400", bg: "bg-green-900/20 border-green-200" },
+  award: { label: "Award", icon: Award, color: "text-purple-400", bg: "bg-purple-900/20 border-purple-200" },
+  achievement: { label: "Achievement", icon: Star, color: "text-indigo-400", bg: "bg-indigo-900/20 border-indigo-200" },
+  other: { label: "Other", icon: Flag, color: "text-content-secondary", bg: "bg-white/5 border-[var(--color-border)]" },
 };
 
 const MILESTONE_TYPES: MilestoneType[] = [
@@ -109,10 +109,10 @@ function TreeNode({
   const littles = getLittles(member, all);
 
   return (
-    <div className={depth > 0 ? "ml-6 mt-2 pl-4 border-l-2 border-gray-200" : ""}>
+    <div className={depth > 0 ? "ml-6 mt-2 pl-4 border-l-2 border-[var(--color-border)]" : ""}>
       <div className="flex items-center gap-2 group py-1.5">
         {littles.length > 0 ? (
-          <button onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-gray-600 shrink-0">
+          <button onClick={() => setExpanded(!expanded)} className="text-content-muted hover:text-content-secondary shrink-0">
             {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
           </button>
         ) : (
@@ -120,18 +120,18 @@ function TreeNode({
         )}
         <Avatar member={member} />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-gray-900 leading-tight truncate">{member.full_name}</p>
+          <p className="text-sm font-semibold text-content-primary leading-tight truncate">{member.full_name}</p>
           {member.line_name && (
             <p className="text-xs text-brand-primary font-medium truncate">"{member.line_name}"</p>
           )}
           {member.line_number && (
-            <p className="text-xs text-gray-400">#{member.line_number}</p>
+            <p className="text-xs text-content-muted">#{member.line_number}</p>
           )}
         </div>
         {canEdit && (
           <button
             onClick={() => onEditLineage(member)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-content-muted hover:text-content-secondary hover:bg-white/5"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
@@ -187,21 +187,21 @@ function EditLineageModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-          <h2 className="text-lg font-heading font-bold text-gray-900">Edit Lineage — {member.full_name}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[var(--color-border)]">
+          <h2 className="text-lg font-heading font-bold text-content-primary">Edit Lineage — {member.full_name}</h2>
+          <button onClick={onClose} className="text-content-muted hover:text-content-secondary p-1 rounded-lg hover:bg-white/5">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Big Brother / Big Sister</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Big Brother / Big Sister</label>
             <select
               value={bigId}
               onChange={(e) => setBigId(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-surface-input focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
             >
               <option value="">— None —</option>
               {otherMembers.map((m) => (
@@ -211,46 +211,46 @@ function EditLineageModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Line Season</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Line Season</label>
             <input
               type="text"
               value={lineSeason}
               onChange={(e) => setLineSeason(e.target.value)}
               placeholder="e.g. Spring 2024 Line"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-surface-input focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Line Number</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Line Number</label>
             <input
               type="number"
               min={1}
               value={lineNumber}
               onChange={(e) => setLineNumber(e.target.value)}
               placeholder="e.g. 3"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-surface-input focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Line Name / Alias</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Line Name / Alias</label>
             <input
               type="text"
               value={lineName}
               onChange={(e) => setLineName(e.target.value)}
               placeholder='e.g. "The Iron Fist"'
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-surface-input focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
 
-        <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
+        <div className="flex gap-3 px-6 py-4 border-t border-[var(--color-border)]">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex-1 px-4 py-2 border border-[var(--color-border)] rounded-xl text-sm font-medium text-content-secondary hover:bg-white/5"
           >
             Cancel
           </button>
@@ -302,44 +302,44 @@ function MilestoneModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-          <h2 className="text-lg font-heading font-bold text-gray-900">
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[var(--color-border)]">
+          <h2 className="text-lg font-heading font-bold text-content-primary">
             {milestone ? "Edit Milestone" : "Add Milestone"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+          <button onClick={onClose} className="text-content-muted hover:text-content-secondary p-1 rounded-lg hover:bg-white/5">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Title *</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Chapter Founded"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-surface-input focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Date *</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-surface-input focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Type</label>
             <select
               value={milestoneType}
               onChange={(e) => setMilestoneType(e.target.value as MilestoneType)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-surface-input focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main"
             >
               {MILESTONE_TYPES.map((t) => (
                 <option key={t} value={t}>{MILESTONE_TYPE_CONFIG[t].label}</option>
@@ -348,26 +348,26 @@ function MilestoneModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="Optional details about this milestone…"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main resize-none"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm bg-surface-input focus:ring-2 focus:ring-brand-primary-main/20 focus:border-brand-primary-main resize-none"
             />
           </div>
 
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="rounded" />
-            <span className="text-sm text-gray-700">Visible to all members</span>
+            <span className="text-sm text-content-secondary">Visible to all members</span>
           </label>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
         </div>
 
-        <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
-          <button onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <div className="flex gap-3 px-6 py-4 border-t border-[var(--color-border)]">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border border-[var(--color-border)] rounded-xl text-sm font-medium text-content-secondary hover:bg-white/5">
             Cancel
           </button>
           <button
@@ -467,8 +467,8 @@ export default function Lineage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-heading font-bold text-gray-900">Lineage & History</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Chapter milestones, line history, and big/little family tree</p>
+            <h1 className="text-2xl font-heading font-bold text-content-primary">Lineage & History</h1>
+            <p className="text-sm text-content-muted mt-0.5">Chapter milestones, line history, and big/little family tree</p>
           </div>
           {canEdit && tab === "history" && (
             <button
@@ -482,15 +482,15 @@ export default function Lineage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+        <div className="flex gap-1 bg-white/5 p-1 rounded-xl w-fit">
           {tabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 tab === key
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-surface-card-solid text-content-primary shadow-glass"
+                  : "text-content-muted hover:text-content-secondary"
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -504,24 +504,24 @@ export default function Lineage() {
             <div className="w-6 h-6 border-2 border-brand-primary-main border-t-transparent rounded-full animate-spin" />
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">{error}</div>
+          <div className="bg-red-900/20 border border-red-200 rounded-xl p-4 text-sm text-red-400">{error}</div>
         ) : (
           <>
             {/* ── Chapter History Tab ── */}
             {tab === "history" && (
               <div className="space-y-4">
                 {milestones.length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                    <BookOpen className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">No milestones yet</p>
+                  <div className="text-center py-16 bg-surface-card-solid rounded-2xl border border-[var(--color-border)]">
+                    <BookOpen className="w-10 h-10 text-content-muted mx-auto mb-3" />
+                    <p className="text-content-muted font-medium">No milestones yet</p>
                     {canEdit && (
-                      <p className="text-sm text-gray-400 mt-1">Add your chapter's founding date, charter events, awards, and more.</p>
+                      <p className="text-sm text-content-muted mt-1">Add your chapter's founding date, charter events, awards, and more.</p>
                     )}
                   </div>
                 ) : (
                   <div className="relative">
                     {/* Timeline line */}
-                    <div className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-gray-200" />
+                    <div className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-white/10" />
                     <div className="space-y-0">
                       {milestones.map((m, idx) => {
                         const config = MILESTONE_TYPE_CONFIG[m.milestone_type];
@@ -533,25 +533,25 @@ export default function Lineage() {
                               <Icon className={`w-5 h-5 ${config.color}`} />
                             </div>
                             {/* Card */}
-                            <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 group mt-1.5">
+                            <div className="flex-1 bg-surface-card-solid rounded-2xl border border-[var(--color-border)] p-4 group mt-1.5">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">{config.label}</p>
-                                  <h3 className="font-heading font-bold text-gray-900">{m.title}</h3>
-                                  <p className="text-sm text-gray-500 mt-0.5">{formatDate(m.date)}</p>
-                                  {m.description && <p className="text-sm text-gray-600 mt-2">{m.description}</p>}
+                                  <p className="text-xs font-semibold uppercase tracking-wider text-content-muted mb-0.5">{config.label}</p>
+                                  <h3 className="font-heading font-bold text-content-primary">{m.title}</h3>
+                                  <p className="text-sm text-content-muted mt-0.5">{formatDate(m.date)}</p>
+                                  {m.description && <p className="text-sm text-content-secondary mt-2">{m.description}</p>}
                                 </div>
                                 {canEdit && (
                                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                                     <button
                                       onClick={() => setEditingMilestone(m)}
-                                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                                      className="p-1.5 rounded-lg text-content-muted hover:text-content-secondary hover:bg-white/5"
                                     >
                                       <Pencil className="w-3.5 h-3.5" />
                                     </button>
                                     <button
                                       onClick={() => setConfirmDeleteMilestone(m)}
-                                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                      className="p-1.5 rounded-lg text-content-muted hover:text-red-400 hover:bg-red-900/20"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -572,27 +572,27 @@ export default function Lineage() {
             {tab === "lines" && (
               <div className="space-y-6">
                 {Object.keys(lines).length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                    <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">No line data yet</p>
+                  <div className="text-center py-16 bg-surface-card-solid rounded-2xl border border-[var(--color-border)]">
+                    <Users className="w-10 h-10 text-content-muted mx-auto mb-3" />
+                    <p className="text-content-muted font-medium">No line data yet</p>
                     {canEdit && (
-                      <p className="text-sm text-gray-400 mt-1">
+                      <p className="text-sm text-content-muted mt-1">
                         Edit member lineage info to assign line seasons, numbers, and names.
                       </p>
                     )}
                   </div>
                 ) : (
                   Object.entries(lines).map(([season, lineMembers]) => (
-                    <div key={season} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                      <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <h3 className="font-heading font-bold text-gray-900">{season}</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">{lineMembers.length} member{lineMembers.length !== 1 ? "s" : ""}</p>
+                    <div key={season} className="bg-surface-card-solid rounded-2xl border border-[var(--color-border)] overflow-hidden">
+                      <div className="px-5 py-4 border-b border-[var(--color-border)] bg-white/5">
+                        <h3 className="font-heading font-bold text-content-primary">{season}</h3>
+                        <p className="text-xs text-content-muted mt-0.5">{lineMembers.length} member{lineMembers.length !== 1 ? "s" : ""}</p>
                       </div>
-                      <div className="divide-y divide-gray-50">
+                      <div className="divide-y divide-white/5">
                         {lineMembers
                           .sort((a, b) => (a.line_number ?? 999) - (b.line_number ?? 999))
                           .map((m) => (
-                            <div key={m.user_id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50/50 group">
+                            <div key={m.user_id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/5 group">
                               {m.line_number ? (
                                 <div className="w-8 h-8 rounded-full bg-brand-primary-main/10 text-brand-primary-dark font-bold text-xs flex items-center justify-center shrink-0">
                                   {m.line_number}
@@ -601,13 +601,13 @@ export default function Lineage() {
                                 <Avatar member={m} />
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-gray-900">{m.full_name}</p>
+                                <p className="text-sm font-semibold text-content-primary">{m.full_name}</p>
                                 {m.line_name && <p className="text-xs text-brand-primary">"{m.line_name}"</p>}
                               </div>
                               {canEdit && (
                                 <button
                                   onClick={() => setEditingLineage(m)}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg text-content-muted hover:text-content-secondary hover:bg-white/5"
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
                                 </button>
@@ -621,11 +621,11 @@ export default function Lineage() {
 
                 {/* Members without line data */}
                 {canEdit && members.some((m) => !m.line_season) && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-                    <p className="text-sm font-medium text-amber-800">
+                  <div className="bg-amber-900/20 border border-amber-200 rounded-2xl p-4">
+                    <p className="text-sm font-medium text-amber-400">
                       {members.filter((m) => !m.line_season).length} member{members.filter((m) => !m.line_season).length !== 1 ? "s" : ""} have no line season assigned
                     </p>
-                    <p className="text-xs text-amber-600 mt-0.5">Use the Family Tree tab to assign line info to historical members.</p>
+                    <p className="text-xs text-amber-400 mt-0.5">Use the Family Tree tab to assign line info to historical members.</p>
                   </div>
                 )}
               </div>
@@ -635,21 +635,21 @@ export default function Lineage() {
             {tab === "tree" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-content-muted">
                     {members.length} total member{members.length !== 1 ? "s" : ""} · {treeRoots.length} root node{treeRoots.length !== 1 ? "s" : ""}
                   </p>
                   {canEdit && (
-                    <p className="text-xs text-gray-400">Hover a member to edit their lineage info</p>
+                    <p className="text-xs text-content-muted">Hover a member to edit their lineage info</p>
                   )}
                 </div>
 
                 {members.length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-                    <GitBranch className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">No members found</p>
+                  <div className="text-center py-16 bg-surface-card-solid rounded-2xl border border-[var(--color-border)]">
+                    <GitBranch className="w-10 h-10 text-content-muted mx-auto mb-3" />
+                    <p className="text-content-muted font-medium">No members found</p>
                   </div>
                 ) : (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                  <div className="bg-surface-card-solid rounded-2xl border border-[var(--color-border)] p-6">
                     {treeRoots.map((root) => (
                       <TreeNode
                         key={root.user_id}
@@ -690,15 +690,15 @@ export default function Lineage() {
       {/* Delete Confirmation */}
       {confirmDeleteMilestone && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="font-heading font-bold text-gray-900 mb-2">Delete Milestone?</h3>
-            <p className="text-sm text-gray-600 mb-6">
+          <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="font-heading font-bold text-content-primary mb-2">Delete Milestone?</h3>
+            <p className="text-sm text-content-secondary mb-6">
               "{confirmDeleteMilestone.title}" will be permanently removed from the chapter timeline.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDeleteMilestone(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="flex-1 px-4 py-2 border border-[var(--color-border)] rounded-xl text-sm font-medium text-content-secondary hover:bg-white/5"
               >
                 Cancel
               </button>

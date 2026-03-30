@@ -26,7 +26,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                     ? "bg-primary-600 text-white"
                     : isCurrent
                       ? "border-2 border-primary-600 text-primary-600"
-                      : "border-2 border-gray-300 text-gray-400"
+                      : "border-2 border-[var(--color-border-brand)] text-content-muted"
                 }`}
               >
                 {isCompleted ? (
@@ -39,7 +39,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
               </div>
               <span
                 className={`mt-1 text-xs font-medium ${
-                  isCurrent ? "text-primary-600" : isCompleted ? "text-gray-700" : "text-gray-400"
+                  isCurrent ? "text-primary-600" : isCompleted ? "text-content-secondary" : "text-content-muted"
                 }`}
               >
                 {label}
@@ -48,7 +48,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
             {index < steps.length - 1 && (
               <div
                 className={`w-16 h-0.5 mx-2 mb-5 ${
-                  currentStep > stepNum ? "bg-primary-600" : "bg-gray-300"
+                  currentStep > stepNum ? "bg-primary-600" : "bg-[var(--color-border-brand)]"
                 }`}
               />
             )}
@@ -72,11 +72,11 @@ export default function Onboarding() {
   }, [user?.active_chapter_id, currentStep, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-white/5">
+      <nav className="bg-surface-card-solid shadow-glass border-b border-[var(--color-border)]">
         <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900">ChapterOps</h1>
-          <span className="text-sm text-gray-500">{user?.full_name}</span>
+          <h1 className="text-xl font-bold text-content-primary">ChapterOps</h1>
+          <span className="text-sm text-content-secondary">{user?.full_name}</span>
         </div>
       </nav>
 

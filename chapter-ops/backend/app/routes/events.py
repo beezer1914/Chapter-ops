@@ -205,6 +205,78 @@ def create_event():
     return jsonify({"success": True, "event": result}), 201
 
 
+@events_bp.route("/service-hours", methods=["GET"])
+@login_required
+@chapter_required
+@role_required("secretary")
+def get_service_hours():
+    """Return per-member community service hour totals for the chapter."""
+    from sqlalchemy.orm import joinedload
+
+    chapter = g.current_chapter
+    year = request.args.get("year", type=int)
+
+    query = Event.query.options(
+        joinedload(Event.attendances).joinedload(EventAttendance.user)
+    ).filter(
+        Event.chapter_id == chapter.id,
+        Event.event_type == "community_service",
+        Event.service_hours.isnot(None),
+        Event.status != "cancelled",
+    )
+    if year:
+        query = query.filter(db.extract("year", Event.start_datetime) == year)
+
+    events = query.order_by(Event.start_datetime.desc()).all()
+
+    member_map: dict[str, dict] = {}
+    for event in events:
+        hours = float(event.service_hours)
+        for att in event.attendances:
+            if att.rsvp_status != "going" or att.user_id is None or att.user is None:
+                continue
+            if att.user_id not in member_map:
+                u = att.user
+                member_map[att.user_id] = {
+                    "user_id": u.id,
+                    "full_name": u.full_name,
+                    "profile_picture_url": u.profile_picture_url,
+                    "total_hours": 0.0,
+                    "events_count": 0,
+                    "events": [],
+                }
+            member_map[att.user_id]["total_hours"] += hours
+            member_map[att.user_id]["events_count"] += 1
+            member_map[att.user_id]["events"].append({
+                "id": event.id,
+                "title": event.title,
+                "date": event.start_datetime.isoformat(),
+                "hours": hours,
+                "checked_in": att.checked_in,
+            })
+
+    chapter_total_hours = sum(float(e.service_hours) for e in events)
+    members = sorted(member_map.values(), key=lambda x: x["total_hours"], reverse=True)
+
+    # Available years for the year-filter picker
+    yr_rows = db.session.query(
+        db.extract("year", Event.start_datetime).label("yr")
+    ).filter(
+        Event.chapter_id == chapter.id,
+        Event.event_type == "community_service",
+        Event.service_hours.isnot(None),
+        Event.status != "cancelled",
+    ).distinct().all()
+    available_years = sorted({int(r.yr) for r in yr_rows}, reverse=True)
+
+    return jsonify({
+        "chapter_total_hours": chapter_total_hours,
+        "total_events": len(events),
+        "members": members,
+        "available_years": available_years,
+    }), 200
+
+
 @events_bp.route("/<event_id>", methods=["GET"])
 @login_required
 @chapter_required

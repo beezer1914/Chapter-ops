@@ -11,7 +11,7 @@ export default function SuccessStep() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-8 text-center">
+    <div className="bg-surface-card-solid rounded-lg shadow-glass p-8 text-center">
       <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
         <svg
           className="w-8 h-8 text-green-600"
@@ -25,7 +25,7 @@ export default function SuccessStep() {
       </div>
 
       <h2 className="text-2xl font-bold text-gray-900 mb-2">You're all set!</h2>
-      <p className="text-gray-600 mb-8 max-w-sm mx-auto">
+      <p className="text-content-secondary mb-8 max-w-sm mx-auto">
         Your chapter has been created under {selectedOrganization?.name} in the {selectedRegion?.name}. As chapter president, you
         can now invite members and manage your chapter.
       </p>

@@ -6,10 +6,11 @@ Chapters connect via Standard Connect (OAuth), allowing direct charges
 to land in their account with an optional platform application_fee.
 """
 
+import secrets
 import stripe
 from urllib.parse import urlencode
 
-from flask import Blueprint, current_app, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request, session
 from flask_login import current_user, login_required
 
 from app.extensions import db
@@ -36,11 +37,14 @@ def get_connect_url():
     if not client_id:
         return jsonify({"error": "Stripe Connect is not configured on this platform."}), 503
 
+    state_token = secrets.token_urlsafe(32)
+    session["stripe_oauth_state"] = state_token
+
     params = {
         "response_type": "code",
         "client_id": client_id,
         "scope": "read_write",
-        "state": chapter.id,
+        "state": state_token,
         "redirect_uri": redirect_uri,
     }
     url = "https://connect.stripe.com/oauth/authorize?" + urlencode(params)
@@ -70,8 +74,9 @@ def stripe_callback():
     if not code:
         return jsonify({"error": "Missing authorization code."}), 400
 
-    # Validate state matches current chapter (CSRF protection)
-    if state != str(chapter.id):
+    # Validate CSRF state token
+    expected_state = session.pop("stripe_oauth_state", None)
+    if not expected_state or state != expected_state:
         return jsonify({"error": "Invalid state parameter. Please try connecting again."}), 400
 
     try:

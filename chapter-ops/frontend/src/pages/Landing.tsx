@@ -101,7 +101,7 @@ export default function Landing() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-content-muted">
             <a href="#features" className="hover:text-white transition-colors">
               Features
             </a>
@@ -116,7 +116,7 @@ export default function Landing() {
           <div className="flex items-center gap-3">
             <Link
               to="/login"
-              className="text-sm font-semibold text-gray-300 hover:text-white transition-colors px-4 py-2"
+              className="text-sm font-semibold text-content-muted hover:text-white transition-colors px-4 py-2"
             >
               Sign In
             </Link>
@@ -155,7 +155,7 @@ export default function Landing() {
         {/* Hero content */}
         <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8 text-center">
           <div className="anim-card-reveal">
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-8 text-xs font-medium text-gray-400 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-8 text-xs font-medium text-content-muted backdrop-blur-sm">
               <Zap className="w-3.5 h-3.5 text-brand-accent-main" />
               Built for every letter on the yard
             </div>
@@ -168,7 +168,7 @@ export default function Landing() {
             </span>
           </h1>
 
-          <p className="anim-card-reveal max-w-2xl mx-auto text-lg sm:text-xl text-gray-400 leading-relaxed mb-10" style={{ animationDelay: "200ms" }}>
+          <p className="anim-card-reveal max-w-2xl mx-auto text-lg sm:text-xl text-content-muted leading-relaxed mb-10" style={{ animationDelay: "200ms" }}>
             Dues collection, member management, events, communications, and
             chapter operations — unified in one white-label platform built
             specifically for Greek letter organizations.
@@ -184,7 +184,7 @@ export default function Landing() {
             </Link>
             <a
               href="#features"
-              className="flex items-center gap-2 text-gray-400 hover:text-white font-medium text-base px-6 py-4 rounded-xl border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all duration-200"
+              className="flex items-center gap-2 text-content-muted hover:text-white font-medium text-base px-6 py-4 rounded-xl border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all duration-200"
             >
               See Features
               <ChevronRight className="w-4 h-4" />
@@ -209,7 +209,7 @@ export default function Landing() {
                 <p className="text-3xl lg:text-4xl font-heading font-bold text-white mb-1">
                   {stat.value}
                 </p>
-                <p className="text-xs uppercase tracking-widest text-gray-500 font-medium">
+                <p className="text-xs uppercase tracking-widest text-content-muted font-medium">
                   {stat.label}
                 </p>
               </div>
@@ -228,7 +228,7 @@ export default function Landing() {
             <h2 className="text-3xl lg:text-4xl font-heading font-bold tracking-tight mb-4">
               Everything Your Chapter Needs
             </h2>
-            <p className="max-w-xl mx-auto text-gray-400 leading-relaxed">
+            <p className="max-w-xl mx-auto text-content-muted leading-relaxed">
               From finances to communications, ChapterOps replaces the
               spreadsheets, Venmo requests, and group texts with a single
               purpose-built platform.
@@ -252,7 +252,7 @@ export default function Landing() {
                   <h3 className="text-base font-heading font-bold text-white mb-2">
                     {feature.title}
                   </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
+                  <p className="text-sm text-content-muted leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
@@ -275,7 +275,7 @@ export default function Landing() {
             <h2 className="text-3xl lg:text-4xl font-heading font-bold tracking-tight mb-4">
               Live in Three Steps
             </h2>
-            <p className="max-w-lg mx-auto text-gray-400 leading-relaxed">
+            <p className="max-w-lg mx-auto text-content-muted leading-relaxed">
               From zero to a fully operational chapter dashboard in under ten
               minutes.
             </p>
@@ -302,7 +302,7 @@ export default function Landing() {
                   <h3 className="text-lg font-heading font-bold text-white mb-2">
                     {step.title}
                   </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">
+                  <p className="text-sm text-content-muted leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -327,7 +327,7 @@ export default function Landing() {
                   Not Adapted From Generic Tools
                 </span>
               </h2>
-              <p className="text-gray-400 leading-relaxed mb-8">
+              <p className="text-content-muted leading-relaxed mb-8">
                 Every feature was built with Greek letter organizations in mind —
                 from the terminology to the role hierarchy to the multi-chapter
                 architecture. No workarounds, no compromises.
@@ -361,7 +361,7 @@ export default function Landing() {
                         <h4 className="text-sm font-heading font-bold text-white mb-0.5">
                           {item.title}
                         </h4>
-                        <p className="text-sm text-gray-500 leading-relaxed">
+                        <p className="text-sm text-content-muted leading-relaxed">
                           {item.desc}
                         </p>
                       </div>
@@ -411,7 +411,7 @@ export default function Landing() {
                     {/* Mock table */}
                     <div className="rounded-xl border border-white/5 bg-white/[0.02] overflow-hidden">
                       <div className="px-4 py-3 border-b border-white/5">
-                        <div className="text-xs font-heading font-semibold text-gray-400">Recent Payments</div>
+                        <div className="text-xs font-heading font-semibold text-content-muted">Recent Payments</div>
                       </div>
                       {[1, 2, 3].map((row) => (
                         <div key={row} className="px-4 py-3 border-b border-white/[0.03] flex items-center justify-between">
@@ -445,7 +445,7 @@ export default function Landing() {
           <h2 className="text-3xl lg:text-5xl font-heading font-bold tracking-tight mb-6 anim-card-reveal">
             Ready to Modernize Your Chapter?
           </h2>
-          <p className="text-lg text-gray-400 leading-relaxed mb-10 max-w-xl mx-auto anim-card-reveal" style={{ animationDelay: "100ms" }}>
+          <p className="text-lg text-content-muted leading-relaxed mb-10 max-w-xl mx-auto anim-card-reveal" style={{ animationDelay: "100ms" }}>
             Join the next generation of Greek organization management. Set up
             your chapter in minutes, not months.
           </p>
@@ -459,7 +459,7 @@ export default function Landing() {
             </Link>
             <Link
               to="/login"
-              className="text-gray-300 hover:text-white font-medium text-base px-6 py-4 transition-colors"
+              className="text-content-muted hover:text-white font-medium text-base px-6 py-4 transition-colors"
             >
               Already have an account? Sign in
             </Link>
@@ -475,22 +475,22 @@ export default function Landing() {
               <span className="text-lg font-heading font-bold tracking-tight">
                 Chapter<span className="text-brand-accent-main">Ops</span>
               </span>
-              <span className="text-xs text-gray-600 ml-2">
+              <span className="text-xs text-content-secondary ml-2">
                 &copy; {new Date().getFullYear()}
               </span>
             </div>
 
-            <div className="flex items-center gap-8 text-sm text-gray-500">
-              <a href="#features" className="hover:text-gray-300 transition-colors">
+            <div className="flex items-center gap-8 text-sm text-content-muted">
+              <a href="#features" className="hover:text-content-secondary transition-colors">
                 Features
               </a>
-              <a href="#how-it-works" className="hover:text-gray-300 transition-colors">
+              <a href="#how-it-works" className="hover:text-content-secondary transition-colors">
                 How It Works
               </a>
-              <Link to="/login" className="hover:text-gray-300 transition-colors">
+              <Link to="/login" className="hover:text-content-secondary transition-colors">
                 Sign In
               </Link>
-              <Link to="/register" className="hover:text-gray-300 transition-colors">
+              <Link to="/register" className="hover:text-content-secondary transition-colors">
                 Get Started
               </Link>
             </div>

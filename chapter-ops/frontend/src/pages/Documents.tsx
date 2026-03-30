@@ -38,11 +38,11 @@ const CATEGORIES: { value: DocumentCategory | "all"; label: string }[] = [
 ];
 
 const CATEGORY_COLORS: Record<DocumentCategory, string> = {
-  minutes: "bg-blue-100 text-blue-700",
-  bylaws: "bg-purple-100 text-purple-700",
-  financials: "bg-emerald-100 text-emerald-700",
-  forms: "bg-amber-100 text-amber-700",
-  other: "bg-gray-100 text-gray-600",
+  minutes: "bg-blue-900/30 text-blue-400",
+  bylaws: "bg-purple-900/30 text-purple-400",
+  financials: "bg-emerald-900/30 text-emerald-400",
+  forms: "bg-amber-900/30 text-amber-400",
+  other: "bg-white/10 text-content-secondary",
 };
 
 function formatBytes(bytes: number): string {
@@ -102,43 +102,43 @@ function UploadModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Upload Document</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-            <X className="w-5 h-5 text-gray-500" />
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-content-primary">Upload Document</h2>
+          <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
+            <X className="w-5 h-5 text-content-secondary" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2.5">{error}</div>
+            <div className="bg-red-900/20 border border-red-900/30 text-red-400 text-sm rounded-lg px-4 py-2.5">{error}</div>
           )}
 
           {/* File drop zone */}
           <div
-            className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-brand-primary-main hover:bg-brand-primary-light/10 transition-colors"
+            className="border-2 border-dashed border-[var(--color-border)] rounded-xl p-6 text-center cursor-pointer hover:border-brand-primary-main hover:bg-brand-primary-light/10 transition-colors"
             onClick={() => fileInputRef.current?.click()}
           >
             {file ? (
               <div className="flex items-center justify-center gap-3">
                 <FileText className="w-8 h-8 text-brand-primary-main" />
                 <div className="text-left">
-                  <p className="text-sm font-medium text-gray-900 truncate max-w-xs">{file.name}</p>
-                  <p className="text-xs text-gray-400">{formatBytes(file.size)}</p>
+                  <p className="text-sm font-medium text-content-primary truncate max-w-xs">{file.name}</p>
+                  <p className="text-xs text-content-muted">{formatBytes(file.size)}</p>
                 </div>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                  className="ml-2 p-1 hover:bg-gray-100 rounded"
+                  className="ml-2 p-1 hover:bg-white/10 rounded"
                 >
-                  <X className="w-4 h-4 text-gray-400" />
+                  <X className="w-4 h-4 text-content-muted" />
                 </button>
               </div>
             ) : (
               <div>
-                <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Click to browse or drag a file here</p>
-                <p className="text-xs text-gray-400 mt-1">PDF, Word, Excel, PowerPoint, images — up to 25MB</p>
+                <Upload className="w-8 h-8 text-content-muted mx-auto mb-2" />
+                <p className="text-sm text-content-secondary">Click to browse or drag a file here</p>
+                <p className="text-xs text-content-muted mt-1">PDF, Word, Excel, PowerPoint, images — up to 25MB</p>
               </div>
             )}
           </div>
@@ -157,22 +157,22 @@ function UploadModal({
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Title <span className="text-red-500">*</span></label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main"
               placeholder="Document title"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Category</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as DocumentCategory)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main bg-white"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main bg-[var(--color-bg-input)]"
             >
               {CATEGORIES.filter((c) => c.value !== "all").map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
@@ -181,11 +181,11 @@ function UploadModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description <span className="text-gray-400">(optional)</span></label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Description <span className="text-content-muted">(optional)</span></label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main resize-none"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main resize-none"
               rows={2}
               placeholder="Brief description..."
             />
@@ -195,7 +195,7 @@ function UploadModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] text-content-secondary text-sm font-medium rounded-lg hover:bg-white/5 transition-colors"
             >
               Cancel
             </button>
@@ -251,32 +251,32 @@ function EditModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Edit Document</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-            <X className="w-5 h-5 text-gray-500" />
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-content-primary">Edit Document</h2>
+          <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors">
+            <X className="w-5 h-5 text-content-secondary" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-2.5">{error}</div>
+            <div className="bg-red-900/20 border border-red-900/30 text-red-400 text-sm rounded-lg px-4 py-2.5">{error}</div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Title</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Category</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as DocumentCategory)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main bg-white"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main bg-[var(--color-bg-input)]"
             >
               {CATEGORIES.filter((c) => c.value !== "all").map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
@@ -284,16 +284,16 @@ function EditModal({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main resize-none"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 focus:border-brand-primary-main resize-none"
               rows={2}
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] text-content-secondary text-sm font-medium rounded-lg hover:bg-white/5 transition-colors">
               Cancel
             </button>
             <button
@@ -365,22 +365,22 @@ export default function Documents() {
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Workflow started banner */}
         {workflowBanner && (
-          <div className="mb-4 flex items-center justify-between bg-green-50 border border-green-200 text-green-800 text-sm rounded-xl px-4 py-3">
+          <div className="mb-4 flex items-center justify-between bg-green-900/20 border border-green-900/30 text-green-400 text-sm rounded-xl px-4 py-3">
             <span>Approval workflow started for <strong>{workflowBanner}</strong>. Reviewers have been notified.</span>
-            <button onClick={() => setWorkflowBanner(null)} className="ml-4 text-green-600 hover:text-green-800 font-medium text-xs">Dismiss</button>
+            <button onClick={() => setWorkflowBanner(null)} className="ml-4 text-green-400 hover:text-green-300 font-medium text-xs">Dismiss</button>
           </div>
         )}
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-heading font-extrabold text-gray-900">Document Vault</h1>
-            <p className="text-sm text-gray-500 mt-0.5">{docs.length} document{docs.length !== 1 ? "s" : ""}</p>
+            <h1 className="text-2xl font-heading font-extrabold text-content-primary">Document Vault</h1>
+            <p className="text-sm text-content-secondary mt-0.5">{docs.length} document{docs.length !== 1 ? "s" : ""}</p>
           </div>
           {isOfficer && (
             <button
               onClick={() => setShowUpload(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary-main text-white text-sm font-semibold rounded-xl hover:bg-brand-primary-dark shadow-md transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary-main text-white text-sm font-semibold rounded-xl hover:bg-brand-primary-dark shadow-glass transition-colors"
             >
               <Upload className="w-4 h-4" />
               Upload Document
@@ -389,15 +389,15 @@ export default function Documents() {
         </div>
 
         {/* Category tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit mb-6 flex-wrap">
+        <div className="flex gap-1 bg-white/10 p-1 rounded-xl w-fit mb-6 flex-wrap">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.value}
               onClick={() => setActiveCategory(cat.value)}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 activeCategory === cat.value
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "bg-surface-card-solid text-content-primary shadow-glass"
+                  : "text-content-secondary hover:text-content-secondary"
               }`}
             >
               {cat.label}
@@ -412,8 +412,8 @@ export default function Documents() {
           </div>
         ) : visibleDocs.length === 0 ? (
           <div className="text-center py-24">
-            <FolderOpen className="w-14 h-14 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">No documents yet</p>
+            <FolderOpen className="w-14 h-14 text-content-muted mx-auto mb-4" />
+            <p className="text-content-secondary font-medium">No documents yet</p>
             {isOfficer && (
               <button
                 onClick={() => setShowUpload(true)}
@@ -428,7 +428,7 @@ export default function Documents() {
             {visibleDocs.map((doc) => (
               <div
                 key={doc.id}
-                className="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow"
+                className="bg-surface-card-solid border border-[var(--color-border)] rounded-2xl shadow-glass p-5 flex flex-col gap-3 hover:shadow-glass transition-shadow"
               >
                 {/* Icon + category */}
                 <div className="flex items-start justify-between">
@@ -442,14 +442,14 @@ export default function Documents() {
 
                 {/* Title + description */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{doc.title}</h3>
+                  <h3 className="text-sm font-semibold text-content-primary leading-snug line-clamp-2">{doc.title}</h3>
                   {doc.description && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{doc.description}</p>
+                    <p className="text-xs text-content-secondary mt-1 line-clamp-2">{doc.description}</p>
                   )}
                 </div>
 
                 {/* Meta */}
-                <div className="text-xs text-gray-400 space-y-0.5">
+                <div className="text-xs text-content-muted space-y-0.5">
                   <p className="truncate">{doc.file_name} · {formatBytes(doc.file_size)}</p>
                   <p>
                     {doc.uploader
@@ -460,7 +460,7 @@ export default function Documents() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-1 border-t border-gray-50">
+                <div className="flex items-center gap-2 pt-1 border-t border-white/5">
                   <button
                     onClick={() => handleDownload(doc)}
                     disabled={downloadingId === doc.id}
@@ -475,7 +475,7 @@ export default function Documents() {
                     <>
                       <button
                         onClick={() => setEditDoc(doc)}
-                        className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 text-content-muted hover:text-content-secondary hover:bg-white/10 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Pencil className="w-4 h-4" />
@@ -491,7 +491,7 @@ export default function Documents() {
                           </button>
                           <button
                             onClick={() => setDeleteConfirmId(null)}
-                            className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-content-muted hover:bg-white/10 rounded-lg transition-colors"
                             title="Cancel"
                           >
                             <X className="w-4 h-4" />
@@ -500,7 +500,7 @@ export default function Documents() {
                       ) : (
                         <button
                           onClick={() => setDeleteConfirmId(doc.id)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-content-muted hover:text-red-500 hover:bg-red-900/20 rounded-lg transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />

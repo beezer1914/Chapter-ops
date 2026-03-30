@@ -11,9 +11,9 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 };
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
-  social: "bg-blue-100 text-blue-700",
-  fundraiser: "bg-green-100 text-green-700",
-  community_service: "bg-purple-100 text-purple-700",
+  social: "bg-blue-900/30 text-blue-400",
+  fundraiser: "bg-green-900/30 text-green-400",
+  community_service: "bg-purple-900/30 text-purple-400",
 };
 
 function formatDateTime(iso: string) {
@@ -87,19 +87,19 @@ export default function EventPublic() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-400 text-lg">Loading event...</div>
+      <div className="min-h-screen bg-white/5 flex items-center justify-center">
+        <div className="text-content-muted text-lg">Loading event...</div>
       </div>
     );
   }
 
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white/5 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Event Not Found</h2>
-          <p className="text-gray-500">{error || "This event is not available."}</p>
+          <h2 className="text-xl font-semibold text-content-primary mb-2">Event Not Found</h2>
+          <p className="text-content-secondary">{error || "This event is not available."}</p>
         </div>
       </div>
     );
@@ -115,10 +115,10 @@ export default function EventPublic() {
     event.attendee_count >= event.capacity;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white/5">
       {/* Header bar */}
       <div className="bg-[#0a1526] text-white py-4 px-6 text-center">
-        <p className="text-sm text-gray-300">
+        <p className="text-sm text-content-muted">
           {event.chapter_name || "Chapter"} — Powered by ChapterOps
         </p>
       </div>
@@ -126,23 +126,23 @@ export default function EventPublic() {
       <div className="max-w-2xl mx-auto px-4 py-10">
         {/* Stripe success/cancelled banners */}
         {stripeSuccess && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
+          <div className="mb-6 p-4 bg-green-900/30 border border-[var(--color-border)] rounded-xl flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
             <div>
-              <p className="font-semibold text-green-800">You're registered!</p>
-              <p className="text-sm text-green-700">Your ticket purchase was successful. See you there!</p>
+              <p className="font-semibold text-green-400">You're registered!</p>
+              <p className="text-sm text-green-400">Your ticket purchase was successful. See you there!</p>
             </div>
           </div>
         )}
         {stripeCancelled && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0" />
-            <p className="text-yellow-800">Checkout was cancelled. You can try again below.</p>
+          <div className="mb-6 p-4 bg-yellow-900/30 border border-[var(--color-border)] rounded-xl flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-400 shrink-0" />
+            <p className="text-yellow-400">Checkout was cancelled. You can try again below.</p>
           </div>
         )}
 
         {/* Event Card */}
-        <div className="bg-white rounded-2xl shadow-md overflow-hidden mb-6">
+        <div className="bg-surface-card-solid rounded-2xl shadow-glass overflow-hidden mb-6">
           {event.banner_image_url && (
             <img
               src={event.banner_image_url}
@@ -152,54 +152,54 @@ export default function EventPublic() {
           )}
           <div className="p-6">
             <div className="flex items-start justify-between gap-4 mb-4">
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight">{event.title}</h1>
+              <h1 className="text-2xl font-bold text-content-primary leading-tight">{event.title}</h1>
               <span
-                className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${EVENT_TYPE_COLORS[event.event_type] ?? "bg-gray-100 text-gray-600"}`}
+                className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${EVENT_TYPE_COLORS[event.event_type] ?? "bg-white/10 text-content-secondary"}`}
               >
                 {EVENT_TYPE_LABELS[event.event_type] ?? event.event_type}
               </span>
             </div>
 
             {isCancelled && (
-              <div className="mb-4 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium">
+              <div className="mb-4 px-3 py-2 bg-red-900/30 border border-[var(--color-border)] rounded-lg text-red-400 text-sm font-medium">
                 This event has been cancelled.
               </div>
             )}
 
             {event.description && (
-              <p className="text-gray-600 mb-5 leading-relaxed">{event.description}</p>
+              <p className="text-content-secondary mb-5 leading-relaxed">{event.description}</p>
             )}
 
-            <div className="space-y-3 text-sm text-gray-600">
+            <div className="space-y-3 text-sm text-content-secondary">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                <Calendar className="w-4 h-4 text-content-muted shrink-0" />
                 <span>{formatDateTime(event.start_datetime)}</span>
               </div>
               {event.end_datetime && (
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-400 shrink-0" />
+                  <Clock className="w-4 h-4 text-content-muted shrink-0" />
                   <span>Ends {formatDateTime(event.end_datetime)}</span>
                 </div>
               )}
               {event.location && (
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
+                  <MapPin className="w-4 h-4 text-content-muted shrink-0" />
                   <span>{event.location}</span>
                 </div>
               )}
               {event.capacity != null && (
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-gray-400 shrink-0" />
+                  <Users className="w-4 h-4 text-content-muted shrink-0" />
                   <span>
                     {event.attendee_count ?? 0} / {event.capacity} spots
-                    {isFull && <span className="ml-2 text-red-600 font-medium">· Full</span>}
+                    {isFull && <span className="ml-2 text-red-400 font-medium">· Full</span>}
                   </span>
                 </div>
               )}
               {event.is_paid && event.ticket_price != null && (
                 <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 text-gray-400 shrink-0 text-center font-bold">$</span>
-                  <span className="font-semibold text-gray-800">
+                  <span className="w-4 h-4 text-content-muted shrink-0 text-center font-bold">$</span>
+                  <span className="font-semibold text-content-primary">
                     ${Number(event.ticket_price).toFixed(2)} per ticket
                   </span>
                 </div>
@@ -210,57 +210,57 @@ export default function EventPublic() {
 
         {/* RSVP / Ticket section */}
         {!isCancelled && !isPast && !stripeSuccess && (
-          <div className="bg-white rounded-2xl shadow-md p-6">
+          <div className="bg-surface-card-solid rounded-2xl shadow-glass p-6">
             {isFull ? (
               <div className="text-center py-4">
-                <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">This event is at capacity.</p>
+                <Users className="w-10 h-10 text-content-muted mx-auto mb-3" />
+                <p className="text-content-secondary font-medium">This event is at capacity.</p>
               </div>
             ) : rsvpSuccess ? (
               <div className="text-center py-4">
                 <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-3" />
-                <p className="text-lg font-semibold text-gray-800">You're on the list!</p>
-                <p className="text-gray-500 text-sm mt-1">We'll see you there.</p>
+                <p className="text-lg font-semibold text-content-primary">You're on the list!</p>
+                <p className="text-content-secondary text-sm mt-1">We'll see you there.</p>
               </div>
             ) : (
               <>
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                <h2 className="text-lg font-semibold text-content-primary mb-4">
                   {event.is_paid ? `Get Your Ticket — $${Number(event.ticket_price).toFixed(2)}` : "RSVP for Free"}
                 </h2>
 
                 {formError && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  <div className="mb-4 p-3 bg-red-900/30 border border-[var(--color-border)] rounded-lg text-red-400 text-sm">
                     {formError}
                   </div>
                 )}
 
                 <form onSubmit={event.is_paid ? handlePaidCheckout : handleFreeRsvp} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <label className="block text-sm font-medium text-content-secondary mb-1">Full Name</label>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
                       placeholder="Jane Smith"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label className="block text-sm font-medium text-content-secondary mb-1">Email Address</label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       placeholder="jane@example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
+                    className="w-full py-3 px-4 bg-brand-primary-main hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors"
                   >
                     {submitting
                       ? "Please wait..."
@@ -275,13 +275,13 @@ export default function EventPublic() {
         )}
 
         {isPast && !isCancelled && (
-          <div className="bg-white rounded-2xl shadow-md p-6 text-center text-gray-400">
+          <div className="bg-surface-card-solid rounded-2xl shadow-glass p-6 text-center text-content-muted">
             <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p>This event has already taken place.</p>
           </div>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-8">
+        <p className="text-center text-xs text-content-muted mt-8">
           Powered by <span className="font-semibold">ChapterOps</span>
         </p>
       </div>

@@ -55,12 +55,12 @@ const STAGE_LABELS: Record<IntakeStage, string> = {
 };
 
 const STAGE_COLORS: Record<IntakeStage, { bg: string; text: string; dot: string; badge: string }> = {
-  interested:          { bg: "bg-slate-100",   text: "text-slate-700",  dot: "bg-slate-400",   badge: "bg-slate-100 text-slate-700 border-slate-200" },
-  applied:             { bg: "bg-sky-100",     text: "text-sky-700",    dot: "bg-sky-500",     badge: "bg-sky-100 text-sky-700 border-sky-200" },
-  under_review:        { bg: "bg-amber-100",   text: "text-amber-700",  dot: "bg-amber-500",   badge: "bg-amber-100 text-amber-700 border-amber-200" },
-  chapter_vote:        { bg: "bg-orange-100",  text: "text-orange-700", dot: "bg-orange-500",  badge: "bg-orange-100 text-orange-700 border-orange-200" },
-  national_submission: { bg: "bg-purple-100",  text: "text-purple-700", dot: "bg-purple-500",  badge: "bg-purple-100 text-purple-700 border-purple-200" },
-  approved:            { bg: "bg-emerald-100", text: "text-emerald-700",dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  interested:          { bg: "bg-slate-900/30",   text: "text-slate-400",  dot: "bg-slate-400",   badge: "bg-slate-900/30 text-slate-400 border-slate-700" },
+  applied:             { bg: "bg-sky-900/30",     text: "text-sky-400",    dot: "bg-sky-500",     badge: "bg-sky-900/30 text-sky-400 border-sky-700" },
+  under_review:        { bg: "bg-amber-900/30",   text: "text-amber-400",  dot: "bg-amber-500",   badge: "bg-amber-900/30 text-amber-400 border-amber-700" },
+  chapter_vote:        { bg: "bg-orange-900/30",  text: "text-orange-400", dot: "bg-orange-500",  badge: "bg-orange-900/30 text-orange-400 border-orange-700" },
+  national_submission: { bg: "bg-purple-900/30",  text: "text-purple-400", dot: "bg-purple-500",  badge: "bg-purple-900/30 text-purple-400 border-purple-700" },
+  approved:            { bg: "bg-emerald-900/30", text: "text-emerald-400",dot: "bg-emerald-500", badge: "bg-emerald-900/30 text-emerald-400 border-emerald-700" },
   crossed:             { bg: "bg-brand-primary-50", text: "text-brand-primary-dark", dot: "bg-brand-primary-main", badge: "bg-brand-primary-100 text-brand-primary-dark border-brand-primary-200" },
 };
 
@@ -204,16 +204,16 @@ export default function Intake() {
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-3xl font-heading font-extrabold text-gray-900 tracking-tight">
+            <h2 className="text-3xl font-heading font-extrabold text-content-primary tracking-tight">
               Intake Pipeline
             </h2>
-            <p className="text-gray-500 mt-1">
+            <p className="text-content-secondary mt-1">
               {totalCount} candidate{totalCount !== 1 ? "s" : ""} in pipeline · Confidential
             </p>
           </div>
           <button
             onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-primary-main text-white rounded-xl text-sm font-semibold hover:bg-brand-primary-dark transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-primary-main text-white rounded-xl text-sm font-semibold hover:bg-brand-primary-dark transition-colors shadow-glass"
           >
             <UserPlus className="w-4 h-4" />
             Add Candidate
@@ -221,9 +221,9 @@ export default function Intake() {
         </div>
 
         {error && (
-          <div className="mb-5 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg text-sm font-medium flex justify-between items-center">
+          <div className="mb-5 p-4 bg-red-900/20 border-l-4 border-red-500 text-red-400 rounded-lg text-sm font-medium flex justify-between items-center">
             <span className="flex items-center gap-2"><AlertCircle className="w-4 h-4" />{error}</span>
-            <button onClick={() => setError(null)} className="text-red-700 text-lg font-bold px-2">&times;</button>
+            <button onClick={() => setError(null)} className="text-red-400 text-lg font-bold px-2">&times;</button>
           </div>
         )}
 
@@ -239,14 +239,14 @@ export default function Intake() {
                 onClick={() => setActiveStage(stage)}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all border ${
                   isActive
-                    ? `${colors.bg} ${colors.text} border-current/20 shadow-sm`
-                    : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                    ? `${colors.bg} ${colors.text} border-current/20 shadow-glass`
+                    : "bg-surface-card-solid text-content-secondary border-[var(--color-border)] hover:bg-white/5"
                 }`}
               >
-                <span className={`w-2 h-2 rounded-full ${isActive ? colors.dot : "bg-gray-300"}`} />
+                <span className={`w-2 h-2 rounded-full ${isActive ? colors.dot : "bg-content-muted"}`} />
                 {STAGE_LABELS[stage]}
                 {count > 0 && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${isActive ? "bg-white/60" : "bg-gray-100"}`}>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${isActive ? "bg-white/60" : "bg-white/10"}`}>
                     {count}
                   </span>
                 )}
@@ -261,14 +261,14 @@ export default function Intake() {
             <div className="w-8 h-8 border-4 border-brand-primary-light border-t-brand-primary-main rounded-full animate-spin" />
           </div>
         ) : stageCandidates.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/40 p-14 text-center">
-            <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <UserPlus className="w-7 h-7 text-gray-400" />
+          <div className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] p-14 text-center">
+            <div className="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <UserPlus className="w-7 h-7 text-content-muted" />
             </div>
-            <h3 className="text-base font-semibold text-gray-800 mb-1">
+            <h3 className="text-base font-semibold text-content-primary mb-1">
               No candidates in {STAGE_LABELS[activeStage]}
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-content-secondary">
               {activeStage === "interested"
                 ? "Add a candidate to start the pipeline."
                 : "Advance candidates from earlier stages."}
@@ -372,16 +372,16 @@ function CandidateCard({
 
   return (
     <div
-      className="bg-white rounded-2xl shadow-glass border border-gray-100 p-5 flex flex-col gap-3 hover:shadow-md transition-shadow cursor-pointer group"
+      className="bg-surface-card-solid rounded-2xl shadow-glass border border-[var(--color-border)] p-5 flex flex-col gap-3 hover:shadow-glass transition-shadow cursor-pointer group"
       onClick={onOpen}
     >
       {/* Name + stage badge */}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="font-semibold text-gray-900 group-hover:text-brand-primary-dark transition-colors">
+          <p className="font-semibold text-content-primary group-hover:text-brand-primary-dark transition-colors">
             {candidate.full_name}
           </p>
-          <p className="text-xs text-gray-500 mt-0.5 truncate">{candidate.email}</p>
+          <p className="text-xs text-content-secondary mt-0.5 truncate">{candidate.email}</p>
         </div>
         <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${colors.badge}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
@@ -390,7 +390,7 @@ function CandidateCard({
       </div>
 
       {/* Meta */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-content-secondary">
         {candidate.semester && <span>{candidate.semester}</span>}
         {candidate.gpa != null && <span>GPA {candidate.gpa.toFixed(2)}</span>}
         {candidate.document_count > 0 && (
@@ -406,11 +406,11 @@ function CandidateCard({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-1 border-t border-gray-100 mt-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="flex gap-2 pt-1 border-t border-[var(--color-border)] mt-auto" onClick={(e) => e.stopPropagation()}>
         {canRevert && (
           <button
             onClick={onRevert}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1.5 text-content-muted hover:text-content-secondary hover:bg-white/10 rounded-lg transition-colors"
             title="Move back"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -426,7 +426,7 @@ function CandidateCard({
         ) : canAdvance ? (
           <button
             onClick={onAdvance}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-semibold rounded-lg hover:bg-gray-700 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white/10 text-white text-xs font-semibold rounded-lg hover:bg-white/20 transition-colors"
           >
             Advance <ChevronRight className="w-3.5 h-3.5" />
           </button>
@@ -436,7 +436,7 @@ function CandidateCard({
         {isPresident && (
           <button
             onClick={onDeactivate}
-            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-content-muted hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
             title="Remove"
           >
             <Trash2 className="w-4 h-4" />
@@ -488,71 +488,71 @@ function AddCandidateModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 backdrop-blur-sm">
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+        className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
       >
-        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/60">
-          <h3 className="text-lg font-heading font-semibold text-gray-900">Add Intake Candidate</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+        <div className="px-6 py-5 border-b border-[var(--color-border)] flex justify-between items-center bg-white/5">
+          <h3 className="text-lg font-heading font-semibold text-content-primary">Add Intake Candidate</h3>
+          <button type="button" onClick={onClose} className="text-content-muted hover:text-content-secondary">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-          {err && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
+          {err && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-lg">{err}</p>}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">First Name *</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">First Name *</label>
               <input required value={form.first_name}
                 onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Last Name *</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">Last Name *</label>
               <input required value={form.last_name}
                 onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Email *</label>
+            <label className="block text-xs font-semibold text-content-secondary mb-1">Email *</label>
             <input required type="email" value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+              className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Phone</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">Phone</label>
               <input value={form.phone ?? ""} type="tel"
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">GPA</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">GPA</label>
               <input value={form.gpa ?? ""} type="number" min="0" max="4" step="0.01"
                 onChange={(e) => setForm((f) => ({ ...f, gpa: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Initial Stage</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">Initial Stage</label>
               <select value={form.stage}
                 onChange={(e) => setForm((f) => ({ ...f, stage: e.target.value as IntakeStage }))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
                 {STAGES.filter((s) => s !== "crossed").map((s) => (
                   <option key={s} value={s}>{STAGE_LABELS[s]}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Line Season</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">Line Season</label>
               <select value={form.semester ?? ""}
                 onChange={(e) => setForm((f) => ({ ...f, semester: e.target.value }))}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
                 <option value="">— Select —</option>
                 {LINE_SEASONS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -560,16 +560,16 @@ function AddCandidateModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Notes</label>
+            <label className="block text-xs font-semibold text-content-secondary mb-1">Notes</label>
             <textarea rows={3} value={form.notes ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main resize-none" />
+              className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main resize-none" />
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+        <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex justify-end gap-3">
           <button type="button" onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">
+            className="px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-xl hover:bg-white/5">
             Cancel
           </button>
           <button type="submit" disabled={saving}
@@ -676,82 +676,82 @@ function CandidateDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
 
         {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100 flex items-start justify-between gap-4 bg-gray-50/60">
+        <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-start justify-between gap-4 bg-white/5">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <h3 className="text-lg font-heading font-bold text-gray-900">{candidate.full_name}</h3>
+              <h3 className="text-lg font-heading font-bold text-content-primary">{candidate.full_name}</h3>
               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${colors.badge}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
                 {STAGE_LABELS[candidate.stage]}
               </span>
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">{candidate.email}</p>
+            <p className="text-sm text-content-secondary mt-0.5">{candidate.email}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 shrink-0">
+          <button onClick={onClose} className="text-content-muted hover:text-content-secondary shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {err && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
+          {err && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-lg">{err}</p>}
 
           {/* Info section */}
           {editing ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">First Name</label>
+                  <label className="block text-xs font-semibold text-content-secondary mb-1">First Name</label>
                   <input value={editForm.first_name ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, first_name: e.target.value }))}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                    className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Last Name</label>
+                  <label className="block text-xs font-semibold text-content-secondary mb-1">Last Name</label>
                   <input value={editForm.last_name ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, last_name: e.target.value }))}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                    className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
+                <label className="block text-xs font-semibold text-content-secondary mb-1">Email</label>
                 <input type="email" value={editForm.email ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                  className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Phone</label>
+                  <label className="block text-xs font-semibold text-content-secondary mb-1">Phone</label>
                   <input type="tel" value={editForm.phone ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                    className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">GPA</label>
+                  <label className="block text-xs font-semibold text-content-secondary mb-1">GPA</label>
                   <input type="number" min="0" max="4" step="0.01" value={editForm.gpa ?? ""}
                     onChange={(e) => setEditForm((f) => ({ ...f, gpa: e.target.value ? parseFloat(e.target.value) : null }))}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                    className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Line Name</label>
+                  <label className="block text-xs font-semibold text-content-secondary mb-1">Line Name</label>
                   <input value={editForm.line_name ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, line_name: e.target.value }))}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                    className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Line Number</label>
+                  <label className="block text-xs font-semibold text-content-secondary mb-1">Line Number</label>
                   <input type="number" min="1" value={editForm.line_number ?? ""}
                     onChange={(e) => setEditForm((f) => ({ ...f, line_number: e.target.value ? parseInt(e.target.value) : null }))}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                    className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Notes</label>
+                <label className="block text-xs font-semibold text-content-secondary mb-1">Notes</label>
                 <textarea rows={3} value={editForm.notes ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))}
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main resize-none" />
+                  className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main resize-none" />
               </div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">Cancel</button>
+                <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-xl hover:bg-white/5">Cancel</button>
                 <button onClick={handleSave} disabled={saving} className="px-5 py-2 text-sm font-semibold text-white bg-brand-primary-main rounded-xl hover:bg-brand-primary-dark disabled:opacity-50">
                   {saving ? "Saving..." : "Save"}
                 </button>
@@ -780,9 +780,9 @@ function CandidateDetailModal({
                 )}
               </div>
               {candidate.notes && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                  <p className="text-xs font-semibold text-amber-600 mb-1">Notes</p>
-                  <p className="text-sm text-amber-900 whitespace-pre-wrap">{candidate.notes}</p>
+                <div className="bg-amber-900/20 border border-amber-200 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-amber-400 mb-1">Notes</p>
+                  <p className="text-sm text-amber-400 whitespace-pre-wrap">{candidate.notes}</p>
                 </div>
               )}
               <button onClick={() => setEditing(true)}
@@ -795,7 +795,7 @@ function CandidateDetailModal({
           {/* Documents */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-gray-700">Documents</h4>
+              <h4 className="text-sm font-semibold text-content-secondary">Documents</h4>
               <button onClick={() => setUploadOpen(true)}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-brand-primary-main hover:text-brand-primary-dark">
                 <Upload className="w-3.5 h-3.5" /> Upload
@@ -803,18 +803,18 @@ function CandidateDetailModal({
             </div>
 
             {uploadOpen && (
-              <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
+              <div className="mb-4 p-4 bg-white/5 rounded-xl border border-[var(--color-border)] space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Title *</label>
+                    <label className="block text-xs font-semibold text-content-secondary mb-1">Title *</label>
                     <input value={uploadTitle} onChange={(e) => setUploadTitle(e.target.value)}
                       placeholder="e.g. Fall 2025 Transcript"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                      className="w-full rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Type</label>
+                    <label className="block text-xs font-semibold text-content-secondary mb-1">Type</label>
                     <select value={uploadType} onChange={(e) => setUploadType(e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
+                      className="w-full rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
                       {Object.entries(DOC_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
                   </div>
@@ -823,12 +823,12 @@ function CandidateDetailModal({
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.csv"
                   onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} />
                 <button onClick={() => fileRef.current?.click()}
-                  className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-brand-primary-main hover:text-brand-primary-main transition-colors">
+                  className="w-full py-2 border-2 border-dashed border-[var(--color-border-brand)] rounded-lg text-sm text-content-secondary hover:border-brand-primary-main hover:text-brand-primary-main transition-colors">
                   {uploadFile ? uploadFile.name : "Click to select file"}
                 </button>
                 <div className="flex gap-2">
                   <button onClick={() => { setUploadOpen(false); setUploadFile(null); setUploadTitle(""); }}
-                    className="px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+                    className="px-3 py-1.5 text-sm text-content-secondary bg-surface-card-solid border border-[var(--color-border)] rounded-lg hover:bg-white/5">Cancel</button>
                   <button onClick={handleUpload} disabled={uploading || !uploadFile || !uploadTitle.trim()}
                     className="px-4 py-1.5 text-sm font-semibold text-white bg-brand-primary-main rounded-lg hover:bg-brand-primary-dark disabled:opacity-50">
                     {uploading ? "Uploading..." : "Upload"}
@@ -838,26 +838,26 @@ function CandidateDetailModal({
             )}
 
             {(candidate.documents?.length ?? 0) === 0 ? (
-              <p className="text-sm text-gray-400 italic">No documents uploaded yet.</p>
+              <p className="text-sm text-content-muted italic">No documents uploaded yet.</p>
             ) : (
               <div className="space-y-2">
                 {candidate.documents?.map((doc) => (
                   <div key={doc.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 group">
+                    className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-[var(--color-border)] group">
                     <div className="flex items-center gap-3 min-w-0">
-                      <FileText className="w-4 h-4 text-gray-400 shrink-0" />
+                      <FileText className="w-4 h-4 text-content-muted shrink-0" />
                       <div className="min-w-0">
                         <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
-                          className="text-sm font-medium text-gray-800 hover:text-brand-primary-main truncate block">
+                          className="text-sm font-medium text-content-primary hover:text-brand-primary-main truncate block">
                           {doc.title}
                         </a>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-content-muted">
                           {DOC_TYPE_LABELS[doc.document_type]} · {formatFileSize(doc.file_size)}
                         </p>
                       </div>
                     </div>
                     <button onClick={() => handleDeleteDoc(doc)}
-                      className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                      className="p-1.5 text-content-muted hover:text-red-400 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -868,17 +868,17 @@ function CandidateDetailModal({
         </div>
 
         {/* Footer actions */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+        <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-2">
             {canRevert && (
               <button onClick={() => { onRevert(); onClose(); }}
-                className="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
+                className="inline-flex items-center gap-1 px-3 py-2 text-sm text-content-secondary bg-surface-card-solid border border-[var(--color-border)] rounded-xl hover:bg-white/5">
                 <ChevronLeft className="w-4 h-4" /> Revert
               </button>
             )}
             {canAdvance && (
               <button onClick={() => { onAdvance(); onClose(); }}
-                className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-gray-900 rounded-xl hover:bg-gray-700">
+                className="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-white/10 rounded-xl hover:bg-white/20">
                 Advance <ChevronRight className="w-4 h-4" />
               </button>
             )}
@@ -891,7 +891,7 @@ function CandidateDetailModal({
           </div>
           {isPresident && candidate.stage !== "crossed" && (
             <button onClick={() => { onDeactivate(); onClose(); }}
-              className="text-sm text-red-500 hover:text-red-700 font-medium">
+              className="text-sm text-red-400 hover:text-red-300 font-medium">
               Remove from pipeline
             </button>
           )}
@@ -903,9 +903,9 @@ function CandidateDetailModal({
 
 function InfoPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
-      <p className="text-sm font-medium text-gray-800 mt-0.5">{value}</p>
+    <div className="bg-white/5 rounded-xl px-3 py-2 border border-[var(--color-border)]">
+      <p className="text-[10px] font-semibold text-content-muted uppercase tracking-wide">{label}</p>
+      <p className="text-sm font-medium text-content-primary mt-0.5">{value}</p>
     </div>
   );
 }
@@ -940,36 +940,36 @@ function CrossModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-100 bg-brand-primary-50/60">
-          <h3 className="text-lg font-heading font-bold text-gray-900 flex items-center gap-2">
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="px-6 py-5 border-b border-[var(--color-border)] bg-brand-primary-50/60">
+          <h3 className="text-lg font-heading font-bold text-content-primary flex items-center gap-2">
             <Star className="w-5 h-5 text-brand-primary-main" /> Cross {candidate.full_name}
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-content-secondary mt-1">
             This will generate an invite code for them to join as a member.
           </p>
         </div>
         <div className="p-6 space-y-4">
-          {err && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
+          {err && <p className="text-sm text-red-400 bg-red-900/20 px-3 py-2 rounded-lg">{err}</p>}
+          <div className="bg-amber-900/20 border border-amber-200 rounded-xl p-3 text-sm text-amber-400">
             <strong>This action is final.</strong> Once crossed, their stage will be permanently set to "Crossed" and an invite code will be issued.
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Line Name (optional)</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">Line Name (optional)</label>
               <input value={lineName} onChange={(e) => setLineName(e.target.value)}
                 placeholder="e.g. The Immovable"
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Line Number (optional)</label>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">Line Number (optional)</label>
               <input type="number" min="1" value={lineNumber} onChange={(e) => setLineNumber(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main" />
             </div>
           </div>
         </div>
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50">Cancel</button>
+        <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-xl hover:bg-white/5">Cancel</button>
           <button onClick={handleCross} disabled={crossing}
             className="px-5 py-2 text-sm font-semibold text-white bg-brand-primary-main rounded-xl hover:bg-brand-primary-dark disabled:opacity-50 flex items-center gap-2">
             <Check className="w-4 h-4" /> {crossing ? "Crossing..." : "Confirm Cross"}
@@ -993,22 +993,22 @@ function CrossSuccessModal({ name, code, onClose }: { name: string; code: string
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden text-center">
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden text-center">
         <div className="px-6 pt-8 pb-6">
           <div className="w-16 h-16 bg-brand-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Star className="w-8 h-8 text-brand-primary-main" />
           </div>
-          <h3 className="text-xl font-heading font-bold text-gray-900 mb-1">{name} has crossed!</h3>
-          <p className="text-sm text-gray-500 mb-6">Share this invite code to complete their registration.</p>
+          <h3 className="text-xl font-heading font-bold text-content-primary mb-1">{name} has crossed!</h3>
+          <p className="text-sm text-content-secondary mb-6">Share this invite code to complete their registration.</p>
 
           <div className="bg-gray-900 rounded-xl px-5 py-4 mb-4 flex items-center justify-between gap-3">
             <span className="text-2xl font-mono font-bold text-white tracking-[0.2em]">{code}</span>
             <button onClick={copyCode}
-              className="text-xs font-semibold text-gray-400 hover:text-white px-2 py-1 rounded-lg hover:bg-white/10 transition-colors">
+              className="text-xs font-semibold text-content-muted hover:text-white px-2 py-1 rounded-lg hover:bg-white/10 transition-colors">
               {copied ? <Check className="w-4 h-4 text-emerald-400" /> : "Copy"}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mb-6">They can use this code at registration to join the chapter.</p>
+          <p className="text-xs text-content-muted mb-6">They can use this code at registration to join the chapter.</p>
         </div>
         <div className="px-6 pb-6">
           <button onClick={onClose} className="w-full py-2.5 text-sm font-semibold text-white bg-brand-primary-main rounded-xl hover:bg-brand-primary-dark">

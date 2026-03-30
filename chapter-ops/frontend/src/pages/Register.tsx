@@ -90,15 +90,15 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-white/5 py-12 px-4">
+      <div className="max-w-md w-full bg-surface-card-solid shadow-glass rounded-lg p-8">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">ChapterOps</h1>
-          <p className="text-sm text-gray-500 mt-1">Create your account</p>
+          <h1 className="text-2xl font-bold text-content-primary">ChapterOps</h1>
+          <p className="text-sm text-content-secondary mt-1">Create your account</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+          <div className="mb-4 p-3 bg-red-900/30 border border-[var(--color-border)] text-red-400 rounded-md text-sm">
             {error}
           </div>
         )}
@@ -106,72 +106,72 @@ export default function Register() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="first_name" className="block text-sm font-medium text-content-secondary">
                 First Name
               </label>
               <input
                 id="first_name"
                 type="text"
                 {...register("first_name")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
               {errors.first_name && (
-                <p className="mt-1 text-xs text-red-600">{errors.first_name.message}</p>
+                <p className="mt-1 text-xs text-red-400">{errors.first_name.message}</p>
               )}
             </div>
             <div>
-              <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="last_name" className="block text-sm font-medium text-content-secondary">
                 Last Name
               </label>
               <input
                 id="last_name"
                 type="text"
                 {...register("last_name")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
               {errors.last_name && (
-                <p className="mt-1 text-xs text-red-600">{errors.last_name.message}</p>
+                <p className="mt-1 text-xs text-red-400">{errors.last_name.message}</p>
               )}
             </div>
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-content-secondary">
               Email
             </label>
             <input
               id="email"
               type="email"
               {...register("email")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
             {errors.email && (
-              <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
+              <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-content-secondary">
               Password
             </label>
             <input
               id="password"
               type="password"
               {...register("password")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
             {errors.password && (
-              <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
+              <p className="mt-1 text-xs text-red-400">{errors.password.message}</p>
             )}
             <ul className="mt-2 space-y-1">
               {passwordRequirements.map((req) => {
                 const met = req.test(password);
                 return (
                   <li key={req.label} className="flex items-center gap-2 text-xs">
-                    <span className={met ? "text-green-600" : "text-gray-400"}>
+                    <span className={met ? "text-green-400" : "text-content-muted"}>
                       {met ? "\u2713" : "\u25CB"}
                     </span>
-                    <span className={met ? "text-green-700" : "text-gray-500"}>
+                    <span className={met ? "text-green-400" : "text-content-secondary"}>
                       {req.label}
                     </span>
                   </li>
@@ -181,58 +181,58 @@ export default function Register() {
           </div>
 
           <div>
-            <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="confirm_password" className="block text-sm font-medium text-content-secondary">
               Confirm Password
             </label>
             <input
               id="confirm_password"
               type="password"
               {...register("confirm_password")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
             {errors.confirm_password && (
-              <p className="mt-1 text-xs text-red-600">{errors.confirm_password.message}</p>
+              <p className="mt-1 text-xs text-red-400">{errors.confirm_password.message}</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Phone <span className="text-gray-400 font-normal">(optional)</span>
+            <label htmlFor="phone" className="block text-sm font-medium text-content-secondary">
+              Phone <span className="text-content-muted font-normal">(optional)</span>
             </label>
             <input
               id="phone"
               type="tel"
               {...register("phone")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
           </div>
 
           <div>
-            <label htmlFor="initiation_date" className="block text-sm font-medium text-gray-700">
-              Initiation Date <span className="text-gray-400 font-normal">(optional)</span>
+            <label htmlFor="initiation_date" className="block text-sm font-medium text-content-secondary">
+              Initiation Date <span className="text-content-muted font-normal">(optional)</span>
             </label>
             <input
               id="initiation_date"
               type="date"
               {...register("initiation_date")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-content-secondary">
               When were you initiated into your organization? This helps us set your membership status.
             </p>
           </div>
 
           <div>
-            <label htmlFor="invite_code" className="block text-sm font-medium text-gray-700">
-              Invite Code <span className="text-gray-400 font-normal">(optional)</span>
+            <label htmlFor="invite_code" className="block text-sm font-medium text-content-secondary">
+              Invite Code <span className="text-content-muted font-normal">(optional)</span>
             </label>
             <input
               id="invite_code"
               type="text"
               {...register("invite_code")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border-brand)] px-3 py-2 shadow-glass focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-content-secondary">
               Have an invite code from your chapter? Enter it here to join automatically.
             </p>
           </div>
@@ -246,7 +246,7 @@ export default function Register() {
           </button>
         </form>
 
-        <p className="text-sm text-gray-600 mt-6 text-center">
+        <p className="text-sm text-content-secondary mt-6 text-center">
           Already have an account?{" "}
           <Link to="/login" className="text-primary-600 hover:underline font-medium">
             Sign in

@@ -56,14 +56,14 @@ export default function NotificationCard({
     <div
       onClick={handleClick}
       className={`
-        relative px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer
+        relative px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer
         ${!notification.is_read ? "bg-brand-primary-light border-l-4 border-brand-primary" : "border-l-4 border-transparent"}
       `}
     >
       {/* Delete button */}
       <button
         onClick={handleDelete}
-        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+        className="absolute top-3 right-3 text-content-muted hover:text-content-secondary"
         aria-label="Delete notification"
       >
         <svg
@@ -84,15 +84,15 @@ export default function NotificationCard({
       <div className="pr-8">
         <div className="flex items-start justify-between mb-1">
           <h4
-            className={`text-sm ${!notification.is_read ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}
+            className={`text-sm ${!notification.is_read ? "font-semibold text-content-primary" : "font-medium text-content-secondary"}`}
           >
             {notification.title}
           </h4>
         </div>
 
-        <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
+        <p className="text-sm text-content-secondary mb-2">{notification.message}</p>
 
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-content-muted">
           {formatRelativeTime(notification.created_at)}
         </p>
       </div>

@@ -62,7 +62,7 @@ export default function NotificationBell() {
       {/* Bell Button */}
       <button
         onClick={handleToggle}
-        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        className="relative p-2 text-content-secondary hover:text-content-primary hover:bg-white/10 rounded-lg transition-colors"
         aria-label="Notifications"
       >
         {/* Bell Icon */}
@@ -94,10 +94,10 @@ export default function NotificationBell() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] overflow-hidden">
+        <div className="absolute right-0 mt-2 w-96 bg-surface-card-solid border border-[var(--color-border)] rounded-lg shadow-lg z-[9999] overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-            <h3 className="text-sm font-semibold text-gray-900">
+          <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between bg-white/5">
+            <h3 className="text-sm font-semibold text-content-primary">
               Notifications
             </h3>
             {notifications.length > 0 && unreadCount > 0 && (
@@ -113,15 +113,15 @@ export default function NotificationBell() {
           {/* Notification List */}
           <div className="max-h-96 overflow-y-auto">
             {isLoading ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
+              <div className="px-4 py-8 text-center text-sm text-content-muted">
                 Loading...
               </div>
             ) : notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
+              <div className="px-4 py-8 text-center text-sm text-content-muted">
                 No notifications yet
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-white/5">
                 {notifications.map((notification) => (
                   <NotificationCard
                     key={notification.id}

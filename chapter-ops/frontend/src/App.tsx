@@ -35,8 +35,8 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-gray-500 text-lg">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen bg-surface-deep">
+        <div className="text-content-muted text-lg">Loading...</div>
       </div>
     );
   }

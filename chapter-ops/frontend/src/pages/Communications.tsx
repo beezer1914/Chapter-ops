@@ -62,16 +62,16 @@ export default function Communications() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 font-heading">Communications</h1>
-          <p className="text-gray-500 mt-1">Announcements and chapter-wide messaging.</p>
+          <h1 className="text-3xl font-bold text-content-primary font-heading">Communications</h1>
+          <p className="text-content-secondary mt-1">Announcements and chapter-wide messaging.</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
           <button
             onClick={() => setTab("announcements")}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-              tab === "announcements" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              tab === "announcements" ? "bg-surface-card-solid text-content-primary shadow-glass" : "text-content-secondary hover:text-content-secondary"
             }`}
           >
             <Megaphone className="w-4 h-4" />
@@ -81,7 +81,7 @@ export default function Communications() {
             <button
               onClick={() => setTab("email_blast")}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                tab === "email_blast" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                tab === "email_blast" ? "bg-surface-card-solid text-content-primary shadow-glass" : "text-content-secondary hover:text-content-secondary"
               }`}
             >
               <Mail className="w-4 h-4" />
@@ -174,7 +174,7 @@ function AnnouncementsTab({
         <div className="flex justify-end">
           <button
             onClick={openCreate}
-            className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary-main text-white font-semibold rounded-xl shadow-md ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary-main text-white font-semibold rounded-xl shadow-glass ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark transition-colors"
           >
             <Plus className="w-4 h-4" />
             New Announcement
@@ -183,7 +183,7 @@ function AnnouncementsTab({
       )}
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
+        <div className="p-4 bg-red-900/20 border border-red-900/30 rounded-xl text-sm text-red-400">{error}</div>
       )}
 
       {loading ? (
@@ -192,8 +192,8 @@ function AnnouncementsTab({
         </div>
       ) : announcements.length === 0 ? (
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/40 p-12 text-center">
-          <Megaphone className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No announcements yet.</p>
+          <Megaphone className="w-12 h-12 text-content-muted mx-auto mb-3" />
+          <p className="text-content-secondary text-sm">No announcements yet.</p>
         </div>
       ) : (
         announcements.map((a) => (
@@ -239,8 +239,8 @@ function AnnouncementCard({
   const displayBody = isLong && !expanded ? a.body.slice(0, 300) + "…" : a.body;
 
   return (
-    <div className={`bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border p-6 ${
-      a.is_pinned ? "border-brand-primary-main/30 ring-1 ring-brand-primary-main/20" : "border-white/40"
+    <div className={`bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border p-6 ${
+      a.is_pinned ? "border-brand-primary-main/30 ring-1 ring-brand-primary-main/20" : "border-[var(--color-border)]"
     }`}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
@@ -251,11 +251,11 @@ function AnnouncementCard({
               </span>
             )}
             {a.expires_at && (
-              <span className="text-xs text-gray-400">Expires {formatDate(a.expires_at)}</span>
+              <span className="text-xs text-content-muted">Expires {formatDate(a.expires_at)}</span>
             )}
           </div>
-          <h3 className="text-base font-semibold text-gray-900">{a.title}</h3>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h3 className="text-base font-semibold text-content-primary">{a.title}</h3>
+          <p className="text-sm text-content-secondary mt-0.5">
             {a.author ? `${a.author.first_name} ${a.author.last_name}` : "Unknown"} · {formatDate(a.created_at)}
           </p>
         </div>
@@ -265,19 +265,19 @@ function AnnouncementCard({
             <button
               onClick={onTogglePin}
               title={a.is_pinned ? "Unpin" : "Pin"}
-              className="p-2 text-gray-400 hover:text-brand-primary-dark hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-content-muted hover:text-brand-primary-dark hover:bg-white/10 rounded-lg transition-colors"
             >
               {a.is_pinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
             </button>
             <button
               onClick={onEdit}
-              className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-content-muted hover:text-content-secondary hover:bg-white/10 rounded-lg transition-colors"
             >
               <Pencil className="w-4 h-4" />
             </button>
             <button
               onClick={onDelete}
-              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 text-content-muted hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -285,7 +285,7 @@ function AnnouncementCard({
         )}
       </div>
 
-      <div className="mt-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+      <div className="mt-4 text-sm text-content-secondary leading-relaxed whitespace-pre-wrap">
         {displayBody}
       </div>
       {isLong && (
@@ -349,47 +349,47 @@ function AnnouncementFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-content-primary">
             {editing ? "Edit Announcement" : "New Announcement"}
           </h2>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-1.5 text-content-muted hover:text-content-secondary hover:bg-white/10 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={(e) => void handleSubmit(e)} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+            <div className="p-3 bg-red-900/20 border border-red-900/30 rounded-lg text-sm text-red-400">{error}</div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Title</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="Announcement title"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
+              className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Body</label>
+            <label className="block text-sm font-medium text-content-secondary mb-1">Body</label>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               required
               rows={5}
               placeholder="Write your announcement here…"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 resize-none"
+              className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 resize-none"
             />
           </div>
 
           <div className="flex items-center gap-6">
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-content-secondary">
               <input
                 type="checkbox"
                 checked={isPinned}
@@ -400,12 +400,12 @@ function AnnouncementFormModal({
             </label>
 
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-500 mb-1">Expires (optional)</label>
+              <label className="block text-xs font-medium text-content-secondary mb-1">Expires (optional)</label>
               <input
                 type="datetime-local"
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
-                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
+                className="w-full px-2 py-1.5 border border-[var(--color-border-brand)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
               />
             </div>
           </div>
@@ -414,7 +414,7 @@ function AnnouncementFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5 transition-colors"
             >
               Cancel
             </button>
@@ -490,14 +490,14 @@ function EmailBlastTab() {
 
   return (
     <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/40 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-5">Send Email Blast</h2>
+      <h2 className="text-lg font-semibold text-content-primary mb-5">Send Email Blast</h2>
 
       {result && (
-        <div className="mb-5 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
-          <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+        <div className="mb-5 p-4 bg-green-900/20 border border-green-900/30 rounded-xl flex items-start gap-3">
+          <CheckCircle className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-green-800">Email sent!</p>
-            <p className="text-sm text-green-700 mt-0.5">
+            <p className="font-semibold text-green-400">Email sent!</p>
+            <p className="text-sm text-green-400 mt-0.5">
               {result.sent} delivered{result.failed > 0 && `, ${result.failed} failed`} out of {result.total} recipients.
             </p>
           </div>
@@ -505,29 +505,29 @@ function EmailBlastTab() {
       )}
 
       {error && (
-        <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
+        <div className="mb-5 p-3 bg-red-900/20 border border-red-900/30 rounded-xl text-sm text-red-400">{error}</div>
       )}
 
       <form onSubmit={(e) => void handleSend(e)} className="space-y-5">
         {/* Audience */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Audience</label>
+          <label className="block text-sm font-medium text-content-secondary mb-1.5">Audience</label>
           <div className="relative">
             <select
               value={audience}
               onChange={(e) => handleAudienceChange(e.target.value as EmailBlastAudience)}
-              className="w-full appearance-none px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 pr-8"
+              className="w-full appearance-none px-3 py-2.5 border border-[var(--color-border-brand)] rounded-lg text-sm bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 pr-8"
             >
               {AUDIENCE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label} — {o.description}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted pointer-events-none" />
           </div>
-          <p className="mt-1.5 text-xs text-gray-500">
+          <p className="mt-1.5 text-xs text-content-secondary">
             {previewLoading ? "Counting recipients…" : preview ? (
               <span>
-                <span className="font-semibold text-gray-700">{preview.count}</span> recipient{preview.count !== 1 ? "s" : ""} will receive this email.
+                <span className="font-semibold text-content-secondary">{preview.count}</span> recipient{preview.count !== 1 ? "s" : ""} will receive this email.
               </span>
             ) : null}
           </p>
@@ -535,30 +535,30 @@ function EmailBlastTab() {
 
         {/* Subject */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
+          <label className="block text-sm font-medium text-content-secondary mb-1.5">Subject</label>
           <input
             type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             required
             placeholder="e.g. Important Chapter Update"
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
+            className="w-full px-3 py-2.5 border border-[var(--color-border-brand)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
           />
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-content-muted">
             Recipients will see: <span className="font-mono">[{"{Chapter Name}"}] {subject || "Your subject"}</span>
           </p>
         </div>
 
         {/* Body */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Message</label>
+          <label className="block text-sm font-medium text-content-secondary mb-1.5">Message</label>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             required
             rows={8}
             placeholder="Write your message here…"
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 resize-none"
+            className="w-full px-3 py-2.5 border border-[var(--color-border-brand)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30 resize-none"
           />
         </div>
 
@@ -566,7 +566,7 @@ function EmailBlastTab() {
           <button
             type="submit"
             disabled={sending || (preview?.count === 0)}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-brand-primary-main rounded-xl shadow-md ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-brand-primary-main rounded-xl shadow-glass ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Mail className="w-4 h-4" />
             {sending ? "Sending…" : `Send to ${preview?.count ?? "?"} Recipients`}

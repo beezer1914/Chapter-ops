@@ -12,7 +12,7 @@ export default function ProtectedRoute({ children, requireChapter = true }: Prot
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-content-muted">Loading...</div>
       </div>
     );
   }

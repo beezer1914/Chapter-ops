@@ -44,11 +44,11 @@ const ROLE_HIERARCHY: Record<string, number> = {
 };
 
 const STATUS_CONFIG: Record<InvoiceStatus, { label: string; bg: string; text: string; icon: typeof Clock }> = {
-  draft: { label: "Draft", bg: "bg-gray-100", text: "text-gray-700", icon: FileText },
-  sent: { label: "Sent", bg: "bg-blue-100", text: "text-blue-700", icon: Send },
-  paid: { label: "Paid", bg: "bg-emerald-100", text: "text-emerald-700", icon: CheckCircle2 },
-  overdue: { label: "Overdue", bg: "bg-red-100", text: "text-red-700", icon: AlertCircle },
-  cancelled: { label: "Cancelled", bg: "bg-gray-100", text: "text-gray-500", icon: XCircle },
+  draft: { label: "Draft", bg: "bg-gray-800/50", text: "text-content-muted", icon: FileText },
+  sent: { label: "Sent", bg: "bg-blue-900/30", text: "text-blue-400", icon: Send },
+  paid: { label: "Paid", bg: "bg-emerald-900/30", text: "text-emerald-400", icon: CheckCircle2 },
+  overdue: { label: "Overdue", bg: "bg-red-900/30", text: "text-red-400", icon: AlertCircle },
+  cancelled: { label: "Cancelled", bg: "bg-gray-800/50", text: "text-content-muted", icon: XCircle },
 };
 
 function formatDate(iso: string): string {
@@ -73,17 +73,17 @@ export default function Invoices() {
       <div className="max-w-7xl mx-auto anim-section-reveal">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-heading font-bold text-gray-900">Invoices</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-heading font-bold text-content-primary">Invoices</h1>
+            <p className="text-sm text-content-secondary mt-1">
               {canManage ? "Create and manage dues invoices for chapter members." : "View your invoices and payment status."}
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-900/30 text-red-400 rounded-lg text-sm">
             {error}
-            <button onClick={() => setError(null)} className="ml-2 underline text-red-600">Dismiss</button>
+            <button onClick={() => setError(null)} className="ml-2 underline text-red-400">Dismiss</button>
           </div>
         )}
 
@@ -142,23 +142,23 @@ function MemberView({ setError }: { setError: (e: string | null) => void }) {
   const unpaid = invoices.filter((i) => i.status === "sent" || i.status === "overdue");
   const totalOwed = unpaid.reduce((sum, i) => sum + parseFloat(i.amount), 0);
 
-  if (loading) return <p className="text-gray-500 text-sm py-12 text-center">Loading invoices...</p>;
+  if (loading) return <p className="text-content-secondary text-sm py-12 text-center">Loading invoices...</p>;
 
   return (
     <div className="space-y-6">
       {/* Summary banner */}
       {unpaid.length > 0 && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-5 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-900/30 rounded-xl p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-amber-600" />
+            <div className="w-10 h-10 rounded-xl bg-amber-900/30 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-amber-800">Outstanding Balance</p>
-              <p className="text-2xl font-heading font-bold text-amber-900">{formatCurrency(totalOwed)}</p>
+              <p className="text-sm font-medium text-amber-400">Outstanding Balance</p>
+              <p className="text-2xl font-heading font-bold text-amber-300">{formatCurrency(totalOwed)}</p>
             </div>
           </div>
-          <p className="text-sm text-amber-700">{unpaid.length} unpaid invoice{unpaid.length !== 1 ? "s" : ""}</p>
+          <p className="text-sm text-amber-400">{unpaid.length} unpaid invoice{unpaid.length !== 1 ? "s" : ""}</p>
         </div>
       )}
 
@@ -168,7 +168,7 @@ function MemberView({ setError }: { setError: (e: string | null) => void }) {
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition ${filter === s ? "bg-brand-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition ${filter === s ? "bg-brand-primary text-white" : "bg-white/10 text-content-secondary hover:bg-white/15"}`}
           >
             {s === "" ? "All" : STATUS_CONFIG[s as InvoiceStatus]?.label}
           </button>
@@ -178,8 +178,8 @@ function MemberView({ setError }: { setError: (e: string | null) => void }) {
       {/* Invoice list */}
       {invoices.length === 0 ? (
         <div className="text-center py-16">
-          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No invoices found.</p>
+          <FileText className="w-12 h-12 text-content-muted mx-auto mb-3" />
+          <p className="text-content-secondary text-sm">No invoices found.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -188,21 +188,21 @@ function MemberView({ setError }: { setError: (e: string | null) => void }) {
             const StatusIcon = cfg.icon;
             const canPay = inv.status === "sent" || inv.status === "overdue";
             return (
-              <div key={inv.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition">
+              <div key={inv.id} className="bg-surface-card-solid border border-[var(--color-border)] rounded-xl p-5 hover:border-[var(--color-border-brand)] transition">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="text-xs font-mono text-gray-400">{inv.invoice_number}</span>
+                      <span className="text-xs font-mono text-content-muted">{inv.invoice_number}</span>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
                         <StatusIcon className="w-3 h-3" />
                         {cfg.label}
                       </span>
                     </div>
-                    <p className="font-medium text-gray-900">{inv.description}</p>
-                    <p className="text-sm text-gray-500 mt-1">Due {formatDate(inv.due_date)}</p>
+                    <p className="font-medium text-content-primary">{inv.description}</p>
+                    <p className="text-sm text-content-secondary mt-1">Due {formatDate(inv.due_date)}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <p className="text-xl font-heading font-bold text-gray-900">{formatCurrency(inv.amount)}</p>
+                    <p className="text-xl font-heading font-bold text-content-primary">{formatCurrency(inv.amount)}</p>
                     {canPay && (
                       <button
                         onClick={() => handlePay(inv)}
@@ -392,7 +392,7 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
     setBulkFeeType(""); setBulkNotes(""); setBulkExcludeFinancial(true);
   }
 
-  if (loading) return <p className="text-gray-500 text-sm py-12 text-center">Loading invoices...</p>;
+  if (loading) return <p className="text-content-secondary text-sm py-12 text-center">Loading invoices...</p>;
 
   const draftCount = invoices.filter((i) => i.status === "draft").length;
 
@@ -445,7 +445,7 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
         </button>
         <button
           onClick={() => setShowForm(showForm === "bulk" ? null : "bulk")}
-          className="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+          className="inline-flex items-center gap-2 bg-surface-card-solid border border-[var(--color-border-brand)] text-content-secondary px-4 py-2 rounded-lg text-sm font-medium hover:bg-white/5 transition"
         >
           <Users className="w-4 h-4" />
           Bulk Invoice
@@ -453,7 +453,7 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
         {draftCount > 0 && (
           <button
             onClick={handleBulkSend}
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+            className="inline-flex items-center gap-2 bg-brand-primary-main text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-primary-dark transition"
           >
             <Send className="w-4 h-4" />
             Send All Drafts ({draftCount})
@@ -466,7 +466,7 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition ${filter === s ? "bg-brand-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition ${filter === s ? "bg-brand-primary text-white" : "bg-white/10 text-content-secondary hover:bg-white/15"}`}
             >
               {s === "" ? "All" : STATUS_CONFIG[s as InvoiceStatus]?.label}
             </button>
@@ -476,13 +476,13 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
 
       {/* Single invoice form */}
       {showForm === "single" && (
-        <form onSubmit={handleCreateSingle} className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-          <h3 className="font-heading font-bold text-gray-900">Create Invoice</h3>
+        <form onSubmit={handleCreateSingle} className="bg-surface-card-solid border border-[var(--color-border)] rounded-xl p-6 space-y-4">
+          <h3 className="font-heading font-bold text-content-primary">Create Invoice</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Member</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Member</label>
               <select value={formUserId} onChange={(e) => setFormUserId(e.target.value)} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary">
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary">
                 <option value="">Select member...</option>
                 {members.map((m) => (
                   <option key={m.user.id} value={m.user.id}>
@@ -492,26 +492,26 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Amount ($)</label>
               <input type="number" step="0.01" min="0.01" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Description</label>
               <input type="text" value={formDescription} onChange={(e) => setFormDescription(e.target.value)} required
                 placeholder="e.g., Spring 2026 Dues"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Due Date</label>
               <input type="date" value={formDueDate} onChange={(e) => setFormDueDate(e.target.value)} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
             </div>
             {feeTypes.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fee Type <span className="text-gray-400 font-normal">(optional)</span></label>
+                <label className="block text-sm font-medium text-content-secondary mb-1">Fee Type <span className="text-content-muted font-normal">(optional)</span></label>
                 <select value={formFeeType} onChange={(e) => setFormFeeType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary">
+                  className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary">
                   <option value="">None</option>
                   {feeTypes.map((ft: { id: string; name: string }) => (
                     <option key={ft.id} value={ft.id}>{ft.name}</option>
@@ -520,9 +520,9 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Notes <span className="text-content-muted font-normal">(optional)</span></label>
               <input type="text" value={formNotes} onChange={(e) => setFormNotes(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
             </div>
           </div>
           <div className="flex gap-3 pt-2">
@@ -531,7 +531,7 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
               {submitting ? "Creating..." : "Create Invoice"}
             </button>
             <button type="button" onClick={() => { setShowForm(null); resetSingleForm(); }}
-              className="text-gray-500 hover:text-gray-700 text-sm font-medium px-4 py-2">
+              className="text-content-secondary hover:text-content-secondary text-sm font-medium px-4 py-2">
               Cancel
             </button>
           </div>
@@ -540,31 +540,31 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
 
       {/* Bulk invoice form */}
       {showForm === "bulk" && (
-        <form onSubmit={handleCreateBulk} className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-          <h3 className="font-heading font-bold text-gray-900">Bulk Invoice — All Members</h3>
-          <p className="text-sm text-gray-500">This will create an invoice for every active member in the chapter.</p>
+        <form onSubmit={handleCreateBulk} className="bg-surface-card-solid border border-[var(--color-border)] rounded-xl p-6 space-y-4">
+          <h3 className="font-heading font-bold text-content-primary">Bulk Invoice — All Members</h3>
+          <p className="text-sm text-content-secondary">This will create an invoice for every active member in the chapter.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Amount ($) per member</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Amount ($) per member</label>
               <input type="number" step="0.01" min="0.01" value={bulkAmount} onChange={(e) => setBulkAmount(e.target.value)} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Due Date</label>
               <input type="date" value={bulkDueDate} onChange={(e) => setBulkDueDate(e.target.value)} required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Description</label>
               <input type="text" value={bulkDescription} onChange={(e) => setBulkDescription(e.target.value)} required
                 placeholder="e.g., Spring 2026 Chapter Dues"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
             </div>
             {feeTypes.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fee Type <span className="text-gray-400 font-normal">(optional)</span></label>
+                <label className="block text-sm font-medium text-content-secondary mb-1">Fee Type <span className="text-content-muted font-normal">(optional)</span></label>
                 <select value={bulkFeeType} onChange={(e) => setBulkFeeType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary">
+                  className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary">
                   <option value="">None</option>
                   {feeTypes.map((ft: { id: string; name: string }) => (
                     <option key={ft.id} value={ft.id}>{ft.name}</option>
@@ -573,14 +573,14 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className="block text-sm font-medium text-content-secondary mb-1">Notes <span className="text-content-muted font-normal">(optional)</span></label>
               <input type="text" value={bulkNotes} onChange={(e) => setBulkNotes(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
+                className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary" />
             </div>
           </div>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-content-secondary">
             <input type="checkbox" checked={bulkExcludeFinancial} onChange={(e) => setBulkExcludeFinancial(e.target.checked)}
-              className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary" />
+              className="rounded border-[var(--color-border-brand)] text-brand-primary focus:ring-brand-primary" />
             Skip members already marked as Financial or Exempt
           </label>
           <div className="flex gap-3 pt-2">
@@ -589,7 +589,7 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
               {submitting ? "Creating..." : `Invoice All Members (${members.length})`}
             </button>
             <button type="button" onClick={() => { setShowForm(null); resetBulkForm(); }}
-              className="text-gray-500 hover:text-gray-700 text-sm font-medium px-4 py-2">
+              className="text-content-secondary hover:text-content-secondary text-sm font-medium px-4 py-2">
               Cancel
             </button>
           </div>
@@ -599,8 +599,8 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
       {/* Invoice table */}
       {invoices.length === 0 ? (
         <div className="text-center py-16">
-          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No invoices yet. Create one to get started.</p>
+          <FileText className="w-12 h-12 text-content-muted mx-auto mb-3" />
+          <p className="text-content-secondary text-sm">No invoices yet. Create one to get started.</p>
         </div>
       ) : (
         <>
@@ -612,33 +612,33 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
           </div>
 
           {/* Desktop table */}
-          <div className="hidden md:block bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="hidden md:block bg-surface-card-solid border border-[var(--color-border)] rounded-xl overflow-hidden">
+            <table className="min-w-full divide-y divide-white/5">
+              <thead className="bg-white/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Invoice</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Member</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Due Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-content-secondary uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-white/5">
                 {invoices.map((inv) => {
                   const cfg = STATUS_CONFIG[inv.status as InvoiceStatus] ?? STATUS_CONFIG.draft;
                   const StatusIcon = cfg.icon;
                   return (
-                    <tr key={inv.id} className="hover:bg-gray-50 transition">
+                    <tr key={inv.id} className="hover:bg-white/5 transition">
                       <td className="px-6 py-4">
-                        <p className="text-xs font-mono text-gray-400">{inv.invoice_number}</p>
-                        <p className="text-sm font-medium text-gray-900 mt-0.5">{inv.description}</p>
+                        <p className="text-xs font-mono text-content-muted">{inv.invoice_number}</p>
+                        <p className="text-sm font-medium text-content-primary mt-0.5">{inv.description}</p>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
+                      <td className="px-6 py-4 text-sm text-content-secondary">
                         {inv.billed_user ? `${inv.billed_user.first_name} ${inv.billed_user.last_name}` : "—"}
                       </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">{formatCurrency(inv.amount)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{formatDate(inv.due_date)}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-content-primary">{formatCurrency(inv.amount)}</td>
+                      <td className="px-6 py-4 text-sm text-content-secondary">{formatDate(inv.due_date)}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
                           <StatusIcon className="w-3 h-3" />
@@ -649,19 +649,19 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
                         <div className="flex items-center justify-end gap-2">
                           {inv.status === "draft" && (
                             <button onClick={() => handleSend(inv.id)}
-                              className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                              className="text-xs text-blue-400 hover:text-blue-300 font-medium">
                               Send
                             </button>
                           )}
                           {(inv.status === "sent" || inv.status === "overdue") && (
                             <button onClick={() => handleMarkPaid(inv.id)}
-                              className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">
+                              className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">
                               Mark Paid
                             </button>
                           )}
                           {inv.status !== "paid" && inv.status !== "cancelled" && (
                             <button onClick={() => handleCancel(inv.id)}
-                              className="text-xs text-gray-400 hover:text-red-600 font-medium">
+                              className="text-xs text-content-muted hover:text-red-400 font-medium">
                               Cancel
                             </button>
                           )}
@@ -680,12 +680,12 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
       {chapterBills.length > 0 && (
         <div className="space-y-4 mt-8">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-purple-600" />
+            <div className="w-9 h-9 rounded-lg bg-purple-900/30 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <h2 className="text-lg font-heading font-bold text-gray-900">Regional Invoices</h2>
-              <p className="text-xs text-gray-500">Head tax and fees billed to your chapter by the region</p>
+              <h2 className="text-lg font-heading font-bold text-content-primary">Regional Invoices</h2>
+              <p className="text-xs text-content-secondary">Head tax and fees billed to your chapter by the region</p>
             </div>
           </div>
 
@@ -695,22 +695,22 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
               const cfg = STATUS_CONFIG[inv.status as InvoiceStatus] ?? STATUS_CONFIG.draft;
               const StatusIcon = cfg.icon;
               return (
-                <div key={inv.id} className="bg-white border border-purple-100 rounded-xl p-4">
+                <div key={inv.id} className="bg-surface-card-solid border border-purple-900/30 rounded-xl p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <span className="text-xs font-mono text-gray-400">{inv.invoice_number}</span>
-                      <p className="font-medium text-gray-900 mt-0.5">{inv.description}</p>
+                      <span className="text-xs font-mono text-content-muted">{inv.invoice_number}</span>
+                      <p className="font-medium text-content-primary mt-0.5">{inv.description}</p>
                     </div>
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
                       <StatusIcon className="w-3 h-3" />
                       {cfg.label}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
+                  <div className="flex items-center justify-between text-sm text-content-secondary mb-1">
                     <span>{inv.region?.name ?? "Region"}</span>
-                    <span className="font-semibold text-gray-900">{formatCurrency(inv.amount)}</span>
+                    <span className="font-semibold text-content-primary">{formatCurrency(inv.amount)}</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-gray-400">
+                  <div className="flex items-center justify-between text-xs text-content-muted">
                     <span>Due {formatDate(inv.due_date)}</span>
                     {inv.per_member_rate && inv.member_count != null && (
                       <span>${parseFloat(inv.per_member_rate).toFixed(2)} × {inv.member_count} members</span>
@@ -722,33 +722,33 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
           </div>
 
           {/* Desktop table */}
-          <div className="hidden md:block bg-white border border-purple-100 rounded-xl overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-purple-50/50">
+          <div className="hidden md:block bg-surface-card-solid border border-purple-900/30 rounded-xl overflow-hidden">
+            <table className="min-w-full divide-y divide-white/5">
+              <thead className="bg-purple-900/20">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Invoice</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Region</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Due Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-white/5">
                 {chapterBills.map((inv) => {
                   const cfg = STATUS_CONFIG[inv.status as InvoiceStatus] ?? STATUS_CONFIG.draft;
                   const StatusIcon = cfg.icon;
                   return (
-                    <tr key={inv.id} className="hover:bg-gray-50 transition">
+                    <tr key={inv.id} className="hover:bg-white/5 transition">
                       <td className="px-6 py-4">
-                        <p className="text-xs font-mono text-gray-400">{inv.invoice_number}</p>
-                        <p className="text-sm font-medium text-gray-900 mt-0.5">{inv.description}</p>
+                        <p className="text-xs font-mono text-content-muted">{inv.invoice_number}</p>
+                        <p className="text-sm font-medium text-content-primary mt-0.5">{inv.description}</p>
                         {inv.per_member_rate && inv.member_count != null && (
-                          <p className="text-xs text-gray-400 mt-0.5">${parseFloat(inv.per_member_rate).toFixed(2)} × {inv.member_count} members</p>
+                          <p className="text-xs text-content-muted mt-0.5">${parseFloat(inv.per_member_rate).toFixed(2)} × {inv.member_count} members</p>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{inv.region?.name ?? "—"}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">{formatCurrency(inv.amount)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{formatDate(inv.due_date)}</td>
+                      <td className="px-6 py-4 text-sm text-content-secondary">{inv.region?.name ?? "—"}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-content-primary">{formatCurrency(inv.amount)}</td>
+                      <td className="px-6 py-4 text-sm text-content-secondary">{formatDate(inv.due_date)}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
                           <StatusIcon className="w-3 h-3" />
@@ -773,19 +773,19 @@ function SummaryCard({ label, value, sub, icon, color }: {
   label: string; value: string; sub: string; icon: React.ReactNode; color: string;
 }) {
   const colors: Record<string, string> = {
-    blue: "bg-blue-50 text-blue-600",
-    emerald: "bg-emerald-50 text-emerald-600",
-    amber: "bg-amber-50 text-amber-600",
-    red: "bg-red-50 text-red-600",
+    blue: "bg-blue-900/30 text-blue-400",
+    emerald: "bg-emerald-900/30 text-emerald-400",
+    amber: "bg-amber-900/30 text-amber-400",
+    red: "bg-red-900/30 text-red-400",
   };
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
+    <div className="bg-surface-card-solid border border-[var(--color-border)] rounded-xl p-4">
       <div className="flex items-center gap-3 mb-2">
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors[color]}`}>{icon}</div>
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{label}</span>
+        <span className="text-xs font-medium text-content-secondary uppercase tracking-wider">{label}</span>
       </div>
-      <p className="text-xl font-heading font-bold text-gray-900">{value}</p>
-      <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+      <p className="text-xl font-heading font-bold text-content-primary">{value}</p>
+      <p className="text-xs text-content-muted mt-0.5">{sub}</p>
     </div>
   );
 }
@@ -800,32 +800,32 @@ function InvoiceCard({ invoice, onSend, onCancel, onMarkPaid }: {
   const StatusIcon = cfg.icon;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
+    <div className="bg-surface-card-solid border border-[var(--color-border)] rounded-xl p-4">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <span className="text-xs font-mono text-gray-400">{invoice.invoice_number}</span>
-          <p className="font-medium text-gray-900 mt-0.5">{invoice.description}</p>
+          <span className="text-xs font-mono text-content-muted">{invoice.invoice_number}</span>
+          <p className="font-medium text-content-primary mt-0.5">{invoice.description}</p>
         </div>
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
           <StatusIcon className="w-3 h-3" />
           {cfg.label}
         </span>
       </div>
-      <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+      <div className="flex items-center justify-between text-sm text-content-secondary mb-3">
         <span>{invoice.billed_user ? `${invoice.billed_user.first_name} ${invoice.billed_user.last_name}` : "—"}</span>
-        <span className="font-semibold text-gray-900">{formatCurrency(invoice.amount)}</span>
+        <span className="font-semibold text-content-primary">{formatCurrency(invoice.amount)}</span>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400">Due {formatDate(invoice.due_date)}</span>
+        <span className="text-xs text-content-muted">Due {formatDate(invoice.due_date)}</span>
         <div className="flex gap-2">
           {invoice.status === "draft" && (
-            <button onClick={() => onSend(invoice.id)} className="text-xs text-blue-600 font-medium">Send</button>
+            <button onClick={() => onSend(invoice.id)} className="text-xs text-blue-400 font-medium">Send</button>
           )}
           {(invoice.status === "sent" || invoice.status === "overdue") && (
-            <button onClick={() => onMarkPaid(invoice.id)} className="text-xs text-emerald-600 font-medium">Mark Paid</button>
+            <button onClick={() => onMarkPaid(invoice.id)} className="text-xs text-emerald-400 font-medium">Mark Paid</button>
           )}
           {invoice.status !== "paid" && invoice.status !== "cancelled" && (
-            <button onClick={() => onCancel(invoice.id)} className="text-xs text-gray-400 hover:text-red-600 font-medium">Cancel</button>
+            <button onClick={() => onCancel(invoice.id)} className="text-xs text-content-muted hover:text-red-400 font-medium">Cancel</button>
           )}
         </div>
       </div>

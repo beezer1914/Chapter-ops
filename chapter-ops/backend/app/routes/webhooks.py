@@ -172,7 +172,7 @@ def _create_donation_from_session(session: dict, metadata: dict) -> None:
         return
 
     amount_cents = session.get("amount_total", 0)
-    amount = amount_cents / 100.0
+    amount = Decimal(str(amount_cents)) / Decimal("100")
 
     donation = Donation(
         chapter_id=chapter_id,

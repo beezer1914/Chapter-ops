@@ -17,12 +17,12 @@ import type {
 import { Edit2, UserX } from "lucide-react";
 
 const ROLE_COLORS: Record<MemberRole, string> = {
-  admin: "bg-red-100 text-red-700",
-  president: "bg-purple-100 text-purple-700",
+  admin: "bg-red-900/30 text-red-400",
+  president: "bg-purple-900/30 text-purple-400",
   vice_president: "bg-brand-primary-light text-brand-primary-dark",
-  treasurer: "bg-blue-100 text-blue-700",
-  secretary: "bg-teal-100 text-teal-700",
-  member: "bg-gray-100 text-gray-700",
+  treasurer: "bg-blue-900/30 text-blue-400",
+  secretary: "bg-teal-900/30 text-teal-400",
+  member: "bg-gray-800/50 text-content-muted",
 };
 
 const FINANCIAL_LABELS: Record<FinancialStatus, string> = {
@@ -33,10 +33,10 @@ const FINANCIAL_LABELS: Record<FinancialStatus, string> = {
 };
 
 const FINANCIAL_COLORS: Record<FinancialStatus, string> = {
-  financial: "bg-green-100 text-green-700",
-  not_financial: "bg-red-100 text-red-700",
-  neophyte: "bg-yellow-100 text-yellow-700",
-  exempt: "bg-gray-100 text-gray-600",
+  financial: "bg-green-900/30 text-green-400",
+  not_financial: "bg-red-900/30 text-red-400",
+  neophyte: "bg-yellow-900/30 text-yellow-400",
+  exempt: "bg-gray-800/50 text-content-muted",
 };
 
 const ROLE_HIERARCHY: Record<MemberRole, number> = {
@@ -55,9 +55,9 @@ const MEMBER_TYPE_LABELS: Record<MemberType, string> = {
 };
 
 const MEMBER_TYPE_COLORS: Record<MemberType, string> = {
-  collegiate: "bg-sky-100 text-sky-700",
-  graduate: "bg-amber-100 text-amber-700",
-  life: "bg-emerald-100 text-emerald-700",
+  collegiate: "bg-sky-900/30 text-sky-400",
+  graduate: "bg-amber-900/30 text-amber-400",
+  life: "bg-emerald-900/30 text-emerald-400",
 };
 
 export default function Members() {
@@ -165,15 +165,15 @@ export default function Members() {
       <div className="max-w-6xl mx-auto animate-fade-in">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-heading font-extrabold text-gray-900 tracking-tight">Members Directory</h2>
-            <p className="text-gray-500 mt-1">Manage your chapter's roster and roles.</p>
+            <h2 className="text-3xl font-heading font-extrabold text-content-primary tracking-tight">Members Directory</h2>
+            <p className="text-content-secondary mt-1">Manage your chapter's roster and roles.</p>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg text-sm font-medium animate-fade-in flex justify-between items-center shadow-sm">
+          <div className="mb-6 p-4 bg-red-900/20 border-l-4 border-red-500 text-red-400 rounded-lg text-sm font-medium animate-fade-in flex justify-between items-center shadow-glass">
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="text-red-700 hover:text-red-900 text-lg font-bold px-2">
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300 text-lg font-bold px-2">
               &times;
             </button>
           </div>
@@ -185,18 +185,18 @@ export default function Members() {
           </div>
         ) : members.length === 0 ? (
           <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/40 p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-content-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No Members Yet</h3>
-            <p className="text-sm text-gray-500">Go to Invites to add members to your chapter.</p>
+            <h3 className="text-lg font-medium text-content-primary mb-1">No Members Yet</h3>
+            <p className="text-sm text-content-secondary">Go to Invites to add members to your chapter.</p>
           </div>
         ) : (
           <>
             {/* ── Mobile card list ─────────────────────────────── */}
             <div className="md:hidden space-y-3">
               {members.map((member) => (
-                <div key={member.id} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-glass border border-gray-100 p-4">
+                <div key={member.id} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     {member.user.profile_picture_url ? (
                       <img
@@ -211,12 +211,12 @@ export default function Members() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{member.user.full_name}</p>
+                        <p className="text-sm font-semibold text-content-primary truncate">{member.user.full_name}</p>
                         {member.user_id === user?.id && (
                           <span className="text-xs text-brand-primary-main/60 bg-brand-primary-50 px-2 py-0.5 rounded-md font-semibold shrink-0">You</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 truncate">{member.user.email}</p>
+                      <p className="text-xs text-content-secondary truncate">{member.user.email}</p>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -231,7 +231,7 @@ export default function Members() {
                       {MEMBER_TYPE_LABELS[member.member_type ?? "collegiate"]}
                     </span>
                     {member.join_date && (
-                      <span className="text-xs text-gray-500 flex items-center">
+                      <span className="text-xs text-content-secondary flex items-center">
                         Joined {new Date(member.join_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}
                       </span>
                     )}
@@ -239,14 +239,14 @@ export default function Members() {
                   {customFieldDefs.some((f) => member.custom_fields?.[f.key]) && (
                     <div className="mt-2 space-y-0.5">
                       {customFieldDefs.filter((f) => member.custom_fields?.[f.key]).map((f) => (
-                        <p key={f.key} className="text-xs text-gray-500">
-                          <span className="font-medium text-gray-600">{f.label}:</span> {String(member.custom_fields[f.key])}
+                        <p key={f.key} className="text-xs text-content-secondary">
+                          <span className="font-medium text-content-secondary">{f.label}:</span> {String(member.custom_fields[f.key])}
                         </p>
                       ))}
                     </div>
                   )}
                   {canManage && member.user_id !== user?.id && (
-                    <div className="mt-3 flex gap-2 pt-3 border-t border-gray-100">
+                    <div className="mt-3 flex gap-2 pt-3 border-t border-[var(--color-border)]">
                       <button
                         onClick={() => openEdit(member)}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 text-brand-primary-main bg-brand-primary-50 hover:bg-brand-primary-100 py-2 rounded-lg transition-colors text-xs font-medium border border-brand-primary-200/50"
@@ -255,7 +255,7 @@ export default function Members() {
                       </button>
                       <button
                         onClick={() => handleDeactivate(member)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 text-red-600 bg-red-50 hover:bg-red-100 py-2 rounded-lg transition-colors text-xs font-medium border border-red-200/50"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 text-red-400 bg-red-900/20 hover:bg-red-900/30 py-2 rounded-lg transition-colors text-xs font-medium border border-red-200/50"
                       >
                         <UserX className="w-3.5 h-3.5" /> Remove
                       </button>
@@ -265,23 +265,24 @@ export default function Members() {
               ))}
             </div>
 
+
             {/* ── Desktop table ─────────────────────────────────── */}
-            <div className="hidden md:block bg-white/90 backdrop-blur-xl rounded-2xl shadow-glass border border-gray-100 overflow-hidden">
+            <div className="hidden md:block bg-white/90 backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50/80 backdrop-blur-sm">
+                <table className="min-w-full divide-y divide-white/5">
+                  <thead className="bg-white/5 backdrop-blur-sm">
                     <tr>
-                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Member</th>
-                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Financial Status</th>
-                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
+                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Member</th>
+                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Role</th>
+                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Financial Status</th>
+                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Type</th>
+                      <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Joined</th>
                       {canManage && (
-                        <th scope="col" className="px-6 py-5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th scope="col" className="px-6 py-5 text-right text-xs font-semibold text-content-secondary uppercase tracking-wider">Actions</th>
                       )}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-surface-card-solid divide-y divide-white/5">
                     {members.map((member) => (
                       <tr key={member.id} className="hover:bg-brand-primary-50/30 transition-colors group">
                         <td className="px-6 py-5 whitespace-nowrap">
@@ -300,12 +301,12 @@ export default function Members() {
                               )}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-semibold text-gray-900 group-hover:text-brand-primary-dark transition-colors">
+                              <div className="text-sm font-semibold text-content-primary group-hover:text-brand-primary-dark transition-colors">
                                 {member.user.full_name}
                               </div>
-                              <div className="text-sm text-gray-500">{member.user.email}</div>
+                              <div className="text-sm text-content-secondary">{member.user.email}</div>
                               {customFieldDefs.filter((f) => member.custom_fields?.[f.key]).map((f) => (
-                                <div key={f.key} className="text-xs text-gray-400">
+                                <div key={f.key} className="text-xs text-content-muted">
                                   <span className="font-medium">{f.label}:</span> {String(member.custom_fields[f.key])}
                                 </div>
                               ))}
@@ -328,7 +329,7 @@ export default function Members() {
                             {MEMBER_TYPE_LABELS[member.member_type ?? "collegiate"]}
                           </span>
                         </td>
-                        <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500 font-medium">
+                        <td className="px-6 py-5 whitespace-nowrap text-sm text-content-secondary font-medium">
                           {member.join_date
                             ? new Date(member.join_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
                             : "—"}
@@ -346,7 +347,7 @@ export default function Members() {
                                 </button>
                                 <button
                                   onClick={() => handleDeactivate(member)}
-                                  className="inline-flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors border border-red-200/50"
+                                  className="inline-flex items-center justify-center text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/30 p-2 rounded-lg transition-colors border border-red-200/50"
                                   title="Remove Member"
                                 >
                                   <UserX className="w-4 h-4" />
@@ -369,12 +370,12 @@ export default function Members() {
         {/* Premium Edit Modal */}
         {editingMember && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-primary-950/40 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform animate-slide-up flex flex-col max-h-[90vh]">
-              <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                <h3 className="text-lg font-heading font-semibold text-gray-900">
+            <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform animate-slide-up flex flex-col max-h-[90vh]">
+              <div className="px-6 py-5 border-b border-[var(--color-border)] bg-white/5 flex justify-between items-center">
+                <h3 className="text-lg font-heading font-semibold text-content-primary">
                   Edit Role & Status
                 </h3>
-                <button onClick={() => setEditingMember(null)} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setEditingMember(null)} className="text-content-muted hover:text-content-secondary">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
               </div>
@@ -385,27 +386,27 @@ export default function Members() {
                     <img
                       src={editingMember.user.profile_picture_url}
                       alt={editingMember.user.full_name}
-                      className="h-12 w-12 rounded-full object-cover shadow-sm"
+                      className="h-12 w-12 rounded-full object-cover shadow-glass"
                     />
                   ) : (
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-primary-light to-brand-primary-main flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-primary-light to-brand-primary-main flex items-center justify-center text-white font-bold text-lg shadow-glass">
                       {editingMember.user.full_name.charAt(0)}
                     </div>
                   )}
                   <div className="ml-4">
-                    <p className="text-sm font-semibold text-gray-900">{editingMember.user.full_name}</p>
-                    <p className="text-xs text-gray-500">{editingMember.user.email}</p>
+                    <p className="text-sm font-semibold text-content-primary">{editingMember.user.full_name}</p>
+                    <p className="text-xs text-content-secondary">{editingMember.user.email}</p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="block text-sm font-medium text-content-secondary mb-1.5">
                     Assigned Role
                   </label>
                   <select
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value as MemberRole)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
+                    className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
                   >
                     {assignableRoles.map((role) => (
                       <option key={role} value={role}>
@@ -416,13 +417,13 @@ export default function Members() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="block text-sm font-medium text-content-secondary mb-1.5">
                     Member Type
                   </label>
                   <select
                     value={editMemberType}
                     onChange={(e) => setEditMemberType(e.target.value as MemberType)}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
+                    className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
                   >
                     {(Object.keys(MEMBER_TYPE_LABELS) as MemberType[]).map((type) => (
                       <option key={type} value={type}>
@@ -431,14 +432,14 @@ export default function Members() {
                     ))}
                   </select>
                   {editMemberType === "life" && (
-                    <p className="mt-1.5 text-xs text-emerald-600 font-medium">
+                    <p className="mt-1.5 text-xs text-emerald-400 font-medium">
                       Life members are permanently exempt from dues.
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="block text-sm font-medium text-content-secondary mb-1.5">
                     Financial Status
                   </label>
                   <select
@@ -447,7 +448,7 @@ export default function Members() {
                       setEditFinancial(e.target.value as FinancialStatus)
                     }
                     disabled={editMemberType === "life"}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {(
                       Object.keys(FINANCIAL_LABELS) as FinancialStatus[]
@@ -458,33 +459,33 @@ export default function Members() {
                     ))}
                   </select>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-[var(--color-border)]">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Intake Officer</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Can access the MIP intake pipeline</p>
+                    <p className="text-sm font-medium text-content-secondary">Intake Officer</p>
+                    <p className="text-xs text-content-secondary mt-0.5">Can access the MIP intake pipeline</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setEditIntakeOfficer((v) => !v)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editIntakeOfficer ? "bg-brand-primary-main" : "bg-gray-300"}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editIntakeOfficer ? "bg-brand-primary-main" : "bg-white/10"}`}
                   >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editIntakeOfficer ? "translate-x-6" : "translate-x-1"}`} />
                   </button>
                 </div>
 
                 {customFieldDefs.length > 0 && (
-                  <div className="border-t border-gray-100 pt-4 space-y-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Custom Fields</p>
+                  <div className="border-t border-[var(--color-border)] pt-4 space-y-4">
+                    <p className="text-xs font-semibold text-content-secondary uppercase tracking-wider">Custom Fields</p>
                     {customFieldDefs.map((field) => (
                       <div key={field.key}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        <label className="block text-sm font-medium text-content-secondary mb-1.5">
                           {field.label}{field.required && <span className="text-red-500 ml-0.5">*</span>}
                         </label>
                         <input
                           type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
                           value={editCustomFields[field.key] ?? ""}
                           onChange={(e) => setEditCustomFields((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
+                          className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
                         />
                       </div>
                     ))}
@@ -492,17 +493,17 @@ export default function Members() {
                 )}
               </div>
 
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+              <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex justify-end gap-3">
                 <button
                   onClick={() => setEditingMember(null)}
-                  className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 shadow-sm transition-colors"
+                  className="px-5 py-2.5 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-xl hover:bg-white/5 shadow-glass transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-5 py-2.5 text-sm font-medium text-white bg-brand-primary-main rounded-xl hover:bg-brand-primary-dark shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center min-w-[120px]"
+                  className="px-5 py-2.5 text-sm font-medium text-white bg-brand-primary-main rounded-xl hover:bg-brand-primary-dark shadow-glass transition-colors disabled:opacity-50 flex items-center justify-center min-w-[120px]"
                 >
                   {saving ? (
                     <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">

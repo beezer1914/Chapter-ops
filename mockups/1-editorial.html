@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter Ops — Editorial Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════════════
+     RESET & BASE
+     ═══════════════════════════════════════════════════ */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --royal: #0f52ba;
+    --royal-light: #1a6bef;
+    --royal-faint: rgba(15, 82, 186, 0.07);
+    --royal-glow: rgba(15, 82, 186, 0.15);
+    --black: #0a0a0a;
+    --ink: #1a1a1a;
+    --charcoal: #2d2d2d;
+    --graphite: #4a4a4a;
+    --slate: #6b6b6b;
+    --silver: #999999;
+    --mist: #c8c8c8;
+    --fog: #e8e8e8;
+    --paper: #f4f3f1;
+    --white: #ffffff;
+    --cream: #faf9f7;
+
+    --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    --font-body: 'Instrument Sans', -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+    --sidebar-w: 260px;
+  }
+
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Dot grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, var(--mist) 0.8px, transparent 0.8px);
+    background-size: 24px 24px;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     ANIMATIONS
+     ═══════════════════════════════════════════════════ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-40px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes revealWidth {
+    from { width: 0; }
+  }
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes accentLine {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+  @keyframes barGrow {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(var(--bar-scale, 1)); }
+  }
+
+  .anim-fade-up {
+    animation: fadeUp 0.7s cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+  .anim-fade-in {
+    animation: fadeIn 0.6s ease both;
+  }
+  .anim-slide-left {
+    animation: slideInLeft 0.6s cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.5s; }
+  .delay-6 { animation-delay: 0.6s; }
+  .delay-7 { animation-delay: 0.7s; }
+  .delay-8 { animation-delay: 0.8s; }
+
+  /* ═══════════════════════════════════════════════════
+     SIDEBAR
+     ═══════════════════════════════════════════════════ */
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--black);
+    color: var(--white);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    animation: slideInLeft 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+
+  .sidebar-brand {
+    padding: 36px 28px 32px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .sidebar-brand-name {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .sidebar-brand-name span {
+    color: var(--royal-light);
+  }
+
+  .sidebar-brand-chapter {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--silver);
+    margin-top: 8px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 28px;
+    text-decoration: none;
+    color: var(--silver);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .sidebar-nav a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: var(--royal);
+    transition: height 0.2s ease;
+  }
+
+  .sidebar-nav a:hover {
+    color: var(--white);
+    background: rgba(255,255,255,0.04);
+  }
+
+  .sidebar-nav a:hover::before {
+    height: 24px;
+  }
+
+  .sidebar-nav a.active {
+    color: var(--white);
+    background: rgba(255,255,255,0.06);
+  }
+
+  .sidebar-nav a.active::before {
+    height: 24px;
+    background: var(--royal);
+  }
+
+  .sidebar-nav-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+  }
+
+  .sidebar-nav a:hover .sidebar-nav-icon,
+  .sidebar-nav a.active .sidebar-nav-icon {
+    opacity: 1;
+  }
+
+  .sidebar-footer {
+    padding: 20px 28px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sidebar-user-avatar {
+    width: 36px;
+    height: 36px;
+    background: var(--royal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--white);
+  }
+
+  .sidebar-user-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--white);
+  }
+
+  .sidebar-user-role {
+    font-size: 0.65rem;
+    color: var(--silver);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     MAIN CONTENT
+     ═══════════════════════════════════════════════════ */
+  .main {
+    margin-left: var(--sidebar-w);
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+  }
+
+  /* ─── TOP HEADER BAR ─── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 56px;
+    border-bottom: 1px solid var(--fog);
+    background: rgba(250, 249, 247, 0.85);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    animation: fadeIn 0.4s ease both;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .topbar-greeting {
+    font-size: 0.85rem;
+    color: var(--slate);
+  }
+
+  .topbar-greeting strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .topbar-date {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--silver);
+    letter-spacing: 0.05em;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .topbar-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--royal);
+    background: var(--royal-faint);
+    padding: 6px 14px;
+    border: 1px solid rgba(15, 82, 186, 0.15);
+  }
+
+  .topbar-icon-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--fog);
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+
+  .topbar-icon-btn:hover {
+    border-color: var(--royal);
+  }
+
+  .topbar-icon-btn .notif-dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 6px;
+    height: 6px;
+    background: var(--royal);
+  }
+
+  /* ─── CONTENT AREA ─── */
+  .content {
+    padding: 48px 56px 80px;
+    max-width: 1200px;
+  }
+
+  /* ─── PAGE TITLE (Editorial style) ─── */
+  .page-title-block {
+    margin-bottom: 56px;
+    position: relative;
+  }
+
+  .page-title-issue {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--silver);
+    margin-bottom: 12px;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--black);
+  }
+
+  .page-title em {
+    font-style: italic;
+    color: var(--royal);
+  }
+
+  .page-title-rule {
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: var(--black);
+    margin-top: 20px;
+    transform-origin: left;
+    animation: accentLine 0.8s cubic-bezier(0.23, 1, 0.32, 1) 0.4s both;
+  }
+
+  .page-title-sub {
+    font-size: 1rem;
+    color: var(--slate);
+    margin-top: 14px;
+    max-width: 500px;
+    line-height: 1.6;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     FINANCIAL HERO
+     ═══════════════════════════════════════════════════ */
+  .hero-financial {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-bottom: 56px;
+    border: 1px solid var(--fog);
+    background: var(--white);
+    position: relative;
+  }
+
+  .hero-financial::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    right: -6px;
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--fog);
+    z-index: -1;
+  }
+
+  .hero-left {
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 1px solid var(--fog);
+  }
+
+  .hero-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--silver);
+    margin-bottom: 8px;
+  }
+
+  .hero-amount {
+    font-family: var(--font-display);
+    font-size: 5.5rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--black);
+    position: relative;
+  }
+
+  .hero-amount .dollar {
+    font-size: 3rem;
+    vertical-align: top;
+    margin-right: 2px;
+    color: var(--royal);
+    font-weight: 700;
+  }
+
+  .hero-of-total {
+    font-size: 1.1rem;
+    color: var(--slate);
+    margin-top: 8px;
+    font-weight: 400;
+  }
+
+  .hero-of-total strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .hero-right {
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 28px;
+  }
+
+  /* Progress bar - editorial style */
+  .progress-editorial {
+    position: relative;
+  }
+
+  .progress-editorial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+  }
+
+  .progress-editorial-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--graphite);
+  }
+
+  .progress-editorial-pct {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--royal);
+    line-height: 1;
+  }
+
+  .progress-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--fog);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--royal);
+    transform-origin: left;
+    animation: barGrow 1.2s cubic-bezier(0.23, 1, 0.32, 1) 0.6s both;
+    --bar-scale: 0.625;
+    transform: scaleX(var(--bar-scale));
+  }
+
+  .progress-segments {
+    display: flex;
+    margin-top: 16px;
+    gap: 12px;
+  }
+
+  .progress-segment {
+    flex: 1;
+    padding: 14px 16px;
+    border-left: 3px solid var(--fog);
+    transition: border-color 0.3s;
+  }
+
+  .progress-segment:hover {
+    border-color: var(--royal);
+  }
+
+  .progress-segment-value {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .progress-segment-label {
+    font-size: 0.7rem;
+    color: var(--silver);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     QUICK STATS
+     ═══════════════════════════════════════════════════ */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-bottom: 56px;
+    border: 1px solid var(--fog);
+    background: var(--white);
+  }
+
+  .stat-card {
+    padding: 32px;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .stat-card:not(:last-child) {
+    border-right: 1px solid var(--fog);
+  }
+
+  .stat-card:hover {
+    background: var(--royal-faint);
+  }
+
+  .stat-card::before {
+    content: attr(data-index);
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--mist);
+  }
+
+  .stat-number {
+    font-family: var(--font-display);
+    font-size: 2.8rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--black);
+    letter-spacing: -0.02em;
+  }
+
+  .stat-number.accent {
+    color: var(--royal);
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--slate);
+    margin-top: 10px;
+  }
+
+  .stat-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    margin-top: 8px;
+    padding: 3px 8px;
+    background: rgba(34, 139, 34, 0.08);
+    color: #228B22;
+  }
+
+  .stat-delta.negative {
+    background: rgba(186, 15, 15, 0.08);
+    color: #ba0f0f;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     TWO-COLUMN EDITORIAL LAYOUT
+     ═══════════════════════════════════════════════════ */
+  .editorial-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 40px;
+    margin-bottom: 56px;
+  }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--black);
+    padding-bottom: 10px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    color: var(--black);
+  }
+
+  .section-count {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--silver);
+    letter-spacing: 0.05em;
+  }
+
+  .section-link {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--royal);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .section-link:hover {
+    color: var(--black);
+  }
+
+  /* ─── PAYMENTS TABLE ─── */
+  .payments-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border: 1px solid var(--fog);
+  }
+
+  .payments-table thead {
+    border-bottom: 2px solid var(--black);
+  }
+
+  .payments-table th {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--slate);
+    text-align: left;
+    padding: 14px 20px;
+  }
+
+  .payments-table td {
+    padding: 16px 20px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--fog);
+    vertical-align: middle;
+  }
+
+  .payments-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .payments-table tbody tr {
+    transition: background 0.2s;
+  }
+
+  .payments-table tbody tr:hover {
+    background: var(--royal-faint);
+  }
+
+  .member-name {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .member-line {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--silver);
+    margin-top: 2px;
+  }
+
+  .amount-cell {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--ink);
+  }
+
+  .date-cell {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--slate);
+  }
+
+  .status-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+  }
+
+  .status-paid {
+    background: rgba(34, 139, 34, 0.08);
+    color: #228B22;
+    border: 1px solid rgba(34, 139, 34, 0.2);
+  }
+
+  .status-pending {
+    background: rgba(204, 136, 0, 0.08);
+    color: #cc8800;
+    border: 1px solid rgba(204, 136, 0, 0.2);
+  }
+
+  .status-overdue {
+    background: rgba(186, 15, 15, 0.08);
+    color: #ba0f0f;
+    border: 1px solid rgba(186, 15, 15, 0.2);
+  }
+
+  /* ─── RIGHT COLUMN ─── */
+
+  /* Announcements */
+  .announcements {
+    margin-bottom: 40px;
+  }
+
+  .announcement-item {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--fog);
+    position: relative;
+  }
+
+  .announcement-item:last-child {
+    border-bottom: none;
+  }
+
+  .announcement-date {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--silver);
+    margin-bottom: 6px;
+  }
+
+  .announcement-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  .announcement-body {
+    font-size: 0.8rem;
+    color: var(--slate);
+    line-height: 1.55;
+  }
+
+  .announcement-tag {
+    display: inline-block;
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--royal);
+    margin-top: 8px;
+  }
+
+  /* Events */
+  .events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--fog);
+    background: var(--white);
+  }
+
+  .event-item {
+    display: grid;
+    grid-template-columns: 72px 1fr auto;
+    gap: 16px;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--fog);
+    transition: background 0.2s;
+  }
+
+  .event-item:last-child {
+    border-bottom: none;
+  }
+
+  .event-item:hover {
+    background: var(--royal-faint);
+  }
+
+  .event-date-block {
+    text-align: center;
+    border-right: 1px solid var(--fog);
+    padding-right: 16px;
+  }
+
+  .event-date-month {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--royal);
+  }
+
+  .event-date-day {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--black);
+  }
+
+  .event-info-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+
+  .event-info-time {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--silver);
+    letter-spacing: 0.03em;
+  }
+
+  .event-rsvp {
+    text-align: center;
+  }
+
+  .event-rsvp-count {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .event-rsvp-label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--silver);
+    margin-top: 2px;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     BOTTOM EDITORIAL STRIP (decorative)
+     ═══════════════════════════════════════════════════ */
+  .editorial-footer {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 24px 0;
+    border-top: 2px solid var(--black);
+    margin-top: 24px;
+  }
+
+  .editorial-footer-col {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--silver);
+  }
+
+  .editorial-footer-col strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .editorial-footer-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--mist);
+  }
+
+  .editorial-footer-bar {
+    flex: 1;
+    height: 1px;
+    background: var(--fog);
+  }
+
+  .editorial-footer-logo {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: var(--mist);
+    text-transform: uppercase;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     SVG ICONS (inline)
+     ═══════════════════════════════════════════════════ */
+  svg.icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+  }
+
+  svg.icon-sm {
+    width: 15px;
+    height: 15px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     SIDEBAR
+     ═══════════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-name">Chapter<span>Ops</span></div>
+    <div class="sidebar-brand-chapter">Sigma Delta Sigma &mdash; SDS</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="#" class="active">
+      <span class="sidebar-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </span>
+      Dashboard
+    </a>
+    <a href="#">
+      <span class="sidebar-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </span>
+      Payments
+    </a>
+    <a href="#">
+      <span class="sidebar-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </span>
+      Members
+    </a>
+    <a href="#">
+      <span class="sidebar-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </span>
+      Events
+    </a>
+    <a href="#">
+      <span class="sidebar-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </span>
+      Communications
+    </a>
+    <a href="#">
+      <span class="sidebar-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </span>
+      Documents
+    </a>
+    <a href="#">
+      <span class="sidebar-nav-icon">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </span>
+      Settings
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-user-avatar">MJ</div>
+      <div>
+        <div class="sidebar-user-name">Marcus Johnson</div>
+        <div class="sidebar-user-role">Chapter President</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════
+     MAIN
+     ═══════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-greeting">Good evening, <strong>Marcus</strong></span>
+      <span class="topbar-date">2026.03.27 / THU</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-badge">Spring 2026</span>
+      <button class="topbar-icon-btn">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- PAGE TITLE -->
+    <div class="page-title-block anim-fade-up delay-1">
+      <div class="page-title-issue">Vol. XII &mdash; Chapter Dashboard</div>
+      <h1 class="page-title">Financial<br><em>Overview</em></h1>
+      <span class="page-title-rule"></span>
+      <p class="page-title-sub">A complete snapshot of chapter dues, membership activity, and upcoming obligations for the current semester.</p>
+    </div>
+
+    <!-- FINANCIAL HERO -->
+    <section class="hero-financial anim-fade-up delay-2">
+      <div class="hero-left">
+        <div class="hero-label">Total Collected &mdash; Spring 2026</div>
+        <div class="hero-amount"><span class="dollar">$</span>4,250</div>
+        <div class="hero-of-total">of <strong>$6,800</strong> total chapter dues</div>
+      </div>
+      <div class="hero-right">
+        <div class="progress-editorial">
+          <div class="progress-editorial-header">
+            <span class="progress-editorial-label">Collection Rate</span>
+            <span class="progress-editorial-pct">62.5%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill"></div>
+          </div>
+        </div>
+        <div class="progress-segments">
+          <div class="progress-segment">
+            <div class="progress-segment-value">$4,250</div>
+            <div class="progress-segment-label">Collected</div>
+          </div>
+          <div class="progress-segment">
+            <div class="progress-segment-value">$1,350</div>
+            <div class="progress-segment-label">Pending</div>
+          </div>
+          <div class="progress-segment">
+            <div class="progress-segment-value">$1,200</div>
+            <div class="progress-segment-label">Overdue</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUICK STATS -->
+    <section class="stats-row anim-fade-up delay-3">
+      <div class="stat-card" data-index="01">
+        <div class="stat-number">24</div>
+        <div class="stat-label">Active Members</div>
+        <div class="stat-delta">+3 from Fall</div>
+      </div>
+      <div class="stat-card" data-index="02">
+        <div class="stat-number">3</div>
+        <div class="stat-label">Neophytes</div>
+        <div class="stat-delta">Spr '26 Line</div>
+      </div>
+      <div class="stat-card" data-index="03">
+        <div class="stat-number accent">$2,550</div>
+        <div class="stat-label">Outstanding</div>
+        <div class="stat-delta negative">8 members owed</div>
+      </div>
+      <div class="stat-card" data-index="04">
+        <div class="stat-number">12</div>
+        <div class="stat-label">Events This Semester</div>
+        <div class="stat-delta">4 upcoming</div>
+      </div>
+    </section>
+
+    <!-- TWO COLUMN: TABLE + RIGHT SIDEBAR -->
+    <div class="editorial-grid anim-fade-up delay-4">
+
+      <!-- LEFT: PAYMENTS TABLE -->
+      <div>
+        <div class="section-header">
+          <h2 class="section-title">Recent Payments</h2>
+          <span class="section-count">5 of 47 transactions</span>
+          <a href="#" class="section-link">View All &rarr;</a>
+        </div>
+        <table class="payments-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="member-name">Darius Thompson</div>
+                <div class="member-line">Line #7 &mdash; Spr '24</div>
+              </td>
+              <td class="amount-cell">$425.00</td>
+              <td class="date-cell">2026-03-25</td>
+              <td><span class="status-badge status-paid">Paid</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="member-name">Jamal Williams</div>
+                <div class="member-line">Line #3 &mdash; Fall '23</div>
+              </td>
+              <td class="amount-cell">$425.00</td>
+              <td class="date-cell">2026-03-24</td>
+              <td><span class="status-badge status-paid">Paid</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="member-name">Terrence Brooks</div>
+                <div class="member-line">Line #1 &mdash; Spr '26</div>
+              </td>
+              <td class="amount-cell">$212.50</td>
+              <td class="date-cell">2026-03-22</td>
+              <td><span class="status-badge status-pending">Pending</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="member-name">Kevin Marshall</div>
+                <div class="member-line">Line #5 &mdash; Fall '22</div>
+              </td>
+              <td class="amount-cell">$425.00</td>
+              <td class="date-cell">2026-03-18</td>
+              <td><span class="status-badge status-overdue">Overdue</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="member-name">Andre Davis</div>
+                <div class="member-line">Line #2 &mdash; Spr '26</div>
+              </td>
+              <td class="amount-cell">$425.00</td>
+              <td class="date-cell">2026-03-20</td>
+              <td><span class="status-badge status-paid">Paid</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- RIGHT: ANNOUNCEMENTS + EVENTS -->
+      <div>
+
+        <!-- ANNOUNCEMENTS -->
+        <div class="announcements">
+          <div class="section-header">
+            <h2 class="section-title">Announcements</h2>
+          </div>
+
+          <div class="announcement-item">
+            <div class="announcement-date">March 26, 2026</div>
+            <div class="announcement-title">Spring Dues Deadline Extended</div>
+            <div class="announcement-body">The executive board has voted to extend the Spring 2026 dues deadline to April 15th. All remaining balances must be settled by this date.</div>
+            <span class="announcement-tag">Finances</span>
+          </div>
+
+          <div class="announcement-item">
+            <div class="announcement-date">March 22, 2026</div>
+            <div class="announcement-title">Regional Conference Registration Open</div>
+            <div class="announcement-body">Southwest Regional Conference is April 18&ndash;20 in Houston. Register through Chapter Ops by April 1st to secure the group rate.</div>
+            <span class="announcement-tag">Events</span>
+          </div>
+
+          <div class="announcement-item">
+            <div class="announcement-date">March 18, 2026</div>
+            <div class="announcement-title">New Member Presentation &mdash; April 5th</div>
+            <div class="announcement-body">Spring 2026 line presentation will be held at the Student Union Ballroom. All brothers are expected to attend in full regalia.</div>
+            <span class="announcement-tag">Chapter Business</span>
+          </div>
+        </div>
+
+        <!-- EVENTS -->
+        <div>
+          <div class="section-header">
+            <h2 class="section-title">Upcoming Events</h2>
+            <a href="#" class="section-link">Calendar &rarr;</a>
+          </div>
+          <div class="events-list">
+
+            <div class="event-item">
+              <div class="event-date-block">
+                <div class="event-date-month">Apr</div>
+                <div class="event-date-day">02</div>
+              </div>
+              <div class="event-info">
+                <div class="event-info-title">Chapter Meeting</div>
+                <div class="event-info-time">WED 7:00 PM &mdash; Student Union 204</div>
+              </div>
+              <div class="event-rsvp">
+                <div class="event-rsvp-count">18</div>
+                <div class="event-rsvp-label">RSVP'd</div>
+              </div>
+            </div>
+
+            <div class="event-item">
+              <div class="event-date-block">
+                <div class="event-date-month">Apr</div>
+                <div class="event-date-day">05</div>
+              </div>
+              <div class="event-info">
+                <div class="event-info-title">Neophyte Presentation</div>
+                <div class="event-info-time">SAT 6:00 PM &mdash; University Ballroom</div>
+              </div>
+              <div class="event-rsvp">
+                <div class="event-rsvp-count">24</div>
+                <div class="event-rsvp-label">RSVP'd</div>
+              </div>
+            </div>
+
+            <div class="event-item">
+              <div class="event-date-block">
+                <div class="event-date-month">Apr</div>
+                <div class="event-date-day">12</div>
+              </div>
+              <div class="event-info">
+                <div class="event-info-title">Community Service: Park Cleanup</div>
+                <div class="event-info-time">SAT 9:00 AM &mdash; Riverside Park</div>
+              </div>
+              <div class="event-rsvp">
+                <div class="event-rsvp-count">14</div>
+                <div class="event-rsvp-label">RSVP'd</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- EDITORIAL FOOTER STRIP -->
+    <footer class="editorial-footer anim-fade-in delay-8">
+      <span class="editorial-footer-col"><strong>Chapter Ops</strong> v2.1</span>
+      <span class="editorial-footer-divider"></span>
+      <span class="editorial-footer-col">Phi Beta Sigma Fraternity, Inc.</span>
+      <span class="editorial-footer-divider"></span>
+      <span class="editorial-footer-col">Sigma Delta Sigma Chapter</span>
+      <span class="editorial-footer-bar"></span>
+      <span class="editorial-footer-logo">PBS 1914</span>
+    </footer>
+
+  </div>
+</main>
+
+</body>
+</html>

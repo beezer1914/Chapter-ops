@@ -101,9 +101,9 @@ export default function OrganizationStep() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-surface-card-solid rounded-lg shadow-glass p-6">
       <h2 className="text-xl font-bold text-gray-900 mb-1">Select Your Organization</h2>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-content-muted mb-6">
         Choose your Greek letter organization or create a new one.
       </p>
 
@@ -114,14 +114,14 @@ export default function OrganizationStep() {
       )}
 
       {/* Mode tabs */}
-      <div className="flex border-b border-gray-200 mb-6">
+      <div className="flex border-b border-[var(--color-border)] mb-6">
         <button
           type="button"
           onClick={() => { setMode("select"); clearError(); }}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
             mode === "select"
               ? "border-primary-600 text-primary-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              : "border-transparent text-content-muted hover:text-content-secondary"
           }`}
         >
           Select Existing
@@ -132,7 +132,7 @@ export default function OrganizationStep() {
           className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
             mode === "create"
               ? "border-primary-600 text-primary-600"
-              : "border-transparent text-gray-500 hover:text-gray-700"
+              : "border-transparent text-content-muted hover:text-content-secondary"
           }`}
         >
           Create New
@@ -146,14 +146,14 @@ export default function OrganizationStep() {
             placeholder="Search organizations..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="mb-4 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="mb-4 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
 
           {isLoading ? (
-            <p className="text-gray-500 text-sm py-8 text-center">Loading organizations...</p>
+            <p className="text-content-muted text-sm py-8 text-center">Loading organizations...</p>
           ) : filteredOrgs.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 text-sm">
+              <p className="text-content-muted text-sm">
                 {search ? "No organizations match your search." : "No organizations yet."}
               </p>
               <button
@@ -171,12 +171,12 @@ export default function OrganizationStep() {
                   key={org.id}
                   type="button"
                   onClick={() => handleSelectOrg(org)}
-                  className="w-full text-left p-4 rounded-md border border-gray-200 hover:border-primary-500 hover:bg-primary-50 transition"
+                  className="w-full text-left p-4 rounded-md border border-[var(--color-border)] hover:border-primary-500 hover:bg-white/5 transition"
                 >
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-900">{org.name}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-content-muted">
                         {org.abbreviation}
                         {org.greek_letters && ` \u2022 ${org.greek_letters}`}
                       </p>
@@ -199,7 +199,7 @@ export default function OrganizationStep() {
       ) : (
         <form onSubmit={handleSubmit(onCreateSubmit)} className="space-y-4">
           <div>
-            <label htmlFor="org_name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="org_name" className="block text-sm font-medium text-content-secondary">
               Organization Name
             </label>
             <input
@@ -207,7 +207,7 @@ export default function OrganizationStep() {
               type="text"
               placeholder="e.g., Alpha Beta Gamma Fraternity, Inc."
               {...register("name")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
             {formErrors.name && (
               <p className="mt-1 text-xs text-red-600">{formErrors.name.message}</p>
@@ -216,7 +216,7 @@ export default function OrganizationStep() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="abbreviation" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="abbreviation" className="block text-sm font-medium text-content-secondary">
                 Abbreviation
               </label>
               <input
@@ -224,28 +224,28 @@ export default function OrganizationStep() {
                 type="text"
                 placeholder="e.g., ABG"
                 {...register("abbreviation")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
               {formErrors.abbreviation && (
                 <p className="mt-1 text-xs text-red-600">{formErrors.abbreviation.message}</p>
               )}
             </div>
             <div>
-              <label htmlFor="greek_letters" className="block text-sm font-medium text-gray-700">
-                Greek Letters <span className="text-gray-400 font-normal">(optional)</span>
+              <label htmlFor="greek_letters" className="block text-sm font-medium text-content-secondary">
+                Greek Letters <span className="text-content-muted font-normal">(optional)</span>
               </label>
               <input
                 id="greek_letters"
                 type="text"
                 placeholder="e.g., \u0391\u0392\u0393"
                 {...register("greek_letters")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+            <label className="block text-sm font-medium text-content-secondary mb-2">Type</label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -254,7 +254,7 @@ export default function OrganizationStep() {
                   {...register("org_type")}
                   className="text-primary-600 focus:ring-primary-500"
                 />
-                <span className="text-sm text-gray-700">Fraternity</span>
+                <span className="text-sm text-content-secondary">Fraternity</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -263,7 +263,7 @@ export default function OrganizationStep() {
                   {...register("org_type")}
                   className="text-primary-600 focus:ring-primary-500"
                 />
-                <span className="text-sm text-gray-700">Sorority</span>
+                <span className="text-sm text-content-secondary">Sorority</span>
               </label>
             </div>
             {formErrors.org_type && (
@@ -273,13 +273,13 @@ export default function OrganizationStep() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="council" className="block text-sm font-medium text-gray-700">
-                Council <span className="text-gray-400 font-normal">(optional)</span>
+              <label htmlFor="council" className="block text-sm font-medium text-content-secondary">
+                Council <span className="text-content-muted font-normal">(optional)</span>
               </label>
               <select
                 id="council"
                 {...register("council")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
                 <option value="">Select council</option>
                 {councils.map((c) => (
@@ -290,15 +290,15 @@ export default function OrganizationStep() {
               </select>
             </div>
             <div>
-              <label htmlFor="founded_year" className="block text-sm font-medium text-gray-700">
-                Founded Year <span className="text-gray-400 font-normal">(optional)</span>
+              <label htmlFor="founded_year" className="block text-sm font-medium text-content-secondary">
+                Founded Year <span className="text-content-muted font-normal">(optional)</span>
               </label>
               <input
                 id="founded_year"
                 type="text"
                 placeholder="e.g., 1920"
                 {...register("founded_year")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
               {formErrors.founded_year && (
                 <p className="mt-1 text-xs text-red-600">{formErrors.founded_year.message}</p>
@@ -307,27 +307,27 @@ export default function OrganizationStep() {
           </div>
 
           <div>
-            <label htmlFor="motto" className="block text-sm font-medium text-gray-700">
-              Motto <span className="text-gray-400 font-normal">(optional)</span>
+            <label htmlFor="motto" className="block text-sm font-medium text-content-secondary">
+              Motto <span className="text-content-muted font-normal">(optional)</span>
             </label>
             <input
               id="motto"
               type="text"
               {...register("motto")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
           </div>
 
           <div>
-            <label htmlFor="website" className="block text-sm font-medium text-gray-700">
-              Website <span className="text-gray-400 font-normal">(optional)</span>
+            <label htmlFor="website" className="block text-sm font-medium text-content-secondary">
+              Website <span className="text-content-muted font-normal">(optional)</span>
             </label>
             <input
               id="website"
               type="text"
               placeholder="https://..."
               {...register("website")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             />
             {formErrors.website && (
               <p className="mt-1 text-xs text-red-600">{formErrors.website.message}</p>

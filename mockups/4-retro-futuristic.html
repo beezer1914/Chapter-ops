@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHAPTER OPS // RETRO-FUTURISTIC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #05080f;
+    --bg-panel: #0a1128;
+    --bg-panel-alt: #0d1a30;
+    --bg-surface: #111b33;
+    --border-dim: #1a2744;
+    --border-mid: #243552;
+    --text-primary: #c8d6e5;
+    --text-secondary: #7a8ba0;
+    --text-muted: #4a5a6e;
+    --neon-blue: #00d4ff;
+    --neon-magenta: #ff006e;
+    --neon-green: #39ff14;
+    --neon-amber: #ffbe0b;
+    --neon-blue-dim: rgba(0, 212, 255, 0.15);
+    --neon-magenta-dim: rgba(255, 0, 110, 0.1);
+    --neon-green-dim: rgba(57, 255, 20, 0.1);
+    --font-mono: 'Space Mono', monospace;
+    --font-display: 'Orbitron', sans-serif;
+    --font-ui: 'Rajdhani', sans-serif;
+    --sidebar-w: 240px;
+    --clip-corner: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+    --clip-corner-sm: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+
+  html { font-size: 14px; }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ===== GRID OVERLAY ===== */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(0, 212, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 212, 255, 0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* ===== SCANLINE OVERLAY ===== */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.08) 2px,
+      rgba(0, 0, 0, 0.08) 4px
+    );
+  }
+
+  /* ===== LAYOUT ===== */
+  .app-layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border-dim);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 212, 255, 0.015) 3px,
+      rgba(0, 212, 255, 0.015) 6px
+    );
+  }
+
+  .sidebar-brand {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border-dim);
+    position: relative;
+  }
+
+  .sidebar-brand::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--neon-blue), transparent);
+    opacity: 0.5;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--neon-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--neon-blue);
+    margin-bottom: 12px;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background: rgba(0, 212, 255, 0.08);
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+  }
+
+  .brand-name {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--neon-blue);
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+  }
+
+  .brand-sub {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 0;
+  }
+
+  .nav-section-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    padding: 12px 20px 8px;
+    text-transform: uppercase;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+
+  .nav-item:hover {
+    color: var(--text-primary);
+    background: rgba(0, 212, 255, 0.03);
+  }
+
+  .nav-item:hover::before {
+    background: rgba(0, 212, 255, 0.3);
+  }
+
+  .nav-item.active {
+    color: var(--neon-blue);
+    background: linear-gradient(90deg, rgba(0, 212, 255, 0.08), transparent);
+  }
+
+  .nav-item.active::before {
+    background: var(--neon-blue);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.6), 0 0 20px rgba(0, 212, 255, 0.2);
+  }
+
+  .nav-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    opacity: 0.7;
+  }
+
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-dim);
+    position: relative;
+  }
+
+  .sidebar-footer::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+    opacity: 0.2;
+  }
+
+  .sys-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--neon-green);
+    box-shadow: 0 0 6px var(--neon-green), 0 0 12px rgba(57, 255, 20, 0.3);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--neon-green), 0 0 12px rgba(57, 255, 20, 0.3); }
+    50% { opacity: 0.6; box-shadow: 0 0 3px var(--neon-green); }
+  }
+
+  /* ===== MAIN CONTENT ===== */
+  .main-content {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(10, 17, 40, 0.9), var(--bg-deep));
+    position: relative;
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--neon-blue), var(--neon-magenta), transparent);
+    opacity: 0.4;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .header-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 6px;
+    color: var(--neon-blue);
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.5), 0 0 40px rgba(0, 212, 255, 0.2);
+    animation: glow-text 3s ease-in-out infinite;
+  }
+
+  @keyframes glow-text {
+    0%, 100% {
+      text-shadow: 0 0 20px rgba(0, 212, 255, 0.5), 0 0 40px rgba(0, 212, 255, 0.2);
+    }
+    50% {
+      text-shadow: 0 0 30px rgba(0, 212, 255, 0.7), 0 0 60px rgba(0, 212, 255, 0.3), 0 0 80px rgba(0, 212, 255, 0.1);
+    }
+  }
+
+  .header-designation {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border: 1px solid var(--border-dim);
+    clip-path: var(--clip-corner-sm);
+    background: rgba(0, 212, 255, 0.03);
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .header-clock {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--neon-blue);
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+  }
+
+  .header-clock .blink {
+    animation: blink-colon 1s step-end infinite;
+  }
+
+  @keyframes blink-colon {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .header-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border: 1px solid rgba(57, 255, 20, 0.3);
+    background: rgba(57, 255, 20, 0.05);
+    clip-path: var(--clip-corner-sm);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--neon-green);
+    text-transform: uppercase;
+  }
+
+  .header-status-badge .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--neon-green);
+    box-shadow: 0 0 4px var(--neon-green);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  /* ===== DASHBOARD BODY ===== */
+  .dashboard-body {
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ===== PANEL SHARED ===== */
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-dim);
+    clip-path: var(--clip-corner);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: panel-reveal 0.5s ease forwards;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+    opacity: 0.3;
+  }
+
+  @keyframes panel-reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel:nth-child(1) { animation-delay: 0.05s; }
+  .panel:nth-child(2) { animation-delay: 0.1s; }
+  .panel:nth-child(3) { animation-delay: 0.15s; }
+  .panel:nth-child(4) { animation-delay: 0.2s; }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 12px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .panel-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-title .accent-bar {
+    width: 3px;
+    height: 12px;
+    background: var(--neon-blue);
+    box-shadow: 0 0 6px rgba(0, 212, 255, 0.4);
+  }
+
+  .panel-badge {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border: 1px solid var(--border-dim);
+  }
+
+  .panel-body {
+    padding: 20px;
+  }
+
+  /* ===== FINANCIAL OVERVIEW ===== */
+  .finance-panel .panel-body {
+    padding: 24px;
+  }
+
+  .finance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: center;
+  }
+
+  .finance-terminal {
+    font-family: var(--font-mono);
+  }
+
+  .finance-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .finance-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--neon-green);
+    text-shadow: 0 0 20px rgba(57, 255, 20, 0.4), 0 0 40px rgba(57, 255, 20, 0.15);
+    line-height: 1;
+    margin-bottom: 4px;
+    font-family: var(--font-display);
+    letter-spacing: 2px;
+  }
+
+  .finance-sub {
+    font-size: 10px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+  }
+
+  .finance-sub span {
+    color: var(--neon-blue);
+  }
+
+  .finance-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .finance-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+  }
+
+  .finance-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-dim);
+    position: relative;
+    overflow: hidden;
+    clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+  }
+
+  .finance-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.5), 0 0 24px rgba(57, 255, 20, 0.2);
+    transition: width 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+  }
+
+  .finance-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3));
+    animation: bar-shimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes bar-shimmer {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+  }
+
+  .finance-percentage {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--neon-blue);
+    text-align: center;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+  }
+
+  .finance-meta-row {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-dim);
+  }
+
+  .finance-meta {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  .finance-meta strong {
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  /* ===== STATS ROW ===== */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .stat-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-dim);
+    clip-path: var(--clip-corner-sm);
+    padding: 18px 16px;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: panel-reveal 0.4s ease forwards;
+  }
+
+  .stat-card:nth-child(1) { animation-delay: 0.15s; }
+  .stat-card:nth-child(2) { animation-delay: 0.25s; }
+  .stat-card:nth-child(3) { animation-delay: 0.35s; }
+  .stat-card:nth-child(4) { animation-delay: 0.45s; }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+  }
+
+  .stat-card:nth-child(1)::before { background: linear-gradient(90deg, var(--neon-blue), transparent); }
+  .stat-card:nth-child(2)::before { background: linear-gradient(90deg, var(--neon-magenta), transparent); }
+  .stat-card:nth-child(3)::before { background: linear-gradient(90deg, var(--neon-amber), transparent); }
+  .stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--neon-green), transparent); }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 50px;
+    height: 50px;
+    border-right: 1px solid var(--border-dim);
+    border-bottom: 1px solid var(--border-dim);
+    opacity: 0.3;
+    transform: rotate(45deg) translate(25px, 25px);
+  }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-card:nth-child(1) .stat-value {
+    color: var(--neon-blue);
+    text-shadow: 0 0 14px rgba(0, 212, 255, 0.4);
+  }
+  .stat-card:nth-child(2) .stat-value {
+    color: var(--neon-magenta);
+    text-shadow: 0 0 14px rgba(255, 0, 110, 0.4);
+  }
+  .stat-card:nth-child(3) .stat-value {
+    color: var(--neon-amber);
+    text-shadow: 0 0 14px rgba(255, 190, 11, 0.4);
+  }
+  .stat-card:nth-child(4) .stat-value {
+    color: var(--neon-green);
+    text-shadow: 0 0 14px rgba(57, 255, 20, 0.4);
+  }
+
+  .stat-detail {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  /* ===== MAIN GRID (table + alerts + events) ===== */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+  }
+
+  /* ===== PAYMENTS TABLE ===== */
+  .payments-table-wrap {
+    overflow: hidden;
+  }
+
+  .payments-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .payments-table thead th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-dim);
+    background: rgba(0, 212, 255, 0.02);
+  }
+
+  .payments-table tbody tr {
+    border-bottom: 1px solid rgba(26, 39, 68, 0.5);
+    transition: background 0.15s ease;
+  }
+
+  .payments-table tbody tr:hover {
+    background: rgba(0, 212, 255, 0.03);
+  }
+
+  .payments-table td {
+    padding: 12px 16px;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+
+  .payments-table .col-name {
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .payments-table .col-amount {
+    color: var(--neon-green);
+    text-shadow: 0 0 6px rgba(57, 255, 20, 0.2);
+  }
+
+  .payments-table .col-date {
+    color: var(--text-secondary);
+    font-size: 11px;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    clip-path: var(--clip-corner-sm);
+  }
+
+  .status-paid {
+    color: var(--neon-green);
+    background: rgba(57, 255, 20, 0.1);
+    border: 1px solid rgba(57, 255, 20, 0.25);
+    text-shadow: 0 0 6px rgba(57, 255, 20, 0.3);
+  }
+
+  .status-pending {
+    color: var(--neon-amber);
+    background: rgba(255, 190, 11, 0.1);
+    border: 1px solid rgba(255, 190, 11, 0.25);
+    text-shadow: 0 0 6px rgba(255, 190, 11, 0.3);
+  }
+
+  .status-overdue {
+    color: var(--neon-magenta);
+    background: rgba(255, 0, 110, 0.1);
+    border: 1px solid rgba(255, 0, 110, 0.25);
+    text-shadow: 0 0 6px rgba(255, 0, 110, 0.3);
+    animation: overdue-pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes overdue-pulse {
+    0%, 100% { box-shadow: none; }
+    50% { box-shadow: 0 0 8px rgba(255, 0, 110, 0.2); }
+  }
+
+  /* ===== RIGHT COLUMN ===== */
+  .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ===== SYSTEM ALERTS ===== */
+  .alert-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .alert-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-dim);
+    clip-path: var(--clip-corner-sm);
+    position: relative;
+  }
+
+  .alert-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+  }
+
+  .alert-item.alert-warn::before { background: var(--neon-amber); box-shadow: 0 0 6px rgba(255, 190, 11, 0.4); }
+  .alert-item.alert-info::before { background: var(--neon-blue); box-shadow: 0 0 6px rgba(0, 212, 255, 0.4); }
+  .alert-item.alert-critical::before { background: var(--neon-magenta); box-shadow: 0 0 6px rgba(255, 0, 110, 0.4); }
+
+  .alert-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    margin-top: 1px;
+  }
+
+  .alert-warn .alert-icon { color: var(--neon-amber); }
+  .alert-info .alert-icon { color: var(--neon-blue); }
+  .alert-critical .alert-icon { color: var(--neon-magenta); }
+
+  .alert-content {
+    flex: 1;
+  }
+
+  .alert-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .alert-warn .alert-title { color: var(--neon-amber); }
+  .alert-info .alert-title { color: var(--neon-blue); }
+  .alert-critical .alert-title { color: var(--neon-magenta); }
+
+  .alert-text {
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .alert-time {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* ===== UPCOMING OPERATIONS ===== */
+  .ops-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ops-item {
+    display: flex;
+    gap: 14px;
+    padding: 14px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-dim);
+    clip-path: var(--clip-corner-sm);
+    transition: border-color 0.2s ease;
+  }
+
+  .ops-item:hover {
+    border-color: var(--border-mid);
+  }
+
+  .ops-datetime {
+    flex-shrink: 0;
+    text-align: center;
+    min-width: 52px;
+  }
+
+  .ops-day {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--neon-blue);
+    line-height: 1;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+  }
+
+  .ops-month {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .ops-divider {
+    width: 1px;
+    background: linear-gradient(180deg, var(--neon-blue), transparent);
+    opacity: 0.3;
+  }
+
+  .ops-details {
+    flex: 1;
+  }
+
+  .ops-codename {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .ops-desc {
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .ops-meta {
+    display: flex;
+    gap: 16px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  .ops-meta .rsvp {
+    color: var(--neon-green);
+    text-shadow: 0 0 4px rgba(57, 255, 20, 0.2);
+  }
+
+  /* ===== TYPING CURSOR ===== */
+  .typing-cursor::after {
+    content: '_';
+    animation: cursor-blink 0.8s step-end infinite;
+    color: var(--neon-blue);
+    text-shadow: 0 0 6px rgba(0, 212, 255, 0.4);
+  }
+
+  @keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ===== HEXAGONAL DECORATIVE ELEMENTS ===== */
+  .hex-decoration {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    opacity: 0.03;
+    border: 1px solid var(--neon-blue);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+
+  /* ===== DIAGONAL ACCENT ===== */
+  .diag-accent {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .diag-accent::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 80px;
+    height: 80px;
+    border: 1px solid var(--border-dim);
+    transform: rotate(45deg);
+    opacity: 0.3;
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-deep);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-mid);
+    border-radius: 2px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-blue);
+  }
+
+  /* ===== CORNER MARKERS ===== */
+  .corner-mark {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+  }
+
+  .corner-mark.tl { top: -1px; left: -1px; border-top: 2px solid var(--neon-blue); border-left: 2px solid var(--neon-blue); }
+  .corner-mark.tr { top: -1px; right: -1px; border-top: 2px solid var(--neon-blue); border-right: 2px solid var(--neon-blue); }
+  .corner-mark.bl { bottom: -1px; left: -1px; border-bottom: 2px solid var(--neon-blue); border-left: 2px solid var(--neon-blue); }
+  .corner-mark.br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--neon-blue); border-right: 2px solid var(--neon-blue); }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">PBS</div>
+      <div class="brand-name">CHAPTER OPS</div>
+      <div class="brand-sub">SDS // COMMAND v3.7</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">// operations</div>
+      <a class="nav-item active" href="#">
+        <span class="nav-icon">&#9638;</span>
+        Dashboard
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#9783;</span>
+        Members
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#9733;</span>
+        Finances
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#9854;</span>
+        Documents
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#9670;</span>
+        Events
+      </a>
+
+      <div class="nav-section-label" style="margin-top: 8px;">// administration</div>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#9881;</span>
+        Settings
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#9888;</span>
+        Audit Log
+      </a>
+      <a class="nav-item" href="#">
+        <span class="nav-icon">&#9993;</span>
+        Comms
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sys-status">
+        <span class="status-dot"></span>
+        SYS ONLINE // ALL CLEAR
+      </div>
+      <div class="sys-status" style="margin-top: 6px; font-size: 8px; opacity: 0.5;">
+        BUILD 2026.03.27-A7
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">CHAPTER OPS</h1>
+        <span class="header-designation">SIGMA DELTA SIGMA // SDS</span>
+      </div>
+      <div class="header-right">
+        <div class="header-clock" id="live-clock">
+          <span id="clock-display">00<span class="blink">:</span>00<span class="blink">:</span>00</span>
+        </div>
+        <div class="header-status-badge">
+          <span class="dot"></span>
+          System Nominal
+        </div>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard-body">
+
+      <!-- FINANCIAL OVERVIEW -->
+      <div class="panel finance-panel" style="animation-delay: 0.05s;">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span class="accent-bar"></span>
+            Financial Overview
+          </div>
+          <span class="panel-badge">FISCAL Q1 2026</span>
+        </div>
+        <div class="panel-body">
+          <div class="finance-grid">
+            <div class="finance-terminal">
+              <div class="finance-label">// total collected</div>
+              <div class="finance-amount">$4,250</div>
+              <div class="finance-sub">of <span>$6,800</span> target</div>
+            </div>
+            <div class="finance-bar-wrap">
+              <div class="finance-bar-labels">
+                <span>COLLECTED</span>
+                <span>TARGET</span>
+              </div>
+              <div class="finance-bar-track">
+                <div class="finance-bar-fill" id="finance-bar"></div>
+              </div>
+              <div class="finance-percentage typing-cursor" id="finance-pct">62.5%</div>
+            </div>
+          </div>
+          <div class="finance-meta-row">
+            <div class="finance-meta"><strong>AVG PAYMENT:</strong> $177.08</div>
+            <div class="finance-meta"><strong>LAST TXN:</strong> 2026-03-25</div>
+            <div class="finance-meta"><strong>COMPLETION:</strong> ETA 2026-04-15</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Active Members</div>
+          <div class="stat-value" id="stat-members">24</div>
+          <div class="stat-detail">+2 from last term</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Neophytes</div>
+          <div class="stat-value" id="stat-neos">3</div>
+          <div class="stat-detail">Fall 2025 line</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Outstanding</div>
+          <div class="stat-value" id="stat-outstanding">$2,550</div>
+          <div class="stat-detail">8 members pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Events</div>
+          <div class="stat-value" id="stat-events">12</div>
+          <div class="stat-detail">This semester</div>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT GRID -->
+      <div class="content-grid">
+
+        <!-- LEFT: Payments Table -->
+        <div class="panel" style="animation-delay: 0.2s;">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span class="accent-bar"></span>
+              Recent Payments
+            </div>
+            <span class="panel-badge">LAST 5 TXN</span>
+          </div>
+          <div class="payments-table-wrap">
+            <table class="payments-table">
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-name">JACKSON, M.</td>
+                  <td class="col-amount">$350.00</td>
+                  <td class="col-date">2026-03-25</td>
+                  <td><span class="status-badge status-paid">PAID</span></td>
+                </tr>
+                <tr>
+                  <td class="col-name">WILLIAMS, D.</td>
+                  <td class="col-amount">$200.00</td>
+                  <td class="col-date">2026-03-24</td>
+                  <td><span class="status-badge status-paid">PAID</span></td>
+                </tr>
+                <tr>
+                  <td class="col-name">THOMPSON, R.</td>
+                  <td class="col-amount">$150.00</td>
+                  <td class="col-date">2026-03-22</td>
+                  <td><span class="status-badge status-pending">PENDING</span></td>
+                </tr>
+                <tr>
+                  <td class="col-name">BROOKS, A.</td>
+                  <td class="col-amount">$350.00</td>
+                  <td class="col-date">2026-03-20</td>
+                  <td><span class="status-badge status-overdue">OVERDUE</span></td>
+                </tr>
+                <tr>
+                  <td class="col-name">CARTER, J.</td>
+                  <td class="col-amount">$200.00</td>
+                  <td class="col-date">2026-03-18</td>
+                  <td><span class="status-badge status-paid">PAID</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="right-column">
+
+          <!-- SYSTEM ALERTS -->
+          <div class="panel" style="animation-delay: 0.25s;">
+            <div class="panel-header">
+              <div class="panel-title">
+                <span class="accent-bar" style="background: var(--neon-amber); box-shadow: 0 0 6px rgba(255,190,11,0.4);"></span>
+                System Alerts
+              </div>
+              <span class="panel-badge">3 ACTIVE</span>
+            </div>
+            <div class="panel-body">
+              <div class="alert-list">
+                <div class="alert-item alert-critical">
+                  <div class="alert-icon">&#9888;</div>
+                  <div class="alert-content">
+                    <div class="alert-title">Dues Deadline Approaching</div>
+                    <div class="alert-text">8 members have not submitted semester dues. Final deadline is April 1, 2026.</div>
+                    <div class="alert-time">2H 14M AGO</div>
+                  </div>
+                </div>
+                <div class="alert-item alert-warn">
+                  <div class="alert-icon">&#9670;</div>
+                  <div class="alert-content">
+                    <div class="alert-title">Regional Report Due</div>
+                    <div class="alert-text">Q1 chapter activity report must be submitted to regional director by March 31.</div>
+                    <div class="alert-time">6H 32M AGO</div>
+                  </div>
+                </div>
+                <div class="alert-item alert-info">
+                  <div class="alert-icon">&#9432;</div>
+                  <div class="alert-content">
+                    <div class="alert-title">New Member Onboarded</div>
+                    <div class="alert-text">BRO. DAVIS, K. has been added to the active roster. Profile complete.</div>
+                    <div class="alert-time">1D 4H AGO</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- UPCOMING OPERATIONS -->
+          <div class="panel" style="animation-delay: 0.3s;">
+            <div class="panel-header">
+              <div class="panel-title">
+                <span class="accent-bar" style="background: var(--neon-green); box-shadow: 0 0 6px rgba(57,255,20,0.4);"></span>
+                Upcoming Operations
+              </div>
+              <span class="panel-badge">NEXT 30D</span>
+            </div>
+            <div class="panel-body">
+              <div class="ops-list">
+                <div class="ops-item">
+                  <div class="ops-datetime">
+                    <div class="ops-day">29</div>
+                    <div class="ops-month">MAR</div>
+                  </div>
+                  <div class="ops-divider"></div>
+                  <div class="ops-details">
+                    <div class="ops-codename">OP: BLUE HORIZON</div>
+                    <div class="ops-desc">Community service initiative - Habitat build</div>
+                    <div class="ops-meta">
+                      <span>0900 HRS</span>
+                      <span class="rsvp">RSVP: 18/24</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="ops-item">
+                  <div class="ops-datetime">
+                    <div class="ops-day">05</div>
+                    <div class="ops-month">APR</div>
+                  </div>
+                  <div class="ops-divider"></div>
+                  <div class="ops-details">
+                    <div class="ops-codename">OP: SIGMA GALA</div>
+                    <div class="ops-desc">Annual scholarship fundraiser dinner</div>
+                    <div class="ops-meta">
+                      <span>1900 HRS</span>
+                      <span class="rsvp">RSVP: 22/24</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="ops-item">
+                  <div class="ops-datetime">
+                    <div class="ops-day">12</div>
+                    <div class="ops-month">APR</div>
+                  </div>
+                  <div class="ops-divider"></div>
+                  <div class="ops-details">
+                    <div class="ops-codename">OP: IRON BOND</div>
+                    <div class="ops-desc">Brotherhood retreat - Lake Murray</div>
+                    <div class="ops-meta">
+                      <span>0800 HRS</span>
+                      <span class="rsvp">RSVP: 15/24</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /right-column -->
+      </div><!-- /content-grid -->
+    </div><!-- /dashboard-body -->
+  </main>
+</div>
+
+<script>
+  // Live clock
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('clock-display').innerHTML =
+      h + '<span class="blink">:</span>' + m + '<span class="blink">:</span>' + s;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Animate finance bar on load
+  window.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      document.getElementById('finance-bar').style.width = '62.5%';
+    }, 600);
+  });
+</script>
+
+</body>
+</html>
