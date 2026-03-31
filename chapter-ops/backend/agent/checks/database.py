@@ -119,7 +119,7 @@ def _check_migration_drift(ctx: AgentContext) -> None:
         return  # No migrations applied yet (fresh DB)
 
     # Find latest migration file revision on disk
-    versions_dir = Path(__file__).resolve().parents[3] / "migrations" / "versions"
+    versions_dir = Path(__file__).resolve().parents[2] / "migrations" / "versions"
     migration_files = list(versions_dir.glob("*.py"))
     revisions_on_disk = set()
     for f in migration_files:

@@ -116,7 +116,7 @@ def _check_overdue_plans(ctx: AgentContext) -> None:
     for plan in overdue_plans:
         last_payment = (
             db.session.query(Payment)
-            .filter(Payment.payment_plan_id == plan.id)
+            .filter(Payment.plan_id == plan.id)
             .order_by(Payment.created_at.desc())
             .first()
         )
