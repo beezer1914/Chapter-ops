@@ -24,6 +24,10 @@ class Organization(BaseModel):
     website: Mapped[str | None] = mapped_column(db.String(300), nullable=True)
     active: Mapped[bool] = mapped_column(db.Boolean, default=True, nullable=False)
 
+    # Subscription plan: "beta" | "starter" | "pro" | "elite" | "organization"
+    # "beta" = Chapter Pro features at $0 during beta period
+    plan: Mapped[str] = mapped_column(db.String(20), nullable=False, default="beta")
+
     # Organization-level configuration (role titles, custom member fields)
     config: Mapped[dict] = mapped_column(db.JSON, nullable=False, default=dict)
 
@@ -47,6 +51,7 @@ class Organization(BaseModel):
             "logo_url": self.logo_url,
             "website": self.website,
             "active": self.active,
+            "plan": self.plan,
             "config": self.config,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
