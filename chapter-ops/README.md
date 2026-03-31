@@ -74,7 +74,7 @@ The platform uses a shared-database, shared-schema multi-tenancy model scoped at
 
 - **Organization** — National Greek letter organization (e.g., Phi Beta Sigma Fraternity, Inc.)
 - **Chapter** — Local chapter (the primary tenant boundary — all data is scoped here)
-- **Member** — Individual user (can belong to multiple chapters)
+- **Member** — Individual user with ONE active chapter membership per organization (transfers move the active membership, not duplicate it)
 
 Data isolation is enforced via:
 - Flask middleware that sets `g.current_chapter` on every authenticated request

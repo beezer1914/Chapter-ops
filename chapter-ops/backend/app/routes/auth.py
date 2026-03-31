@@ -13,10 +13,26 @@ from flask_login import current_user, login_required, login_user, logout_user
 from app.extensions import bcrypt, db, limiter
 from app.models import User, InviteCode, ChapterMembership, Chapter
 from app.models.workflow import WorkflowTemplate
+from app.models.auth_event import AuthEvent
 from app.services import notification_service, workflow_engine
 from app.utils.password import validate_password
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+
+
+def _log_auth_event(event_type: str, user_id: str | None = None) -> None:
+    """Record an AuthEvent. Silently swallowed on failure — never breaks the request."""
+    try:
+        event = AuthEvent(
+            user_id=user_id,
+            ip_address=request.remote_addr or "unknown",
+            event_type=event_type,
+            user_agent=(request.user_agent.string or "")[:512],
+        )
+        db.session.add(event)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -31,14 +47,17 @@ def login():
     user = User.query.filter_by(email=data["email"].lower().strip()).first()
 
     if not user or not user.check_password(data["password"]):
+        _log_auth_event("login_failure", user_id=user.id if user else None)
         return jsonify({"error": "Invalid email or password."}), 401
 
     if not user.active:
+        _log_auth_event("login_failure", user_id=user.id)
         return jsonify({"error": "This account has been deactivated."}), 403
 
     # Regenerate session to prevent session fixation
     session.clear()
     login_user(user, remember=data.get("remember", False))
+    _log_auth_event("login_success", user_id=user.id)
 
     return jsonify({
         "success": True,
@@ -218,8 +237,10 @@ def register():
 @login_required
 def logout():
     """End the user's session."""
+    user_id = current_user.id
     logout_user()
     session.clear()
+    _log_auth_event("logout", user_id=user_id)
     return jsonify({"success": True}), 200
 
 
@@ -288,6 +309,7 @@ def change_password():
 
     current_user.set_password(new_password)
     db.session.commit()
+    _log_auth_event("password_change", user_id=current_user.id)
     return jsonify({"success": True}), 200
 
 

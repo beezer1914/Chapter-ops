@@ -112,6 +112,7 @@ def create_app(config_class=None):
     from app.routes.intake import intake_bp
     from app.routes.expenses import expenses_bp
     from app.routes.lineage import lineage_bp
+    from app.routes.agent import agent_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(onboarding_bp)
@@ -136,6 +137,7 @@ def create_app(config_class=None):
     app.register_blueprint(intake_bp)
     app.register_blueprint(expenses_bp)
     app.register_blueprint(lineage_bp)
+    app.register_blueprint(agent_bp)
 
     # Exempt API routes from CSRF (using session cookies + SameSite instead)
     csrf.exempt(auth_bp)
@@ -161,6 +163,15 @@ def create_app(config_class=None):
     csrf.exempt(stripe_connect_bp)
     csrf.exempt(webhooks_bp)
     csrf.exempt(files_bp)
+    csrf.exempt(agent_bp)
+
+    # ── Start ops agent scheduler ──────────────────────────────────────
+    if not app.testing:
+        try:
+            from agent.runner import init_agent
+            init_agent(app)
+        except Exception as exc:
+            logger.warning(f"Ops agent failed to start: {exc}")
 
     # ── CLI commands ───────────────────────────────────────────────────
     @app.cli.command("make-org-admin")

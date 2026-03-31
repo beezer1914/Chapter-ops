@@ -68,6 +68,14 @@ class BaseConfig:
     # Frontend
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
+    # Ops Agent
+    FOUNDER_EMAIL = os.environ.get("FOUNDER_EMAIL", "")
+    AGENT_ENABLED = os.environ.get("AGENT_ENABLED", "true").lower() not in ("false", "0", "no")
+    AGENT_DIGEST_HOUR = int(os.environ.get("AGENT_DIGEST_HOUR", "7"))
+    STATUSPAGE_API_KEY = os.environ.get("STATUSPAGE_API_KEY", "")
+    STATUSPAGE_PAGE_ID = os.environ.get("STATUSPAGE_PAGE_ID", "")
+    BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:5000")
+
 
 class LocalConfig(BaseConfig):
     """Local development configuration."""

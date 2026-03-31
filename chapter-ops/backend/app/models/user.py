@@ -1,8 +1,11 @@
 """
 User model — global user account.
 
-Users are NOT tenant-scoped. A user can belong to multiple chapters
-via ChapterMembership. Authentication is global; authorization is per-chapter.
+Users are NOT tenant-scoped. Authentication is global; authorization is per-chapter
+via ChapterMembership. A user has ONE active chapter membership per organization —
+concurrent memberships in two chapters are not permitted (BGLO cultural rule).
+Cross-organization membership (belonging to two different Greek letter orgs) is
+also forbidden and must never be allowed by the platform.
 """
 
 from flask_login import UserMixin
