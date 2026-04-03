@@ -27,6 +27,7 @@ import type {
 
 const ROLE_HIERARCHY: Record<MemberRole, number> = {
   member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
+  regional_director: 3, regional_1st_vice: 2,
 };
 
 type PlanFrequency = "weekly" | "biweekly" | "monthly" | "quarterly";
@@ -40,7 +41,7 @@ function calcEndDate(startDate: string, installments: number, frequency: PlanFre
     case "monthly":    d.setMonth(d.getMonth() + installments); break;
     case "quarterly":  d.setMonth(d.getMonth() + installments * 3); break;
   }
-  return d.toISOString().split("T")[0];
+  return d.toISOString().split("T")[0] ?? "";
 }
 
 function formatDate(iso: string): string {
@@ -296,6 +297,7 @@ function MemberPaymentsView({
   const [loading, setLoading] = useState(true);
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [stripeAmount, setStripeAmount] = useState("");
+  const [stripeFeeType, setStripeFeeType] = useState("");
   const [stripeSubmitting, setStripeSubmitting] = useState(false);
   const [payingPlanId, setPayingPlanId] = useState<string | null>(null);
   const [payModalPlan, setPayModalPlan] = useState<PaymentPlanWithUser | null>(null);
@@ -336,7 +338,10 @@ function MemberPaymentsView({
     setStripeSubmitting(true);
     setError(null);
     try {
-      const url = await createDuesCheckout({ amount: parseFloat(stripeAmount) });
+      const url = await createDuesCheckout({
+        amount: parseFloat(stripeAmount),
+        fee_type_id: stripeFeeType || undefined,
+      });
       window.location.href = url;
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error ?? "Failed to create payment session.";
@@ -409,8 +414,31 @@ function MemberPaymentsView({
       {showStripeModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-surface-card-solid rounded-xl shadow-glass p-6 w-full max-w-sm">
-            <h3 className="text-lg font-semibold text-content-primary mb-4">Pay Dues via Stripe</h3>
+            <h3 className="text-lg font-semibold text-content-primary mb-4">Pay via Stripe</h3>
             <form onSubmit={handleStripeCheckout} className="space-y-4">
+              {feeTypes.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-content-secondary mb-1">Fee Type</label>
+                  <select
+                    value={stripeFeeType}
+                    onChange={(e) => {
+                      setStripeFeeType(e.target.value);
+                      const ft = feeTypes.find((f) => f.id === e.target.value);
+                      if (ft && ft.default_amount > 0 && !stripeAmount) {
+                        setStripeAmount(ft.default_amount.toString());
+                      }
+                    }}
+                    className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  >
+                    <option value="">Select a fee type (optional)</option>
+                    {feeTypes.map((ft) => (
+                      <option key={ft.id} value={ft.id}>
+                        {ft.label}{ft.default_amount > 0 ? ` — $${ft.default_amount.toFixed(2)}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-content-secondary mb-1">Amount ($)</label>
                 <input
@@ -421,24 +449,13 @@ function MemberPaymentsView({
                   className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
-              {feeTypes.length > 0 && (
-                <div className="text-xs text-content-secondary">
-                  Fee presets:{" "}
-                  {feeTypes.map((ft) => (
-                    <button key={ft.id} type="button" onClick={() => setStripeAmount(ft.default_amount.toString())}
-                      className="mr-2 underline text-brand-primary hover:text-brand-primary-dark">
-                      {ft.label} (${ft.default_amount.toFixed(2)})
-                    </button>
-                  ))}
-                </div>
-              )}
               <p className="text-xs text-content-muted">You'll be redirected to Stripe's secure checkout page.</p>
               <div className="flex gap-3">
                 <button type="submit" disabled={stripeSubmitting}
                   className="flex-1 px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary-dark disabled:opacity-50">
                   {stripeSubmitting ? "Redirecting..." : "Continue to Stripe"}
                 </button>
-                <button type="button" onClick={() => { setShowStripeModal(false); setStripeAmount(""); }}
+                <button type="button" onClick={() => { setShowStripeModal(false); setStripeAmount(""); setStripeFeeType(""); }}
                   className="px-4 py-2 text-sm font-medium text-content-secondary bg-white/10 rounded-lg hover:bg-white/10">
                   Cancel
                 </button>
@@ -658,6 +675,7 @@ function PaymentsTab({
   const [members, setMembers] = useState<MemberWithUser[]>([]);
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [stripeAmount, setStripeAmount] = useState("");
+  const [stripeFeeType, setStripeFeeType] = useState("");
   const [stripeSubmitting, setStripeSubmitting] = useState(false);
 
   const { getFeeTypes } = useConfigStore();
@@ -734,7 +752,10 @@ function PaymentsTab({
     setStripeSubmitting(true);
     setError(null);
     try {
-      const url = await createDuesCheckout({ amount: parseFloat(stripeAmount) });
+      const url = await createDuesCheckout({
+        amount: parseFloat(stripeAmount),
+        fee_type_id: stripeFeeType || undefined,
+      });
       window.location.href = url;
     } catch (err: unknown) {
       const msg =
@@ -787,7 +808,7 @@ function PaymentsTab({
           onClick={() => setShowStripeModal(true)}
           className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary-dark"
         >
-          Pay Dues via Stripe
+          Make a Payment
         </button>
         {canManage && (
           <button
@@ -802,8 +823,31 @@ function PaymentsTab({
       {showStripeModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-surface-card-solid rounded-xl shadow-glass p-6 w-full max-w-sm">
-            <h3 className="text-lg font-semibold text-content-primary mb-4">Pay Dues via Stripe</h3>
+            <h3 className="text-lg font-semibold text-content-primary mb-4">Pay via Stripe</h3>
             <form onSubmit={handleStripeCheckout} className="space-y-4">
+              {feeTypes.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-content-secondary mb-1">Fee Type</label>
+                  <select
+                    value={stripeFeeType}
+                    onChange={(e) => {
+                      setStripeFeeType(e.target.value);
+                      const ft = feeTypes.find((f) => f.id === e.target.value);
+                      if (ft && ft.default_amount > 0 && !stripeAmount) {
+                        setStripeAmount(ft.default_amount.toString());
+                      }
+                    }}
+                    className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  >
+                    <option value="">Select a fee type (optional)</option>
+                    {feeTypes.map((ft) => (
+                      <option key={ft.id} value={ft.id}>
+                        {ft.label}{ft.default_amount > 0 ? ` — $${ft.default_amount.toFixed(2)}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-content-secondary mb-1">Amount ($)</label>
                 <input
@@ -817,21 +861,6 @@ function PaymentsTab({
                   className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
               </div>
-              {feeTypes.length > 0 && (
-                <div className="text-xs text-content-secondary">
-                  Fee presets:{" "}
-                  {feeTypes.map((ft) => (
-                    <button
-                      key={ft.id}
-                      type="button"
-                      onClick={() => setStripeAmount(ft.default_amount.toString())}
-                      className="mr-2 underline text-brand-primary hover:text-brand-primary-dark"
-                    >
-                      {ft.label} (${ft.default_amount.toFixed(2)})
-                    </button>
-                  ))}
-                </div>
-              )}
               <p className="text-xs text-content-muted">
                 You'll be redirected to Stripe's secure checkout page to complete payment.
               </p>
@@ -845,7 +874,7 @@ function PaymentsTab({
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowStripeModal(false); setStripeAmount(""); }}
+                  onClick={() => { setShowStripeModal(false); setStripeAmount(""); setStripeFeeType(""); }}
                   className="px-4 py-2 text-sm font-medium text-content-secondary bg-white/10 rounded-lg hover:bg-white/10"
                 >
                   Cancel

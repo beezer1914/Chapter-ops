@@ -42,7 +42,11 @@ def _get_s3_client():
 
 def _is_treasurer_plus(chapter_id: str) -> bool:
     membership = current_user.get_membership(chapter_id)
-    return membership is not None and membership.has_role("treasurer")
+    return (
+        membership is not None
+        and membership.has_role("treasurer")
+        and membership.role != "admin"
+    )
 
 
 # ── List expenses ──────────────────────────────────────────────────────────────

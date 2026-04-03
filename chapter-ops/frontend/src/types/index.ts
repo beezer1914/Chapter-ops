@@ -376,7 +376,7 @@ export interface PaymentPlan {
   id: string;
   chapter_id: string;
   user_id: string;
-  frequency: "weekly" | "biweekly" | "monthly";
+  frequency: "weekly" | "biweekly" | "monthly" | "quarterly";
   start_date: string;
   end_date: string;
   total_amount: string;
@@ -566,7 +566,7 @@ export interface CreatePaymentRequest {
 
 export interface CreatePaymentPlanRequest {
   user_id: string;
-  frequency: "weekly" | "biweekly" | "monthly";
+  frequency: "weekly" | "biweekly" | "monthly" | "quarterly";
   start_date: string;
   end_date: string;
   total_amount: number;

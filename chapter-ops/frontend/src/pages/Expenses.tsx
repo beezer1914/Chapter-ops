@@ -84,7 +84,8 @@ export default function Expenses() {
   const roleHierarchy: Record<string, number> = {
     member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
   };
-  const isOfficer = roleHierarchy[currentMembership?.role ?? "member"] >= roleHierarchy["treasurer"];
+  const role = currentMembership?.role ?? "member";
+  const isOfficer = roleHierarchy[role] >= roleHierarchy["treasurer"] && roleHierarchy[role] <= roleHierarchy["president"];
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [summary, setSummary] = useState<ExpenseSummary | null>(null);
