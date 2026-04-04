@@ -14,6 +14,7 @@ import {
   BarChart3,
   Receipt,
   FileText,
+  LayoutDashboard,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────
@@ -111,16 +112,18 @@ export default function Landing() {
       </nav>
 
       {/* ── HERO ─────────────────────────────────────── */}
-      <section className="relative min-h-[100vh] flex flex-col items-center justify-center pt-16 px-6 overflow-hidden text-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-primary-dark/30 via-surface-deep to-surface-deep" />
-        <div className="absolute inset-0 bg-mesh-diagonal opacity-50" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] rounded-full bg-brand-primary-main/10 blur-3xl pointer-events-none" />
+      <section className="relative min-h-[100vh] flex items-center pt-20 pb-16 px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-primary-dark/25 via-surface-deep to-surface-deep" />
+        <div className="absolute inset-0 bg-mesh-diagonal opacity-40" />
+        {/* Ambient glow — left side behind text */}
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[500px] h-[600px] rounded-full bg-brand-primary-main/[0.07] blur-3xl pointer-events-none" />
 
+        {/* Floating Greek letters — background texture */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden>
           {["Σ","Φ","Α","Δ","Π","Ω","Κ","Ζ","Β","Θ"].map((l, i) => (
             <span
               key={l}
-              className="absolute font-heading font-bold text-white/[0.018]"
+              className="absolute font-heading font-bold text-white/[0.012]"
               style={{
                 fontSize: `${80 + (i % 4) * 30}px`,
                 top: `${10 + (i * 17) % 75}%`,
@@ -132,46 +135,183 @@ export default function Landing() {
           ))}
         </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.08] rounded-full px-4 py-1.5 mb-8 text-[11px] font-medium text-content-muted tracking-widest uppercase backdrop-blur-sm anim-card-reveal">
-            Chapter Operations Platform
+        <div className="relative z-10 max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 xl:gap-20 items-center">
+
+          {/* ── Left: copy ── */}
+          <div>
+            <div className="inline-flex items-center gap-2 bg-white/[0.05] border border-white/[0.08] rounded-full px-4 py-1.5 mb-8 text-[11px] font-medium text-content-muted tracking-widest uppercase backdrop-blur-sm anim-card-reveal">
+              Chapter Operations Platform
+            </div>
+
+            <h1
+              className="text-4xl sm:text-5xl lg:text-[3.75rem] font-heading font-bold tracking-tight leading-[1.08] mb-6 anim-card-reveal"
+              style={{ animationDelay: "80ms" }}
+            >
+              Your chapter runs<br />
+              <span className="italic text-transparent bg-clip-text bg-gradient-to-br from-brand-primary-light via-[#6B8FEA] to-brand-primary-light">
+                on one platform.
+              </span>
+            </h1>
+
+            <p
+              className="text-[1.05rem] text-content-muted leading-relaxed mb-8 max-w-lg anim-card-reveal"
+              style={{ animationDelay: "160ms" }}
+            >
+              Most chapters manage their operations across five disconnected tools — and the overhead falls on already-busy officers. ChapterOps converges everything into one platform built specifically for Greek organizations.
+            </p>
+
+            <div
+              className="flex flex-col sm:flex-row items-start gap-4 mb-10 anim-card-reveal"
+              style={{ animationDelay: "240ms" }}
+            >
+              <Link
+                to="/register"
+                className="group flex items-center gap-2 bg-brand-primary-main text-white font-bold text-[15px] px-8 py-3.5 rounded-xl hover:bg-brand-primary-dark transition-all duration-200 shadow-lg shadow-brand-primary-main/20"
+              >
+                Request Access
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <a
+                href="#problem"
+                className="text-[14px] font-medium text-content-muted hover:text-white transition-colors py-3.5"
+              >
+                See how it works ↓
+              </a>
+            </div>
+
           </div>
 
-          <h1
-            className="text-5xl sm:text-6xl lg:text-[4.5rem] font-heading font-bold tracking-tight leading-[1.08] mb-7 anim-card-reveal"
-            style={{ animationDelay: "80ms" }}
-          >
-            Your chapter runs<br />
-            <span className="italic text-transparent bg-clip-text bg-gradient-to-br from-brand-primary-light via-[#6B8FEA] to-brand-primary-light">
-              on one platform.
-            </span>
-          </h1>
+          {/* ── Right: Dashboard mockup ── */}
+          <div className="relative hidden lg:block anim-card-reveal" style={{ animationDelay: "200ms" }}>
+            {/* Glow behind the mockup */}
+            <div className="absolute -inset-8 bg-gradient-to-br from-brand-primary-main/25 via-brand-primary-dark/10 to-transparent rounded-[40px] blur-3xl pointer-events-none" />
 
-          <p
-            className="max-w-2xl mx-auto text-[1.1rem] text-content-muted leading-relaxed mb-10 anim-card-reveal"
-            style={{ animationDelay: "160ms" }}
-          >
-            Most chapters manage their operations across five disconnected tools — and the overhead falls on already-busy officers. ChapterOps converges everything into one platform built specifically for Greek organizations.
-          </p>
+            {/* Mockup frame — perspective tilt */}
+            <div
+              className="relative rounded-2xl border border-white/[0.12] overflow-hidden shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.05)]"
+              style={{ transform: "perspective(1100px) rotateY(-8deg) rotateX(3deg)", transformOrigin: "60% 50%" }}
+            >
+              {/* Browser chrome */}
+              <div className="flex items-center gap-1.5 px-4 py-3 bg-[#050c1a] border-b border-white/[0.06]">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
+                <div className="ml-3 flex-1 bg-white/[0.04] rounded-md px-3 py-1 text-[11px] text-content-muted font-body">
+                  app.chapterops.com/dashboard
+                </div>
+              </div>
 
-          <div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 anim-card-reveal"
-            style={{ animationDelay: "240ms" }}
-          >
-            <Link
-              to="/register"
-              className="group flex items-center gap-2 bg-brand-primary-main text-white font-bold text-[15px] px-8 py-4 rounded-xl hover:bg-brand-primary-dark transition-all duration-200 shadow-lg shadow-brand-primary-main/20"
-            >
-              Request Access
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <a
-              href="#problem"
-              className="text-[14px] font-medium text-content-muted hover:text-white transition-colors px-4 py-4"
-            >
-              See how it works ↓
-            </a>
+              {/* App layout */}
+              <div className="flex bg-[#060b18]">
+
+                {/* Narrow sidebar */}
+                <div className="w-[56px] bg-[#050a16] border-r border-white/[0.05] flex flex-col items-center py-4 gap-2 shrink-0">
+                  <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-brand-primary-main to-brand-primary-dark flex items-center justify-center mb-2 shadow-sm">
+                    <span className="text-white font-bold text-[9px] font-body">CO</span>
+                  </div>
+                  {[LayoutDashboard, CreditCard, Users, Calendar, FolderOpen].map((Icon, i) => (
+                    <div
+                      key={i}
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                        i === 0
+                          ? "bg-brand-primary-main/20"
+                          : "hover:bg-white/[0.03]"
+                      }`}
+                    >
+                      <Icon
+                        className={`w-[15px] h-[15px] ${
+                          i === 0 ? "text-brand-primary-light" : "text-content-muted"
+                        }`}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Main content */}
+                <div className="flex-1 p-4 bg-[#07101e]">
+                  {/* Top bar */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-[13px] font-heading font-bold text-white leading-tight">Welcome back, Brandon</p>
+                      <p className="text-[10px] text-content-muted mt-0.5">Phi Beta Sigma · Lambda Chapter</p>
+                    </div>
+                    <div className="w-7 h-7 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center relative">
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-primary-light" />
+                      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 border border-[#07101e]" />
+                    </div>
+                  </div>
+
+                  {/* Stat cards — 2×2 */}
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-3 relative overflow-hidden">
+                      <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-white/10" />
+                      <p className="text-[9px] text-emerald-100/70 uppercase tracking-wider font-semibold">Status</p>
+                      <p className="text-[17px] font-heading font-bold text-white mt-0.5">Financial</p>
+                      <p className="text-[9px] text-emerald-100/60">President</p>
+                    </div>
+                    <div className="bg-[#0f1a3a] border border-white/[0.05] rounded-xl p-3 relative overflow-hidden">
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-primary-main via-brand-primary-light to-transparent" />
+                      <p className="text-[9px] text-content-muted uppercase tracking-wider font-semibold">Collected</p>
+                      <p className="text-[17px] font-heading font-bold text-white mt-0.5">$4,280</p>
+                      <p className="text-[9px] text-emerald-400/80">+$840 this month</p>
+                    </div>
+                    <div className="bg-[#0f1a3a] border border-white/[0.05] rounded-xl p-3 relative overflow-hidden">
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-400 via-amber-200 to-transparent" />
+                      <p className="text-[9px] text-content-muted uppercase tracking-wider font-semibold">Outstanding</p>
+                      <p className="text-[17px] font-heading font-bold text-white mt-0.5">3</p>
+                      <p className="text-[9px] text-content-muted">not financial</p>
+                    </div>
+                    <div className="bg-[#0f1a3a] border border-white/[0.05] rounded-xl p-3 relative overflow-hidden">
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-400 via-indigo-200 to-transparent" />
+                      <p className="text-[9px] text-content-muted uppercase tracking-wider font-semibold">Members</p>
+                      <p className="text-[17px] font-heading font-bold text-white mt-0.5">24</p>
+                      <p className="text-[9px] text-content-muted">active</p>
+                    </div>
+                  </div>
+
+                  {/* Recent transactions card */}
+                  <div className="rounded-xl border border-white/[0.06] bg-[#0f1a3a] overflow-hidden">
+                    <div className="flex items-center gap-1.5 px-3 py-2.5 border-b border-white/[0.05]">
+                      <CreditCard className="w-3 h-3 text-brand-primary-light" />
+                      <p className="text-[10px] font-heading font-semibold text-white">Recent Transactions</p>
+                    </div>
+                    {[
+                      { name: "Dues Payment", date: "Apr 1", amount: "$125.00", dot: "bg-emerald-500" },
+                      { name: "Event Ticket",  date: "Mar 28", amount: "$25.00",  dot: "bg-violet-500" },
+                      { name: "Donation",      date: "Mar 22", amount: "$50.00",  dot: "bg-sky-500" },
+                    ].map((tx) => (
+                      <div key={tx.name} className="flex items-center justify-between px-3 py-2 border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-colors">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${tx.dot}`} />
+                          <div>
+                            <p className="text-[10px] text-white font-medium leading-tight">{tx.name}</p>
+                            <p className="text-[9px] text-content-muted">{tx.date}</p>
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-bold text-white tabular-nums">{tx.amount}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Shine overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent pointer-events-none" />
+            </div>
+
+            {/* Floating stat badge — bottom-left */}
+            <div className="absolute -bottom-5 -left-6 bg-[#0f1a3a] border border-brand-primary-main/25 rounded-2xl px-4 py-3 shadow-xl backdrop-blur-sm">
+              <p className="text-[10px] text-content-muted uppercase tracking-widest">Everything in one place</p>
+              <p className="text-[20px] font-heading font-bold text-white leading-tight">12 modules</p>
+            </div>
+
+            {/* Floating stat badge — top-right */}
+            <div className="absolute -top-4 -right-4 bg-emerald-900/50 border border-emerald-700/40 rounded-xl px-3 py-2 shadow-lg backdrop-blur-sm">
+              <p className="text-[10px] text-emerald-300 font-semibold">Stripe-powered</p>
+              <p className="text-[10px] text-emerald-400/70">PCI compliant</p>
+            </div>
           </div>
+
         </div>
 
         <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-surface-deep to-transparent pointer-events-none" />
