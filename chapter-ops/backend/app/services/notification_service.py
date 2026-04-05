@@ -237,7 +237,7 @@ def notify_workflow_step_assignees(
 
     title = "Action Required: Workflow Approval"
     message = f'Your approval is needed on "{step_name}" for {trigger_title}'
-    link = "/workflows"
+    link = f"/workflows?instance={instance.id}"
 
     try:
         if step_instance.assigned_to_user_id:

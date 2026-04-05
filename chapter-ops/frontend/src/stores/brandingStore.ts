@@ -1,17 +1,17 @@
 import { create } from "zustand";
 import type { BrandColors, Typography, ResolvedBranding, OrganizationConfig, ChapterConfig } from "@/types";
 
-// Default ChapterOps branding
+// Match index.css :root defaults exactly — no drift
 const DEFAULT_COLORS: BrandColors = {
-  primary: { light: "#eff6ff", main: "#3b82f6", dark: "#1e40af" },
-  secondary: { light: "#f3f4f6", main: "#6b7280", dark: "#374151" },
-  accent: { light: "#fef3c7", main: "#f59e0b", dark: "#d97706" },
+  primary:   { light: "#3b7ddb", main: "#0f52ba", dark: "#0a3d8a" },
+  secondary: { light: "#0d1630", main: "#0f1a3a", dark: "#132248" },
+  accent:    { light: "rgba(251,191,36,0.1)", main: "#fbbf24", dark: "#d97706" },
 };
 
 const DEFAULT_TYPOGRAPHY: Typography = {
-  heading_font: "Inter",
-  body_font: "Inter",
-  font_source: "system",
+  heading_font: "Cormorant Garamond",
+  body_font: "Outfit",
+  font_source: "google",
 };
 
 interface BrandingState {
@@ -20,6 +20,17 @@ interface BrandingState {
 
   initializeBranding: (orgConfig: OrganizationConfig | undefined, chapterConfig: ChapterConfig | undefined) => void;
   applyBranding: () => void;
+}
+
+// Convert a hex color to its RGB components so we can derive rgba() values.
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim());
+  if (!result || !result[1] || !result[2] || !result[3]) return null;
+  return {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16),
+  };
 }
 
 export const useBrandingStore = create<BrandingState>((set, get) => ({
@@ -37,28 +48,29 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
     const chapterBranding = chapterConfig?.branding || {};
     const chapterOverrideEnabled = chapterBranding.enabled === true;
 
-    // Resolve branding with inheritance logic:
-    // If chapter override is enabled, use chapter branding, otherwise use org branding
-    const resolved: ResolvedBranding = {
-      // Logo comes from Organization model, not config
-      logo_url: null, // Will be set by org.logo_url or chapter.logo_url separately
+    // If no branding has ever been saved, leave index.css defaults untouched.
+    // Overriding with DEFAULT_COLORS would cause a subtle color drift between
+    // what the CSS file defines and what JS injects.
+    if (!orgBranding.colors && !chapterBranding.colors) {
+      set({ isInitialized: true });
+      return;
+    }
 
-      // Favicon from config.branding
+    const resolved: ResolvedBranding = {
+      logo_url: null,
+
       favicon_url: chapterOverrideEnabled && chapterBranding.favicon_url
         ? chapterBranding.favicon_url
         : orgBranding.favicon_url || null,
 
-      // Colors
       colors: chapterOverrideEnabled && chapterBranding.colors
         ? chapterBranding.colors
         : orgBranding.colors || DEFAULT_COLORS,
 
-      // Typography
       typography: chapterOverrideEnabled && chapterBranding.typography
         ? chapterBranding.typography
         : orgBranding.typography || DEFAULT_TYPOGRAPHY,
 
-      // Custom CSS (future feature, not implemented yet)
       custom_css: null,
     };
 
@@ -70,24 +82,35 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
     const { branding } = get();
     const root = document.documentElement;
 
-    // Inject CSS custom properties for colors
+    // ── Primary brand colors ──────────────────────────────────────────────
     root.style.setProperty("--color-primary-light", branding.colors.primary.light);
-    root.style.setProperty("--color-primary-main", branding.colors.primary.main);
-    root.style.setProperty("--color-primary-dark", branding.colors.primary.dark);
+    root.style.setProperty("--color-primary-main",  branding.colors.primary.main);
+    root.style.setProperty("--color-primary-dark",  branding.colors.primary.dark);
 
+    // Derive glow and border vars from primary-main so they always stay in sync
+    // with whatever color the org chose. Previously these were hardcoded to
+    // Royal Blue in index.css and never updated when branding changed.
+    const rgb = hexToRgb(branding.colors.primary.main);
+    if (rgb) {
+      const { r, g, b } = rgb;
+      root.style.setProperty("--color-primary-glow",  `rgba(${r}, ${g}, ${b}, 0.14)`);
+      root.style.setProperty("--color-border",        `rgba(${r}, ${g}, ${b}, 0.10)`);
+      root.style.setProperty("--color-border-brand",  `rgba(${r}, ${g}, ${b}, 0.22)`);
+    }
+
+    // ── Secondary / accent ────────────────────────────────────────────────
     root.style.setProperty("--color-secondary-light", branding.colors.secondary.light);
-    root.style.setProperty("--color-secondary-main", branding.colors.secondary.main);
-    root.style.setProperty("--color-secondary-dark", branding.colors.secondary.dark);
+    root.style.setProperty("--color-secondary-main",  branding.colors.secondary.main);
+    root.style.setProperty("--color-secondary-dark",  branding.colors.secondary.dark);
 
     root.style.setProperty("--color-accent-light", branding.colors.accent.light);
-    root.style.setProperty("--color-accent-main", branding.colors.accent.main);
-    root.style.setProperty("--color-accent-dark", branding.colors.accent.dark);
+    root.style.setProperty("--color-accent-main",  branding.colors.accent.main);
+    root.style.setProperty("--color-accent-dark",  branding.colors.accent.dark);
 
-    // Apply typography
+    // ── Typography ────────────────────────────────────────────────────────
     root.style.setProperty("--font-heading", branding.typography.heading_font);
-    root.style.setProperty("--font-body", branding.typography.body_font);
+    root.style.setProperty("--font-body",    branding.typography.body_font);
 
-    // Load Google Fonts if needed
     if (branding.typography.font_source === "google") {
       loadGoogleFont(branding.typography.heading_font);
       if (branding.typography.body_font !== branding.typography.heading_font) {
@@ -95,21 +118,16 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
       }
     }
 
-    // Update favicon
+    // ── Favicon ───────────────────────────────────────────────────────────
     if (branding.favicon_url) {
       updateFavicon(branding.favicon_url);
     }
   },
 }));
 
-// Helper function to load Google Fonts dynamically
 function loadGoogleFont(fontName: string) {
   const fontId = `google-font-${fontName.replace(/\s+/g, "-")}`;
-
-  // Check if already loaded
-  if (document.getElementById(fontId)) {
-    return;
-  }
+  if (document.getElementById(fontId)) return;
 
   const link = document.createElement("link");
   link.id = fontId;
@@ -118,15 +136,12 @@ function loadGoogleFont(fontName: string) {
   document.head.appendChild(link);
 }
 
-// Helper function to update favicon
 function updateFavicon(faviconUrl: string) {
   let link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
-
   if (!link) {
     link = document.createElement("link");
     link.rel = "icon";
     document.head.appendChild(link);
   }
-
   link.href = faviconUrl;
 }

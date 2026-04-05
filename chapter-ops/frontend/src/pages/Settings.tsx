@@ -1317,28 +1317,24 @@ interface BrandingTabProps {
   onChapterUpdate: (config: ChapterConfig) => void;
 }
 
-const GOOGLE_FONTS = [
-  "Inter",
-  "Roboto",
-  "Open Sans",
-  "Lato",
-  "Montserrat",
-  "Poppins",
-  "Raleway",
-  "Ubuntu",
-  "Nunito",
-  "Merriweather",
-  "Playfair Display",
+// Heading fonts: serif/display faces that feel premium on the dark theme
+const HEADING_FONTS = [
+  "Cormorant Garamond",  // default — elegant serif
+  "Playfair Display",    // high-contrast editorial serif
+  "DM Serif Display",    // friendly but refined
+  "Libre Baskerville",   // sturdy classic serif
+  "Cinzel",              // Roman-inspired, great for Greek org gravitas
+  "EB Garamond",         // scholarly serif
 ];
 
-const SYSTEM_FONTS = [
-  "system-ui",
-  "Georgia",
-  "Times New Roman",
-  "Arial",
-  "Verdana",
-  "Courier New",
-  "Trebuchet MS",
+// Body fonts: clean, readable sans-serifs that work on dark backgrounds
+const BODY_FONTS = [
+  "Outfit",              // default — geometric, modern
+  "DM Sans",             // warm geometric sans
+  "Plus Jakarta Sans",   // sharp and versatile
+  "Nunito",              // soft and approachable
+  "Raleway",             // elegant thin geometric
+  "Jost",                // minimalist German-influenced
 ];
 
 const DEFAULT_COLORS: BrandColors = {
@@ -1348,8 +1344,8 @@ const DEFAULT_COLORS: BrandColors = {
 };
 
 const DEFAULT_TYPOGRAPHY: Typography = {
-  heading_font: "Inter",
-  body_font: "Inter",
+  heading_font: "Cormorant Garamond",
+  body_font: "Outfit",
   font_source: "google",
 };
 
@@ -1382,9 +1378,17 @@ function BrandingTab({
   const [colors, setColors] = useState<BrandColors>(
     currentBranding?.colors || DEFAULT_COLORS
   );
-  const [typography, setTypography] = useState<Typography>(
-    currentBranding?.typography || DEFAULT_TYPOGRAPHY
-  );
+  const [typography, setTypography] = useState<Typography>(() => {
+    const saved = currentBranding?.typography;
+    if (!saved) return DEFAULT_TYPOGRAPHY;
+    const headingValid = HEADING_FONTS.includes(saved.heading_font);
+    const bodyValid = BODY_FONTS.includes(saved.body_font);
+    return {
+      heading_font: headingValid ? saved.heading_font : DEFAULT_TYPOGRAPHY.heading_font,
+      body_font: bodyValid ? saved.body_font : DEFAULT_TYPOGRAPHY.body_font,
+      font_source: "google",
+    };
+  });
   const { organization, chapter } = useConfigStore();
   const [logoPreview, setLogoPreview] = useState<string | null>(
     scope === "organization" ? (organization?.logo_url ?? null) : (chapter?.logo_url ?? null)
@@ -1420,8 +1424,13 @@ function BrandingTab({
       ? orgConfig.branding
       : chapterConfig.branding;
 
+    const savedTypo = currentBranding?.typography;
     setColors(currentBranding?.colors || DEFAULT_COLORS);
-    setTypography(currentBranding?.typography || DEFAULT_TYPOGRAPHY);
+    setTypography(savedTypo ? {
+      heading_font: HEADING_FONTS.includes(savedTypo.heading_font) ? savedTypo.heading_font : DEFAULT_TYPOGRAPHY.heading_font,
+      body_font: BODY_FONTS.includes(savedTypo.body_font) ? savedTypo.body_font : DEFAULT_TYPOGRAPHY.body_font,
+      font_source: "google",
+    } : DEFAULT_TYPOGRAPHY);
     setFaviconPreview(currentBranding?.favicon_url || null);
     setLogoPreview(scope === "organization" ? (organization?.logo_url ?? null) : (chapter?.logo_url ?? null));
 
@@ -1602,8 +1611,13 @@ function BrandingTab({
   };
 
   const handleReset = () => {
+    const savedTypo = currentBranding?.typography;
     setColors(currentBranding?.colors || DEFAULT_COLORS);
-    setTypography(currentBranding?.typography || DEFAULT_TYPOGRAPHY);
+    setTypography(savedTypo ? {
+      heading_font: HEADING_FONTS.includes(savedTypo.heading_font) ? savedTypo.heading_font : DEFAULT_TYPOGRAPHY.heading_font,
+      body_font: BODY_FONTS.includes(savedTypo.body_font) ? savedTypo.body_font : DEFAULT_TYPOGRAPHY.body_font,
+      font_source: "google",
+    } : DEFAULT_TYPOGRAPHY);
     setFaviconPreview(currentBranding?.favicon_url || null);
     setFaviconFile(null);
     if (scope === "chapter") {
@@ -1824,13 +1838,9 @@ function BrandingTab({
               }
               className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary"
             >
-              {(typography.font_source === "google" ? GOOGLE_FONTS : SYSTEM_FONTS).map(
-                (font) => (
-                  <option key={font} value={font}>
-                    {font}
-                  </option>
-                )
-              )}
+              {HEADING_FONTS.map((font) => (
+                <option key={font} value={font}>{font}</option>
+              ))}
             </select>
           </div>
           <div>
@@ -1842,13 +1852,9 @@ function BrandingTab({
               }
               className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary"
             >
-              {(typography.font_source === "google" ? GOOGLE_FONTS : SYSTEM_FONTS).map(
-                (font) => (
-                  <option key={font} value={font}>
-                    {font}
-                  </option>
-                )
-              )}
+              {BODY_FONTS.map((font) => (
+                <option key={font} value={font}>{font}</option>
+              ))}
             </select>
           </div>
         </div>

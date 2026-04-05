@@ -25,14 +25,19 @@ VALID_FIELD_TYPES = {"text", "number", "date"}
 # Internal role keys that can have custom titles
 VALID_ROLE_KEYS = {"member", "secretary", "treasurer", "vice_president", "president"}
 
-# Hex color validation pattern
+# Hex color validation pattern (#RRGGBB)
 HEX_COLOR_REGEX = re.compile(r'^#[0-9a-fA-F]{6}$')
 
-# Allowed Google Fonts (curated list for performance and reliability)
+# rgba() color validation pattern — used for semi-transparent accent swatches
+RGBA_COLOR_REGEX = re.compile(r'^rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(?:0(?:\.\d+)?|1(?:\.0+)?)\s*\)$')
+
+# Allowed Google Fonts — must stay in sync with frontend HEADING_FONTS + BODY_FONTS
 GOOGLE_FONTS_WHITELIST = [
-    "Inter", "Roboto", "Open Sans", "Lato", "Montserrat",
-    "Poppins", "Raleway", "Ubuntu", "Nunito", "Playfair Display",
-    "Merriweather", "PT Sans", "Noto Sans", "Source Sans Pro"
+    # Heading fonts (display serifs)
+    "Cormorant Garamond", "Playfair Display", "DM Serif Display",
+    "Libre Baskerville", "Cinzel", "EB Garamond",
+    # Body fonts (geometric sans)
+    "Outfit", "DM Sans", "Plus Jakarta Sans", "Nunito", "Raleway", "Jost",
 ]
 
 # Allowed system fonts
@@ -64,8 +69,10 @@ def validate_color_palette(colors):
                 return False, f"Missing {shade} shade in {palette_name} palette."
 
             color_value = palette[shade]
-            if not isinstance(color_value, str) or not HEX_COLOR_REGEX.match(color_value):
-                return False, f"Invalid hex color '{color_value}' in {palette_name}.{shade}. Must be format #RRGGBB."
+            if not isinstance(color_value, str) or (
+                not HEX_COLOR_REGEX.match(color_value) and not RGBA_COLOR_REGEX.match(color_value)
+            ):
+                return False, f"Invalid color '{color_value}' in {palette_name}.{shade}. Must be #RRGGBB or rgba(R,G,B,alpha)."
 
     return True, None
 

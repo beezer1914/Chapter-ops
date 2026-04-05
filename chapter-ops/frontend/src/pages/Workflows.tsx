@@ -90,8 +90,9 @@ export default function Workflows() {
 
   const { user, memberships } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
+  const instanceParam = searchParams.get("instance");
   const [activeTab, setActiveTab] = useState<"templates" | "activity">(
-    "templates",
+    instanceParam ? "activity" : "templates",
   );
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -102,11 +103,9 @@ export default function Workflows() {
   const currentRole = currentMembership?.role ?? "member";
   const canManageTemplates = hasRole(currentRole, "treasurer");
 
-  // Auto-open an instance when ?instance=<id> is present (e.g. from Events page)
-  const instanceParam = searchParams.get("instance");
+  // Auto-open an instance when ?instance=<id> is present (e.g. from notifications)
   useEffect(() => {
     if (instanceParam) {
-      setActiveTab("activity");
       loadInstanceDetail(instanceParam);
       setSearchParams({}, { replace: true });
     }
