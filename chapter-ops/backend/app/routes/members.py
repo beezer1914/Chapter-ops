@@ -14,6 +14,7 @@ from app.extensions import db
 from app.models import ChapterMembership, User
 from app.services import notification_service
 from app.utils.decorators import chapter_required, role_required
+from app.utils.pagination import paginate
 
 members_bp = Blueprint("members", __name__, url_prefix="/api/members")
 
@@ -30,36 +31,35 @@ def list_members():
     """List all active members of the current chapter with user info."""
     chapter = g.current_chapter
 
-    memberships = (
+    from sqlalchemy.orm import joinedload
+    query = (
         ChapterMembership.query
         .filter_by(chapter_id=chapter.id, active=True)
-        .all()
+        .options(joinedload(ChapterMembership.user))
     )
+    paged, meta = paginate(query)
 
-    # Build response with user info
+    role_order = ChapterMembership.ROLE_HIERARCHY
     result = []
-    for membership in memberships:
-        user = db.session.get(User, membership.user_id)
-        if not user:
+    for membership in paged.items:
+        if not membership.user:
             continue
         result.append({
             **membership.to_dict(),
             "user": {
-                "id": user.id,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "full_name": user.full_name,
-                "phone": user.phone,
-                "profile_picture_url": user.profile_picture_url,
+                "id": membership.user.id,
+                "email": membership.user.email,
+                "first_name": membership.user.first_name,
+                "last_name": membership.user.last_name,
+                "full_name": membership.user.full_name,
+                "phone": membership.user.phone,
+                "profile_picture_url": membership.user.profile_picture_url,
             },
         })
 
-    # Sort by role hierarchy (desc), then last name
-    role_order = ChapterMembership.ROLE_HIERARCHY
     result.sort(key=lambda m: (-role_order.get(m["role"], 0), m["user"]["last_name"]))
 
-    return jsonify({"members": result}), 200
+    return jsonify({"members": result, "pagination": meta}), 200
 
 
 @members_bp.route("/<membership_id>", methods=["PATCH"])
@@ -201,3 +201,51 @@ def deactivate_member(membership_id):
     db.session.commit()
 
     return jsonify({"success": True}), 200
+
+
+@members_bp.route("/<membership_id>/suspend", methods=["POST"])
+@login_required
+@chapter_required
+@role_required("president")
+def suspend_member(membership_id):
+    """
+    Suspend a member. They remain on the roster but cannot access the chapter.
+
+    Cannot suspend yourself.
+    """
+    chapter = g.current_chapter
+    membership = db.session.get(ChapterMembership, membership_id)
+
+    if not membership or membership.chapter_id != chapter.id or not membership.active:
+        return jsonify({"error": "Member not found."}), 404
+
+    if membership.user_id == current_user.id:
+        return jsonify({"error": "You cannot suspend yourself."}), 403
+
+    data = request.get_json() or {}
+    reason = (data.get("reason") or "").strip() or None
+
+    membership.suspended = True
+    membership.suspension_reason = reason
+    db.session.commit()
+
+    return jsonify({"success": True, "member": {**membership.to_dict()}}), 200
+
+
+@members_bp.route("/<membership_id>/unsuspend", methods=["POST"])
+@login_required
+@chapter_required
+@role_required("president")
+def unsuspend_member(membership_id):
+    """Lift a member's suspension and restore their access."""
+    chapter = g.current_chapter
+    membership = db.session.get(ChapterMembership, membership_id)
+
+    if not membership or membership.chapter_id != chapter.id or not membership.active:
+        return jsonify({"error": "Member not found."}), 404
+
+    membership.suspended = False
+    membership.suspension_reason = None
+    db.session.commit()
+
+    return jsonify({"success": True, "member": {**membership.to_dict()}}), 200

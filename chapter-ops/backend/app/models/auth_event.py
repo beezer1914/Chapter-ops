@@ -24,7 +24,7 @@ class AuthEvent(BaseModel):
     user_id: Mapped[Optional[str]] = mapped_column(
         String(36), ForeignKey("user.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    ip_address: Mapped[str] = mapped_column(String(45), nullable=False)  # IPv4 or IPv6
+    ip_address: Mapped[str] = mapped_column(String(45), nullable=False, index=True)  # IPv4 or IPv6
     event_type: Mapped[str] = mapped_column(
         String(32), nullable=False, index=True
     )  # "login_success" | "login_failure" | "logout" | "password_change"

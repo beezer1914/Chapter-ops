@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { BrandColors, Typography, ResolvedBranding, OrganizationConfig, ChapterConfig } from "@/types";
+import type { BrandColors, Typography, ResolvedBranding, OrganizationConfig, ChapterConfig, ColorScheme } from "@/types";
 
 // Match index.css :root defaults exactly — no drift
 const DEFAULT_COLORS: BrandColors = {
@@ -14,8 +14,43 @@ const DEFAULT_TYPOGRAPHY: Typography = {
   font_source: "google",
 };
 
+// Light surface palette — mirrors index.css :root dark values but inverted for bright backgrounds.
+const LIGHT_SURFACE = {
+  "--color-bg-deep":         "#eef2f9",
+  "--color-bg-primary":      "#f4f7fd",
+  "--color-bg-card":         "rgba(255, 255, 255, 0.80)",
+  "--color-bg-card-solid":   "#ffffff",
+  "--color-bg-card-hover":   "#f0f4fb",
+  "--color-bg-sidebar":      "rgba(244, 247, 253, 0.97)",
+  "--color-bg-surface":      "#e8eef8",
+  "--color-bg-input":        "#ffffff",
+  "--color-text-primary":    "#0f172a",
+  "--color-text-secondary":  "#374151",
+  "--color-text-muted":      "#6b7280",
+  "--color-text-heading":    "#0f172a",
+  "--color-border-subtle":   "rgba(0, 0, 0, 0.06)",
+} as const;
+
+// Dark surface palette — matches index.css :root exactly so we can restore it.
+const DARK_SURFACE = {
+  "--color-bg-deep":         "#060b18",
+  "--color-bg-primary":      "#0a1128",
+  "--color-bg-card":         "rgba(12, 20, 45, 0.6)",
+  "--color-bg-card-solid":   "#0f1a3a",
+  "--color-bg-card-hover":   "#132248",
+  "--color-bg-sidebar":      "rgba(8, 14, 32, 0.75)",
+  "--color-bg-surface":      "#0d1630",
+  "--color-bg-input":        "#0c1530",
+  "--color-text-primary":    "#f0f4fa",
+  "--color-text-secondary":  "#94a3c0",
+  "--color-text-muted":      "#5c6d8a",
+  "--color-text-heading":    "#e4ecf7",
+  "--color-border-subtle":   "rgba(255, 255, 255, 0.06)",
+} as const;
+
 interface BrandingState {
   branding: ResolvedBranding;
+  colorScheme: ColorScheme;
   isInitialized: boolean;
 
   initializeBranding: (orgConfig: OrganizationConfig | undefined, chapterConfig: ChapterConfig | undefined) => void;
@@ -41,6 +76,7 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
     typography: DEFAULT_TYPOGRAPHY,
     custom_css: null,
   },
+  colorScheme: "dark",
   isInitialized: false,
 
   initializeBranding: (orgConfig, chapterConfig) => {
@@ -48,11 +84,14 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
     const chapterBranding = chapterConfig?.branding || {};
     const chapterOverrideEnabled = chapterBranding.enabled === true;
 
-    // If no branding has ever been saved, leave index.css defaults untouched.
-    // Overriding with DEFAULT_COLORS would cause a subtle color drift between
-    // what the CSS file defines and what JS injects.
+    // Resolve color scheme — org-level only (chapters inherit)
+    const colorScheme: ColorScheme = orgBranding.color_scheme ?? "dark";
+
+    // If no branding has ever been saved, leave index.css defaults untouched
+    // but still apply the color scheme in case it was set.
     if (!orgBranding.colors && !chapterBranding.colors) {
-      set({ isInitialized: true });
+      set({ colorScheme, isInitialized: true });
+      applySurfacePalette(colorScheme);
       return;
     }
 
@@ -74,13 +113,16 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
       custom_css: null,
     };
 
-    set({ branding: resolved, isInitialized: true });
+    set({ branding: resolved, colorScheme, isInitialized: true });
     get().applyBranding();
   },
 
   applyBranding: () => {
-    const { branding } = get();
+    const { branding, colorScheme } = get();
     const root = document.documentElement;
+
+    // ── Surface palette (dark / light) ────────────────────────────────────
+    applySurfacePalette(colorScheme);
 
     // ── Primary brand colors ──────────────────────────────────────────────
     root.style.setProperty("--color-primary-light", branding.colors.primary.light);
@@ -88,14 +130,17 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
     root.style.setProperty("--color-primary-dark",  branding.colors.primary.dark);
 
     // Derive glow and border vars from primary-main so they always stay in sync
-    // with whatever color the org chose. Previously these were hardcoded to
-    // Royal Blue in index.css and never updated when branding changed.
+    // with whatever color the org chose. Border opacity is higher in light mode
+    // so the subtle brand tint remains visible against white backgrounds.
     const rgb = hexToRgb(branding.colors.primary.main);
     if (rgb) {
       const { r, g, b } = rgb;
-      root.style.setProperty("--color-primary-glow",  `rgba(${r}, ${g}, ${b}, 0.14)`);
-      root.style.setProperty("--color-border",        `rgba(${r}, ${g}, ${b}, 0.10)`);
-      root.style.setProperty("--color-border-brand",  `rgba(${r}, ${g}, ${b}, 0.22)`);
+      const glowAlpha   = colorScheme === "light" ? 0.10 : 0.14;
+      const borderAlpha = colorScheme === "light" ? 0.18 : 0.10;
+      const brandAlpha  = colorScheme === "light" ? 0.30 : 0.22;
+      root.style.setProperty("--color-primary-glow",  `rgba(${r}, ${g}, ${b}, ${glowAlpha})`);
+      root.style.setProperty("--color-border",        `rgba(${r}, ${g}, ${b}, ${borderAlpha})`);
+      root.style.setProperty("--color-border-brand",  `rgba(${r}, ${g}, ${b}, ${brandAlpha})`);
     }
 
     // ── Secondary / accent ────────────────────────────────────────────────
@@ -124,6 +169,17 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
     }
   },
 }));
+
+/** Swap the CSS surface variables based on the chosen color scheme. */
+function applySurfacePalette(scheme: ColorScheme) {
+  const root = document.documentElement;
+  const palette = scheme === "light" ? LIGHT_SURFACE : DARK_SURFACE;
+  for (const [key, value] of Object.entries(palette)) {
+    root.style.setProperty(key, value);
+  }
+  // Toggle a data attribute so CSS can key off it if needed (e.g. noise overlay)
+  root.setAttribute("data-color-scheme", scheme);
+}
 
 function loadGoogleFont(fontName: string) {
   const fontId = `google-font-${fontName.replace(/\s+/g, "-")}`;

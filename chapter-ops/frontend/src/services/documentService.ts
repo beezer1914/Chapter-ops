@@ -3,8 +3,8 @@ import type { Document, UpdateDocumentRequest, DocumentCategory } from "@/types"
 
 export async function fetchDocuments(category?: DocumentCategory): Promise<Document[]> {
   const params = category ? { category } : {};
-  const { data } = await api.get<Document[]>("/documents", { params });
-  return data;
+  const { data } = await api.get<{ documents: Document[] }>("/documents", { params });
+  return data.documents;
 }
 
 export async function uploadDocument(

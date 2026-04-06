@@ -25,6 +25,16 @@ VALID_FIELD_TYPES = {"text", "number", "date"}
 # Internal role keys that can have custom titles
 VALID_ROLE_KEYS = {"member", "secretary", "treasurer", "vice_president", "president"}
 
+# Configurable module keys for access control
+VALID_MODULE_KEYS = {
+    "dashboard", "payments", "invoices", "donations", "expenses",
+    "events", "communications", "documents", "knowledge_base", "lineage",
+    "members", "invites", "intake", "regions", "workflows",
+}
+
+# Roles that can be assigned as a module's minimum access level
+VALID_PERMISSION_ROLES = {"member", "secretary", "treasurer", "vice_president", "president"}
+
 # Hex color validation pattern (#RRGGBB)
 HEX_COLOR_REGEX = re.compile(r'^#[0-9a-fA-F]{6}$')
 
@@ -313,6 +323,21 @@ def update_chapter_config():
 
         current_config["settings"] = current_settings
 
+    # ── Access permissions ───────────────────────────────────────────
+    if "permissions" in data:
+        perms = data["permissions"]
+        if not isinstance(perms, dict):
+            return jsonify({"error": "permissions must be an object."}), 400
+
+        validated_perms = {}
+        for module, role in perms.items():
+            if module not in VALID_MODULE_KEYS:
+                return jsonify({"error": f"Invalid module key: {module}"}), 400
+            if role not in VALID_PERMISSION_ROLES:
+                return jsonify({"error": f"Invalid role '{role}' for module '{module}'."}), 400
+            validated_perms[module] = role
+        current_config["permissions"] = validated_perms
+
     # ── Branding ─────────────────────────────────────────────────────
     if "branding" in data:
         branding = data["branding"]
@@ -350,3 +375,138 @@ def update_chapter_config():
     return jsonify({
         "chapter_config": chapter.config,
     }), 200
+
+
+@config_bp.route("/chapter/delete", methods=["POST"])
+@login_required
+@chapter_required
+@role_required("president")
+def request_chapter_deletion():
+    """
+    Schedule chapter deletion with a 30-day grace period.
+
+    Immediately sends a data export email with member/payment/donation CSVs.
+    The chapter is hard-deleted by the background job after deletion_scheduled_at.
+    Requires password confirmation for safety.
+    """
+    import csv
+    import io
+    from datetime import timedelta, timezone
+    from datetime import datetime as _datetime
+
+    from flask_login import current_user as cu
+    from app.models import ChapterMembership, Payment, Donation
+
+    data = request.get_json() or {}
+    password = data.get("password", "")
+    confirm_name = (data.get("chapter_name", "") or "").strip()
+
+    chapter = g.current_chapter
+
+    if not password or not cu.check_password(password):
+        return jsonify({"error": "Incorrect password."}), 400
+
+    if confirm_name.lower() != chapter.name.lower():
+        return jsonify({"error": "Chapter name does not match."}), 400
+
+    # Idempotency — if already scheduled, just return the existing date
+    if chapter.deletion_scheduled_at:
+        return jsonify({
+            "success": True,
+            "deletion_scheduled_at": chapter.deletion_scheduled_at.isoformat(),
+            "already_scheduled": True,
+        }), 200
+
+    now = _datetime.now(timezone.utc)
+    scheduled_at = now + timedelta(days=30)
+    chapter.deletion_requested_at = now
+    chapter.deletion_scheduled_at = scheduled_at
+    db.session.commit()
+
+    deletion_date_str = scheduled_at.strftime("%B %d, %Y")
+
+    # ── Generate CSV exports ─────────────────────────────────────────
+    def make_members_csv() -> str:
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["First Name", "Last Name", "Email", "Role", "Member Type",
+                         "Financial Status", "Initiation Date", "Active"])
+        memberships = ChapterMembership.query.filter_by(chapter_id=chapter.id).all()
+        for m in memberships:
+            u = m.user
+            writer.writerow([
+                u.first_name, u.last_name, u.email, m.role,
+                getattr(m, "member_type", ""), m.financial_status,
+                m.initiation_date.isoformat() if m.initiation_date else "",
+                m.active,
+            ])
+        return buf.getvalue()
+
+    def make_payments_csv() -> str:
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["Member Name", "Email", "Amount", "Fee Type",
+                         "Payment Method", "Status", "Date", "Notes"])
+        payments = Payment.query.filter_by(chapter_id=chapter.id).all()
+        for p in payments:
+            u = p.user
+            writer.writerow([
+                u.full_name if u else "", u.email if u else "",
+                str(p.amount), getattr(p, "fee_type", ""),
+                p.payment_method, p.status,
+                p.created_at.isoformat() if p.created_at else "",
+                getattr(p, "notes", "") or "",
+            ])
+        return buf.getvalue()
+
+    def make_donations_csv() -> str:
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["Donor Name", "Email", "Amount", "Status", "Date", "Message"])
+        donations = Donation.query.filter_by(chapter_id=chapter.id).all()
+        for d in donations:
+            writer.writerow([
+                getattr(d, "donor_name", "") or "",
+                getattr(d, "donor_email", "") or "",
+                str(d.amount), d.status,
+                d.created_at.isoformat() if d.created_at else "",
+                getattr(d, "message", "") or "",
+            ])
+        return buf.getvalue()
+
+    # Send export email to the requesting president
+    try:
+        from app.utils.email import send_chapter_data_export_email
+        send_chapter_data_export_email(
+            to=cu.email,
+            chapter_name=chapter.name,
+            deletion_date=deletion_date_str,
+            members_csv=make_members_csv(),
+            payments_csv=make_payments_csv(),
+            donations_csv=make_donations_csv(),
+        )
+    except Exception as exc:
+        current_app.logger.error(f"Chapter export email failed for {chapter.id}: {exc}")
+
+    return jsonify({
+        "success": True,
+        "deletion_scheduled_at": scheduled_at.isoformat(),
+    }), 200
+
+
+@config_bp.route("/chapter/delete", methods=["DELETE"])
+@login_required
+@chapter_required
+@role_required("president")
+def cancel_chapter_deletion():
+    """Cancel a pending chapter deletion during the 30-day grace period."""
+    chapter = g.current_chapter
+
+    if not chapter.deletion_scheduled_at:
+        return jsonify({"error": "No pending deletion to cancel."}), 400
+
+    chapter.deletion_requested_at = None
+    chapter.deletion_scheduled_at = None
+    db.session.commit()
+
+    return jsonify({"success": True}), 200

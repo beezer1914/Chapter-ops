@@ -23,6 +23,7 @@ from app.models.document import Document, DOCUMENT_CATEGORIES
 from app.models.workflow import WorkflowTemplate
 from app.services import workflow_engine
 from app.utils.decorators import chapter_required, role_required
+from app.utils.pagination import paginate
 
 documents_bp = Blueprint("documents", __name__, url_prefix="/api/documents")
 
@@ -96,8 +97,8 @@ def list_documents():
     if category and category in DOCUMENT_CATEGORIES:
         query = query.filter(Document.category == category)
 
-    docs = query.order_by(Document.created_at.desc()).all()
-    return jsonify([d.to_dict() for d in docs])
+    paged, meta = paginate(query.order_by(Document.created_at.desc()))
+    return jsonify({"documents": [d.to_dict() for d in paged.items], "pagination": meta})
 
 
 # ── Upload document ────────────────────────────────────────────────────────────

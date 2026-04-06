@@ -24,7 +24,10 @@ import Intake from "@/pages/Intake";
 import Expenses from "@/pages/Expenses";
 import Lineage from "@/pages/Lineage";
 import Landing from "@/pages/Landing";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import StripeCallback from "@/pages/StripeCallback";
+import IHQDashboard from "@/pages/IHQDashboard";
 
 export default function App() {
   const { initializeAuth, isLoading } = useAuthStore();
@@ -48,6 +51,8 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected: requires auth but NOT a chapter */}
         <Route
@@ -72,7 +77,7 @@ export default function App() {
         <Route
           path="/members"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="members">
               <Members />
             </ProtectedRoute>
           }
@@ -80,7 +85,7 @@ export default function App() {
         <Route
           path="/invites"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="invites">
               <Invites />
             </ProtectedRoute>
           }
@@ -88,7 +93,7 @@ export default function App() {
         <Route
           path="/payments"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="payments">
               <Payments />
             </ProtectedRoute>
           }
@@ -96,7 +101,7 @@ export default function App() {
         <Route
           path="/donations"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="donations">
               <Donations />
             </ProtectedRoute>
           }
@@ -104,7 +109,7 @@ export default function App() {
         <Route
           path="/invoices"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="invoices">
               <Invoices />
             </ProtectedRoute>
           }
@@ -112,7 +117,7 @@ export default function App() {
         <Route
           path="/regions"
           element={
-            <ProtectedRoute requireChapter={false}>
+            <ProtectedRoute requireChapter={false} module="regions">
               <Regions />
             </ProtectedRoute>
           }
@@ -128,7 +133,7 @@ export default function App() {
         <Route
           path="/workflows"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="workflows">
               <Workflows />
             </ProtectedRoute>
           }
@@ -145,7 +150,7 @@ export default function App() {
         <Route
           path="/events"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="events">
               <Events />
             </ProtectedRoute>
           }
@@ -154,7 +159,7 @@ export default function App() {
         <Route
           path="/communications"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="communications">
               <Communications />
             </ProtectedRoute>
           }
@@ -163,7 +168,7 @@ export default function App() {
         <Route
           path="/documents"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="documents">
               <Documents />
             </ProtectedRoute>
           }
@@ -172,7 +177,7 @@ export default function App() {
         <Route
           path="/knowledge-base"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="knowledge_base">
               <KnowledgeBase />
             </ProtectedRoute>
           }
@@ -181,7 +186,7 @@ export default function App() {
         <Route
           path="/intake"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="intake">
               <Intake />
             </ProtectedRoute>
           }
@@ -190,7 +195,7 @@ export default function App() {
         <Route
           path="/expenses"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="expenses">
               <Expenses />
             </ProtectedRoute>
           }
@@ -199,8 +204,17 @@ export default function App() {
         <Route
           path="/lineage"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute module="lineage">
               <Lineage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ihq"
+          element={
+            <ProtectedRoute requireChapter={false}>
+              <IHQDashboard />
             </ProtectedRoute>
           }
         />

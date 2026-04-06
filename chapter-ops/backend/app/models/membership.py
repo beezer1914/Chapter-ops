@@ -61,6 +61,10 @@ class ChapterMembership(BaseModel):
     join_date: Mapped[date] = mapped_column(db.Date, nullable=False, default=date.today)
     active: Mapped[bool] = mapped_column(db.Boolean, default=True, nullable=False)
 
+    # Suspension — temporarily blocks access without removing the member
+    suspended: Mapped[bool] = mapped_column(db.Boolean, default=False, nullable=False)
+    suspension_reason: Mapped[str | None] = mapped_column(db.String(500), nullable=True)
+
     # Custom field values for this member (org-defined fields)
     custom_fields: Mapped[dict] = mapped_column(db.JSON, nullable=False, default=dict)
 
@@ -99,6 +103,8 @@ class ChapterMembership(BaseModel):
             "initiation_date": self.initiation_date.isoformat() if self.initiation_date else None,
             "join_date": self.join_date.isoformat() if self.join_date else None,
             "active": self.active,
+            "suspended": self.suspended,
+            "suspension_reason": self.suspension_reason,
             "custom_fields": self.custom_fields,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

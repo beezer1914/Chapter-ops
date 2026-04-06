@@ -5,7 +5,8 @@ import { useConfigStore } from "@/stores/configStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useRegionStore } from "@/stores/regionStore";
 import NotificationBell from "@/components/NotificationBell";
-import type { MemberRole } from "@/types";
+import type { ModuleKey } from "@/types";
+import { useModuleAccess } from "@/lib/permissions";
 import {
   LayoutDashboard,
   Users,
@@ -27,47 +28,44 @@ import {
   LogOut,
   Menu,
   X,
+  Globe,
 } from "lucide-react";
-
-const ROLE_HIERARCHY: Record<MemberRole, number> = {
-  member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
-};
 
 type NavSection = {
   label: string;
-  items: { to: string; label: string; icon: typeof LayoutDashboard; minRole: MemberRole }[];
+  items: { to: string; label: string; icon: typeof LayoutDashboard; module: ModuleKey | "settings" }[];
 };
 
 const NAV_SECTIONS: NavSection[] = [
   {
     label: "Overview",
     items: [
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, minRole: "member" },
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, module: "dashboard" },
     ],
   },
   {
     label: "Chapter",
     items: [
-      { to: "/payments", label: "Payments", icon: CreditCard, minRole: "member" },
-      { to: "/invoices", label: "Invoices", icon: FileText, minRole: "member" },
-      { to: "/donations", label: "Donations", icon: HeartHandshake, minRole: "member" },
-      { to: "/expenses", label: "Expenses", icon: Receipt, minRole: "member" },
-      { to: "/events", label: "Events", icon: Calendar, minRole: "member" },
-      { to: "/communications", label: "Communications", icon: Megaphone, minRole: "member" },
-      { to: "/documents", label: "Documents", icon: FolderOpen, minRole: "member" },
-      { to: "/knowledge-base", label: "Knowledge Base", icon: BookOpen, minRole: "member" },
-      { to: "/lineage", label: "Lineage & History", icon: GitBranch, minRole: "member" },
+      { to: "/payments",       label: "Payments",        icon: CreditCard,    module: "payments" },
+      { to: "/invoices",       label: "Invoices",        icon: FileText,      module: "invoices" },
+      { to: "/donations",      label: "Donations",       icon: HeartHandshake, module: "donations" },
+      { to: "/expenses",       label: "Expenses",        icon: Receipt,       module: "expenses" },
+      { to: "/events",         label: "Events",          icon: Calendar,      module: "events" },
+      { to: "/communications", label: "Communications",  icon: Megaphone,     module: "communications" },
+      { to: "/documents",      label: "Documents",       icon: FolderOpen,    module: "documents" },
+      { to: "/knowledge-base", label: "Knowledge Base",  icon: BookOpen,      module: "knowledge_base" },
+      { to: "/lineage",        label: "Lineage & History", icon: GitBranch,   module: "lineage" },
     ],
   },
   {
     label: "Admin",
     items: [
-      { to: "/members", label: "Members", icon: Users, minRole: "secretary" },
-      { to: "/invites", label: "Invites", icon: UserPlus, minRole: "secretary" },
-      { to: "/intake", label: "Intake / MIP", icon: ShieldCheck, minRole: "secretary" },
-      { to: "/regions", label: "Regions", icon: Map, minRole: "member" },
-      { to: "/workflows", label: "Workflows", icon: GitMerge, minRole: "secretary" },
-      { to: "/settings", label: "Settings", icon: SettingsIcon, minRole: "member" },
+      { to: "/members",   label: "Members",     icon: Users,        module: "members" },
+      { to: "/invites",   label: "Invites",     icon: UserPlus,     module: "invites" },
+      { to: "/intake",    label: "Intake / MIP", icon: ShieldCheck, module: "intake" },
+      { to: "/regions",   label: "Regions",     icon: Map,          module: "regions" },
+      { to: "/workflows", label: "Workflows",   icon: GitMerge,     module: "workflows" },
+      { to: "/settings",  label: "Settings",    icon: SettingsIcon, module: "settings" },
     ],
   },
 ];
@@ -174,7 +172,7 @@ function SidebarContent({
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, memberships, logout } = useAuthStore();
   const { organization, chapter } = useConfigStore();
-  const { isRegionalDirector, loadRegions } = useRegionStore();
+  const { isRegionalDirector, isOrgAdmin, loadRegions } = useRegionStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -188,35 +186,31 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [user, loadRegions]);
 
-  const currentMembership = memberships.find((m) => m.chapter_id === user?.active_chapter_id);
-  const currentRole = currentMembership?.role ?? "member";
+  const canAccess = useModuleAccess();
 
-  const isIntakeOfficer = currentMembership?.is_intake_officer ?? false;
-
-  // Filter nav sections by role (intake officers also see the Intake link)
+  // Filter nav sections by configured module permissions
   const filteredSections = NAV_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((item) => {
-      if (item.to === "/intake" && isIntakeOfficer) return true;
-      return ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY[item.minRole];
-    }),
+    items: section.items.filter((item) =>
+      item.module === "settings" || canAccess(item.module as ModuleKey)
+    ),
   })).filter((section) => section.items.length > 0);
 
-  // Inject Region Dashboard if user is a regional director
-  const navSections = isRegionalDirector
-    ? filteredSections.map((section) => {
-        if (section.label === "Overview") {
-          return {
-            ...section,
-            items: [
-              ...section.items,
-              { to: "/region-dashboard", label: "Region Dashboard", icon: BarChart3, minRole: "member" as MemberRole },
-            ],
-          };
-        }
-        return section;
-      })
-    : filteredSections;
+  // Inject Region Dashboard for regional directors and IHQ Dashboard for org admins
+  const navSections = filteredSections.map((section) => {
+    if (section.label === "Overview") {
+      const extra = [];
+      if (isRegionalDirector) {
+        extra.push({ to: "/region-dashboard", label: "Region Dashboard", icon: BarChart3, module: "dashboard" as ModuleKey });
+      }
+      if (isOrgAdmin) {
+        extra.push({ to: "/ihq", label: "IHQ Dashboard", icon: Globe, module: "dashboard" as ModuleKey });
+      }
+      if (extra.length === 0) return section;
+      return { ...section, items: [...section.items, ...extra] };
+    }
+    return section;
+  });
 
   const { startPolling, stopPolling } = useNotificationStore();
   const navigate = useNavigate();

@@ -6,6 +6,8 @@ import {
   fetchMembers,
   updateMember,
   deactivateMember,
+  suspendMember,
+  unsuspendMember,
 } from "@/services/chapterService";
 import type {
   MemberWithUser,
@@ -14,7 +16,7 @@ import type {
   MemberType,
   CustomFieldDefinition,
 } from "@/types";
-import { Edit2, UserX } from "lucide-react";
+import { Edit2, UserX, ShieldOff, ShieldCheck } from "lucide-react";
 
 const ROLE_COLORS: Record<MemberRole, string> = {
   admin: "bg-red-900/30 text-red-400",
@@ -76,6 +78,11 @@ export default function Members() {
   const [editIntakeOfficer, setEditIntakeOfficer] = useState(false);
   const [editCustomFields, setEditCustomFields] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  // Suspend modal state
+  const [suspendingMember, setSuspendingMember] = useState<MemberWithUser | null>(null);
+  const [suspendReason, setSuspendReason] = useState("");
+  const [suspending, setSuspending] = useState(false);
 
   // Current user's role in this chapter
   const currentMembership = memberships.find(
@@ -155,6 +162,36 @@ export default function Members() {
     }
   }
 
+  async function handleSuspend() {
+    if (!suspendingMember) return;
+    setSuspending(true);
+    try {
+      const updated = await suspendMember(suspendingMember.id, suspendReason);
+      setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+      setSuspendingMember(null);
+      setSuspendReason("");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } }).response?.data
+          ?.error || "Failed to suspend member.";
+      setError(message);
+    } finally {
+      setSuspending(false);
+    }
+  }
+
+  async function handleUnsuspend(member: MemberWithUser) {
+    try {
+      const updated = await unsuspendMember(member.id);
+      setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } }).response?.data
+          ?.error || "Failed to unsuspend member.";
+      setError(message);
+    }
+  }
+
   // Roles the current user can assign (up to their own level)
   const assignableRoles = (Object.keys(ROLE_HIERARCHY) as MemberRole[]).filter(
     (r) => ROLE_HIERARCHY[r] <= ROLE_HIERARCHY[currentRole] && r !== "admin"
@@ -196,7 +233,7 @@ export default function Members() {
             {/* ── Mobile card list ─────────────────────────────── */}
             <div className="md:hidden space-y-3">
               {members.map((member) => (
-                <div key={member.id} className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] p-4">
+                <div key={member.id} className={`bg-white/90 backdrop-blur-xl rounded-2xl shadow-glass border p-4 ${member.suspended ? "border-orange-800/50 opacity-75" : "border-[var(--color-border)]"}`}>
                   <div className="flex items-center gap-3">
                     {member.user.profile_picture_url ? (
                       <img
@@ -215,8 +252,14 @@ export default function Members() {
                         {member.user_id === user?.id && (
                           <span className="text-xs text-brand-primary-main/60 bg-brand-primary-50 px-2 py-0.5 rounded-md font-semibold shrink-0">You</span>
                         )}
+                        {member.suspended && (
+                          <span className="text-xs text-orange-400 bg-orange-900/30 px-2 py-0.5 rounded-md font-semibold shrink-0">Suspended</span>
+                        )}
                       </div>
                       <p className="text-xs text-content-secondary truncate">{member.user.email}</p>
+                      {member.suspended && member.suspension_reason && (
+                        <p className="text-xs text-orange-400/70 mt-0.5 truncate">Reason: {member.suspension_reason}</p>
+                      )}
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -253,6 +296,21 @@ export default function Members() {
                       >
                         <Edit2 className="w-3.5 h-3.5" /> Edit
                       </button>
+                      {member.suspended ? (
+                        <button
+                          onClick={() => handleUnsuspend(member)}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/30 py-2 rounded-lg transition-colors text-xs font-medium border border-emerald-200/50"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" /> Restore
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => { setSuspendingMember(member); setSuspendReason(""); }}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 text-orange-400 bg-orange-900/20 hover:bg-orange-900/30 py-2 rounded-lg transition-colors text-xs font-medium border border-orange-200/50"
+                        >
+                          <ShieldOff className="w-3.5 h-3.5" /> Suspend
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDeactivate(member)}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 text-red-400 bg-red-900/20 hover:bg-red-900/30 py-2 rounded-lg transition-colors text-xs font-medium border border-red-200/50"
@@ -284,7 +342,7 @@ export default function Members() {
                   </thead>
                   <tbody className="bg-surface-card-solid divide-y divide-white/5">
                     {members.map((member) => (
-                      <tr key={member.id} className="hover:bg-brand-primary-50/30 transition-colors group">
+                      <tr key={member.id} className={`transition-colors group ${member.suspended ? "bg-orange-900/5 hover:bg-orange-900/10" : "hover:bg-brand-primary-50/30"}`}>
                         <td className="px-6 py-5 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
@@ -301,10 +359,20 @@ export default function Members() {
                               )}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-semibold text-content-primary group-hover:text-brand-primary-dark transition-colors">
-                                {member.user.full_name}
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-content-primary group-hover:text-brand-primary-dark transition-colors">
+                                  {member.user.full_name}
+                                </span>
+                                {member.suspended && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-orange-400 bg-orange-900/30 px-1.5 py-0.5 rounded-full">
+                                    <ShieldOff className="w-2.5 h-2.5" /> Suspended
+                                  </span>
+                                )}
                               </div>
                               <div className="text-sm text-content-secondary">{member.user.email}</div>
+                              {member.suspended && member.suspension_reason && (
+                                <div className="text-xs text-orange-400/70 mt-0.5">Reason: {member.suspension_reason}</div>
+                              )}
                               {customFieldDefs.filter((f) => member.custom_fields?.[f.key]).map((f) => (
                                 <div key={f.key} className="text-xs text-content-muted">
                                   <span className="font-medium">{f.label}:</span> {String(member.custom_fields[f.key])}
@@ -345,6 +413,23 @@ export default function Members() {
                                 >
                                   <Edit2 className="w-4 h-4" />
                                 </button>
+                                {member.suspended ? (
+                                  <button
+                                    onClick={() => handleUnsuspend(member)}
+                                    className="inline-flex items-center justify-center text-emerald-400 hover:text-emerald-300 bg-emerald-900/20 hover:bg-emerald-900/30 p-2 rounded-lg transition-colors border border-emerald-200/50"
+                                    title="Restore Member"
+                                  >
+                                    <ShieldCheck className="w-4 h-4" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => { setSuspendingMember(member); setSuspendReason(""); }}
+                                    className="inline-flex items-center justify-center text-orange-400 hover:text-orange-300 bg-orange-900/20 hover:bg-orange-900/30 p-2 rounded-lg transition-colors border border-orange-200/50"
+                                    title="Suspend Member"
+                                  >
+                                    <ShieldOff className="w-4 h-4" />
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => handleDeactivate(member)}
                                   className="inline-flex items-center justify-center text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/30 p-2 rounded-lg transition-colors border border-red-200/50"
@@ -517,6 +602,62 @@ export default function Members() {
           </div>
         )}
       </div>
+
+      {/* Suspend Member Modal */}
+      {suspendingMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-primary-950/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform animate-slide-up">
+            <div className="px-6 py-5 border-b border-[var(--color-border)] bg-orange-900/10 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-orange-900/30">
+                <ShieldOff className="w-4 h-4 text-orange-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-heading font-semibold text-content-primary">Suspend Member</h3>
+                <p className="text-xs text-content-muted mt-0.5">{suspendingMember.user.full_name}</p>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-content-secondary">
+                This member will lose access to the chapter immediately. They remain on the roster and can be restored at any time.
+              </p>
+              <div>
+                <label className="block text-sm font-medium text-content-secondary mb-1.5">
+                  Reason <span className="text-content-muted font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={suspendReason}
+                  onChange={(e) => setSuspendReason(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Pending disciplinary review..."
+                  className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-surface-input focus:outline-none focus:ring-2 focus:ring-orange-500/30 resize-none"
+                />
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex justify-end gap-3">
+              <button
+                onClick={() => setSuspendingMember(null)}
+                className="px-5 py-2.5 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border)] rounded-xl hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSuspend}
+                disabled={suspending}
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-orange-600 rounded-xl hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center gap-2 min-w-[120px] justify-center"
+              >
+                {suspending ? (
+                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <><ShieldOff className="w-4 h-4" /> Suspend</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

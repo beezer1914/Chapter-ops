@@ -223,7 +223,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-3">
                 {/* Mini progress ring */}
                 <svg className="w-11 h-11 shrink-0 -rotate-90" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="14" fill="none" strokeWidth="3" stroke="rgba(255,255,255,0.06)" />
+                  <circle cx="18" cy="18" r="14" fill="none" strokeWidth="3" stroke="rgba(255,255,255,0.06)" className="ring-track" />
                   <circle
                     cx="18" cy="18" r="14" fill="none" strokeWidth="3"
                     stroke={isOfficer ? "#f59e0b" : "var(--color-primary-main)"}

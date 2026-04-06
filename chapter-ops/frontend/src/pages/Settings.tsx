@@ -36,6 +36,7 @@ import {
 import api from "@/lib/api";
 import type {
   MemberRole,
+  ModuleKey,
   OrganizationConfig,
   ChapterConfig,
   CustomFieldDefinition,
@@ -45,7 +46,9 @@ import type {
   Typography,
   ChapterTransferRequest,
 } from "@/types";
+import { DEFAULT_PERMISSIONS, MODULE_LABELS, ROLE_HIERARCHY as PERM_ROLE_HIERARCHY } from "@/lib/permissions";
 import { BRANDING_PRESETS, getPresetById } from "@/data/brandingPresets";
+import type { ColorScheme } from "@/types";
 
 const ROLE_HIERARCHY: Record<MemberRole, number> = {
   member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
@@ -53,7 +56,7 @@ const ROLE_HIERARCHY: Record<MemberRole, number> = {
 
 const INTERNAL_ROLES: MemberRole[] = ["president", "vice_president", "treasurer", "secretary", "member"];
 
-type Tab = "profile" | "organization" | "chapter" | "payments" | "branding";
+type Tab = "profile" | "organization" | "chapter" | "payments" | "branding" | "access";
 
 const TAB_LABELS: Record<Tab, string> = {
   profile: "Profile",
@@ -61,6 +64,7 @@ const TAB_LABELS: Record<Tab, string> = {
   chapter: "Chapter",
   payments: "Payments",
   branding: "Branding",
+  access: "Access Control",
 };
 
 export default function Settings() {
@@ -74,15 +78,16 @@ export default function Settings() {
   const currentRole = currentMembership?.role ?? "member";
   const isAdmin = isOrgAdmin || ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["admin"];
   const isOfficer = isOrgAdmin || ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["secretary"];
+  const isPresident = isAdmin || ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["president"];
 
   // Members default to Profile tab; officers default to Organization
   const [tab, setTab] = useState<Tab>(isOfficer ? "organization" : "profile");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Profile tab is always visible; officer tabs only for secretary+
+  // Profile tab is always visible; officer tabs only for secretary+; access tab only for president+
   const visibleTabs: Tab[] = isOfficer
-    ? ["profile", "organization", "chapter", "payments", "branding"]
+    ? ["profile", "organization", "chapter", "payments", "branding", ...(isPresident ? ["access" as Tab] : [])]
     : ["profile"];
 
   return (
@@ -156,7 +161,7 @@ export default function Settings() {
             setError={setError}
             setSuccess={setSuccess}
           />
-        ) : (
+        ) : tab === "branding" ? (
           <BrandingTab
             orgConfig={orgConfig}
             chapterConfig={chapterConfig}
@@ -168,6 +173,14 @@ export default function Settings() {
             setSuccess={setSuccess}
             onOrgUpdate={setOrgConfig}
             onChapterUpdate={setChapterConfig}
+          />
+        ) : (
+          <AccessControlTab
+            config={chapterConfig}
+            isAdmin={isPresident}
+            setError={setError}
+            setSuccess={setSuccess}
+            onSave={setChapterConfig}
           />
         )}
       </div>
@@ -567,6 +580,9 @@ function ProfileTab({
           )}
         </div>
       )}
+
+      {/* Danger Zone */}
+      <DeleteAccountSection setError={setError} />
     </div>
   );
 }
@@ -1008,6 +1024,11 @@ function ChapterConfigTab({
       {ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["president"] && (
         <TransferApprovalsSection setError={setError} setSuccess={setSuccess} />
       )}
+
+      {/* Danger Zone — close chapter (presidents only) */}
+      {ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["president"] && (
+        <CloseChapterSection setError={setError} setSuccess={setSuccess} />
+      )}
     </div>
   );
 }
@@ -1401,6 +1422,9 @@ function BrandingTab({
   const [chapterOverrideEnabled, setChapterOverrideEnabled] = useState<boolean>(
     chapterConfig.branding?.enabled ?? false
   );
+  const [colorScheme, setColorScheme] = useState<ColorScheme>(
+    orgConfig.branding?.color_scheme ?? "dark"
+  );
   const [saving, setSaving] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>("");
 
@@ -1436,6 +1460,8 @@ function BrandingTab({
 
     if (scope === "chapter") {
       setChapterOverrideEnabled(chapterConfig.branding?.enabled ?? false);
+    } else {
+      setColorScheme(orgConfig.branding?.color_scheme ?? "dark");
     }
   }, [scope, orgConfig.branding, chapterConfig.branding, organization?.logo_url, chapter?.logo_url]);
 
@@ -1581,7 +1607,7 @@ function BrandingTab({
       if (scope === "organization") {
         const updatedConfig = {
           ...orgConfig,
-          branding: brandingConfig,
+          branding: { ...brandingConfig, color_scheme: colorScheme },
         };
         await updateOrgConfig(updatedConfig);
         onOrgUpdate(updatedConfig);
@@ -1627,6 +1653,77 @@ function BrandingTab({
 
   return (
     <div className="space-y-6">
+      {/* Color Scheme Toggle — org scope only */}
+      {scope === "organization" && (
+        <div className="bg-surface-card-solid p-5 rounded-xl border border-[var(--color-border)]">
+          <p className="text-sm font-semibold text-content-primary mb-1">Color Scheme</p>
+          <p className="text-xs text-content-muted mb-4">
+            Sets the surface palette for your entire platform. Your brand colors apply on top of either scheme.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {/* Dark option */}
+            <button
+              type="button"
+              onClick={() => setColorScheme("dark")}
+              className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                colorScheme === "dark"
+                  ? "border-brand-primary-main bg-brand-primary-main/10"
+                  : "border-[var(--color-border)] hover:border-[var(--color-border-brand)]"
+              }`}
+            >
+              {/* Mini dark preview */}
+              <div className="w-full h-16 rounded-lg bg-[#060b18] mb-3 overflow-hidden flex flex-col gap-1.5 p-2">
+                <div className="h-2 w-3/4 rounded bg-[#0f1a3a]" />
+                <div className="h-2 w-1/2 rounded bg-[#0f1a3a]" />
+                <div className="mt-auto flex gap-1">
+                  <div className="h-2 w-8 rounded bg-brand-primary-main/60" />
+                  <div className="h-2 w-5 rounded bg-[#132248]" />
+                </div>
+              </div>
+              <p className="text-sm font-semibold text-content-primary">Dark</p>
+              <p className="text-xs text-content-muted mt-0.5">Luxury dark navy — default</p>
+              {colorScheme === "dark" && (
+                <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-brand-primary-main flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
+              )}
+            </button>
+
+            {/* Light option */}
+            <button
+              type="button"
+              onClick={() => setColorScheme("light")}
+              className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                colorScheme === "light"
+                  ? "border-brand-primary-main bg-brand-primary-main/10"
+                  : "border-[var(--color-border)] hover:border-[var(--color-border-brand)]"
+              }`}
+            >
+              {/* Mini light preview */}
+              <div className="w-full h-16 rounded-lg bg-[#eef2f9] mb-3 overflow-hidden flex flex-col gap-1.5 p-2">
+                <div className="h-2 w-3/4 rounded bg-white shadow-sm" />
+                <div className="h-2 w-1/2 rounded bg-white shadow-sm" />
+                <div className="mt-auto flex gap-1">
+                  <div className="h-2 w-8 rounded bg-brand-primary-main/70" />
+                  <div className="h-2 w-5 rounded bg-[#e0e8f4]" />
+                </div>
+              </div>
+              <p className="text-sm font-semibold text-content-primary">Light</p>
+              <p className="text-xs text-content-muted mt-0.5">Clean white surface</p>
+              {colorScheme === "light" && (
+                <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-brand-primary-main flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Preset Selector */}
       <div className="bg-surface-card-solid p-4 rounded-lg border border-[var(--color-border)]">
         <label className="block text-sm font-medium text-content-secondary mb-3">
@@ -1645,7 +1742,7 @@ function BrandingTab({
           ))}
         </select>
         <p className="text-xs text-content-secondary mt-2">
-          Select your organization to auto-fill official brand colors. You can customize them after applying.
+          Choose a starter palette, then customize the colors below to match your organization exactly.
         </p>
       </div>
 
@@ -1919,5 +2016,436 @@ function BrandingTab({
         </button>
       </div>
     </div>
+  );
+}
+
+// ── Access Control Tab ────────────────────────────────────────────────────────
+
+const MODULE_SECTIONS: { label: string; modules: ModuleKey[] }[] = [
+  {
+    label: "Member Modules",
+    modules: ["payments", "expenses", "events", "communications", "documents", "knowledge_base", "lineage"],
+  },
+  {
+    label: "Admin Modules",
+    modules: ["members", "invites", "intake", "workflows", "donations", "invoices", "regions"],
+  },
+];
+
+const SELECTABLE_ROLES: { value: MemberRole; label: string }[] = [
+  { value: "member",         label: "Member" },
+  { value: "secretary",      label: "Secretary" },
+  { value: "treasurer",      label: "Treasurer" },
+  { value: "vice_president", label: "Vice President" },
+  { value: "president",      label: "President" },
+];
+
+function AccessControlTab({
+  config,
+  isAdmin,
+  setError,
+  setSuccess,
+  onSave,
+}: {
+  config: ChapterConfig;
+  isAdmin: boolean;
+  setError: (e: string | null) => void;
+  setSuccess: (s: string | null) => void;
+  onSave: (c: ChapterConfig) => void;
+}) {
+  const [permissions, setPermissions] = useState<Partial<Record<ModuleKey, MemberRole>>>(
+    config.permissions ?? {}
+  );
+  const [saving, setSaving] = useState(false);
+
+  function getEffectiveRole(module: ModuleKey): MemberRole {
+    return permissions[module] ?? DEFAULT_PERMISSIONS[module];
+  }
+
+  function handleChange(module: ModuleKey, role: MemberRole) {
+    setPermissions((prev) => ({ ...prev, [module]: role }));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await updateChapterConfig({ permissions });
+      onSave(updated);
+      setSuccess("Access permissions saved.");
+    } catch {
+      setError("Failed to save permissions.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleReset() {
+    setPermissions(config.permissions ?? {});
+  }
+
+  const hasChanges = JSON.stringify(permissions) !== JSON.stringify(config.permissions ?? {});
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-lg font-semibold text-content-primary mb-1">Access Control</h3>
+        <p className="text-sm text-content-muted">
+          Set the minimum role required to access each module. Members below the minimum will not see it in their sidebar and cannot navigate to it directly.
+        </p>
+      </div>
+
+      {!isAdmin && (
+        <div className="p-3 bg-yellow-900/20 text-yellow-400 rounded-lg text-sm">
+          You are viewing access settings in read-only mode. Only the President or Admin can edit these.
+        </div>
+      )}
+
+      {MODULE_SECTIONS.map((section) => (
+        <div key={section.label}>
+          <h4 className="text-xs font-semibold uppercase tracking-widest text-content-muted mb-3">
+            {section.label}
+          </h4>
+          <div className="bg-surface-card-solid rounded-xl border border-[var(--color-border)] overflow-hidden">
+            {section.modules.map((module, idx) => {
+              const effectiveRole = getEffectiveRole(module);
+              const isDefault = !permissions[module];
+              const effectiveLevel = PERM_ROLE_HIERARCHY[effectiveRole] ?? 0;
+
+              return (
+                <div
+                  key={module}
+                  className={`flex items-center justify-between px-5 py-3.5 gap-4 ${
+                    idx < section.modules.length - 1 ? "border-b border-[var(--color-border)]" : ""
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-content-primary">{MODULE_LABELS[module]}</p>
+                    {isDefault && (
+                      <p className="text-[11px] text-content-muted mt-0.5">Default</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {/* Visual role fill bar */}
+                    <div className="hidden sm:flex items-center gap-1">
+                      {SELECTABLE_ROLES.map((r) => (
+                        <div
+                          key={r.value}
+                          className={`h-1.5 w-5 rounded-full transition-colors ${
+                            PERM_ROLE_HIERARCHY[r.value] >= effectiveLevel
+                              ? "bg-brand-primary-main"
+                              : "bg-white/10"
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <select
+                      value={effectiveRole}
+                      onChange={(e) => handleChange(module, e.target.value as MemberRole)}
+                      disabled={!isAdmin}
+                      className="text-sm rounded-lg px-3 py-1.5 border border-[var(--color-border)] text-content-primary disabled:opacity-50 disabled:cursor-not-allowed focus:border-brand-primary-main focus:ring-1 focus:ring-brand-primary-light/50 outline-none"
+                    >
+                      {SELECTABLE_ROLES.map((r) => (
+                        <option key={r.value} value={r.value}>
+                          {r.label}+
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {isAdmin && (
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            onClick={handleReset}
+            disabled={!hasChanges}
+            className="px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border)] rounded-lg hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Discard Changes
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || !hasChanges}
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-primary-main rounded-lg hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? "Saving..." : "Save Permissions"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Delete Account Section ────────────────────────────────────────────────────
+
+function DeleteAccountSection({
+  setError,
+}: {
+  setError: (e: string | null) => void;
+}) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleDelete(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.delete("/auth/account", { data: { password } });
+      // Redirect to login — account is gone
+      window.location.href = "/login";
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } }).response?.data?.error ||
+        "Failed to delete account.";
+      setError(message);
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="bg-surface-card-solid rounded-lg shadow border border-red-900/40 p-6">
+        <h3 className="text-lg font-semibold text-red-400 mb-1">Danger Zone</h3>
+        <p className="text-sm text-content-secondary mb-4">
+          Permanently delete your account. Your name, email, and profile data will be anonymized
+          immediately. Financial records are retained for 7 years per accounting regulations and
+          cannot be removed.
+        </p>
+        <button
+          onClick={() => setModalOpen(true)}
+          className="px-4 py-2 text-sm font-medium text-red-400 border border-red-900/50 rounded-lg hover:bg-red-900/20 transition-colors"
+        >
+          Delete My Account
+        </button>
+      </div>
+
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface-card-solid rounded-xl shadow-xl border border-red-900/40 w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-semibold text-red-400 mb-2">Delete Your Account</h3>
+            <p className="text-sm text-content-secondary mb-1">This action is <strong className="text-content-primary">irreversible</strong>. It will:</p>
+            <ul className="text-sm text-content-secondary mb-4 list-disc list-inside space-y-0.5">
+              <li>Anonymize your name and email address immediately</li>
+              <li>Deactivate all chapter memberships</li>
+              <li>End your access to ChapterOps permanently</li>
+            </ul>
+            <p className="text-xs text-content-muted mb-4">
+              Financial records associated with your account are retained for 7 years and cannot be removed.
+            </p>
+            <form onSubmit={handleDelete} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-content-secondary mb-1">
+                  Confirm your password to continue
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Your current password"
+                  className="w-full rounded-lg border border-red-900/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setModalOpen(false); setPassword(""); }}
+                  className="px-4 py-2 text-sm font-medium text-content-secondary border border-[var(--color-border)] rounded-lg hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting || !password}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {submitting ? "Deleting..." : "Permanently Delete Account"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── Close Chapter Section ─────────────────────────────────────────────────────
+
+function CloseChapterSection({
+  setError,
+  setSuccess,
+}: {
+  setError: (e: string | null) => void;
+  setSuccess: (s: string | null) => void;
+}) {
+  const { chapter } = useConfigStore();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [chapterNameConfirm, setChapterNameConfirm] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<string | null>(
+    chapter?.deletion_scheduled_at ?? null
+  );
+  const [cancelling, setCancelling] = useState(false);
+
+  const chapterName = chapter?.name ?? "";
+
+  async function handleRequestDeletion(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await api.post("/config/chapter/delete", {
+        password,
+        chapter_name: chapterNameConfirm,
+      });
+      setScheduledAt(res.data.deletion_scheduled_at);
+      setModalOpen(false);
+      setPassword("");
+      setChapterNameConfirm("");
+      setSuccess(
+        "Chapter deletion scheduled. A data export has been sent to your email. You have 30 days to cancel."
+      );
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } }).response?.data?.error ||
+        "Failed to schedule deletion.";
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleCancelDeletion() {
+    setCancelling(true);
+    setError(null);
+    try {
+      await api.delete("/config/chapter/delete");
+      setScheduledAt(null);
+      setSuccess("Chapter deletion cancelled.");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } }).response?.data?.error ||
+        "Failed to cancel deletion.";
+      setError(message);
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  const deletionDate = scheduledAt
+    ? new Date(scheduledAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+    : null;
+
+  return (
+    <>
+      <div className="bg-surface-card-solid rounded-lg shadow border border-red-900/40 p-6">
+        <h3 className="text-lg font-semibold text-red-400 mb-1">Danger Zone</h3>
+
+        {scheduledAt ? (
+          <>
+            <div className="mb-4 p-3 bg-red-900/20 border border-red-900/30 rounded-lg text-sm text-red-300">
+              <strong>Chapter deletion scheduled for {deletionDate}.</strong><br />
+              A data export was sent to your email. All chapter data will be permanently deleted on this date.
+              You can cancel before then.
+            </div>
+            <button
+              onClick={handleCancelDeletion}
+              disabled={cancelling}
+              className="px-4 py-2 text-sm font-medium text-content-secondary border border-[var(--color-border)] rounded-lg hover:bg-white/5 disabled:opacity-50"
+            >
+              {cancelling ? "Cancelling..." : "Cancel Deletion"}
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-content-secondary mb-4">
+              Permanently close this chapter and delete all associated data. A 30-day grace period
+              allows you to cancel and retrieve your data export. Financial records are retained for
+              7 years and cannot be removed.
+            </p>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="px-4 py-2 text-sm font-medium text-red-400 border border-red-900/50 rounded-lg hover:bg-red-900/20 transition-colors"
+            >
+              Close This Chapter
+            </button>
+          </>
+        )}
+      </div>
+
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface-card-solid rounded-xl shadow-xl border border-red-900/40 w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-semibold text-red-400 mb-2">Close Chapter</h3>
+            <p className="text-sm text-content-secondary mb-1">
+              This will schedule <strong className="text-content-primary">permanent deletion</strong> of your chapter in 30 days. It will:
+            </p>
+            <ul className="text-sm text-content-secondary mb-4 list-disc list-inside space-y-0.5">
+              <li>Send a data export (members, payments, donations) to your email</li>
+              <li>Give you 30 days to cancel before data is wiped</li>
+              <li>Delete all members, events, documents, and settings</li>
+              <li>Retain financial records for 7 years (accounting requirement)</li>
+            </ul>
+            <form onSubmit={handleRequestDeletion} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-content-secondary mb-1">
+                  Type the chapter name to confirm: <span className="text-content-primary font-semibold">{chapterName}</span>
+                </label>
+                <input
+                  type="text"
+                  value={chapterNameConfirm}
+                  onChange={(e) => setChapterNameConfirm(e.target.value)}
+                  required
+                  placeholder={chapterName}
+                  className="w-full rounded-lg border border-red-900/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-content-secondary mb-1">
+                  Confirm your password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  placeholder="Your current password"
+                  className="w-full rounded-lg border border-red-900/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setModalOpen(false); setPassword(""); setChapterNameConfirm(""); }}
+                  className="px-4 py-2 text-sm font-medium text-content-secondary border border-[var(--color-border)] rounded-lg hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting || !password || chapterNameConfirm.toLowerCase() !== chapterName.toLowerCase()}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {submitting ? "Scheduling..." : "Schedule Chapter Deletion"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

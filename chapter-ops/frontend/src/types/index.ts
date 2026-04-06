@@ -103,10 +103,13 @@ export interface Typography {
   font_source: "google" | "system";
 }
 
+export type ColorScheme = "dark" | "light";
+
 export interface BrandingConfig {
   favicon_url?: string | null;
   colors?: BrandColors;
   typography?: Typography;
+  color_scheme?: ColorScheme;
 }
 
 export interface ResolvedBranding {
@@ -136,10 +139,16 @@ export interface ChapterSettings {
   allow_payment_plans?: boolean;
 }
 
+export type ModuleKey =
+  | "dashboard" | "payments" | "invoices" | "donations" | "expenses"
+  | "events" | "communications" | "documents" | "knowledge_base" | "lineage"
+  | "members" | "invites" | "intake" | "regions" | "workflows";
+
 export interface ChapterConfig {
   fee_types?: FeeType[];
   settings?: ChapterSettings;
   branding?: BrandingConfig & { enabled?: boolean };
+  permissions?: Partial<Record<ModuleKey, MemberRole>>;
 }
 
 // ============================================================================
@@ -303,11 +312,14 @@ export interface Chapter {
   country: string;
   timezone: string;
   active: boolean;
+  suspended: boolean;
+  suspension_reason: string | null;
   logo_url: string | null;
   stripe_onboarding_complete: boolean;
   subscription_tier: "starter" | "pro" | "elite" | "organization";
   config: ChapterConfig;
   created_at: string;
+  deletion_scheduled_at: string | null;
 }
 
 // ============================================================================
@@ -347,6 +359,8 @@ export interface ChapterMembership {
   initiation_date: string | null;
   join_date: string;
   active: boolean;
+  suspended: boolean;
+  suspension_reason: string | null;
   custom_fields: Record<string, string | number | null>;
   created_at: string;
 }
@@ -1400,4 +1414,52 @@ export interface InvoiceSummary {
   total_invoiced: string;
   total_count: number;
   by_status: Record<string, { count: number; amount: string }>;
+}
+
+// ============================================================================
+// IHQ (International Headquarters) types
+// ============================================================================
+
+export interface IHQSummary {
+  total_chapters: number;
+  total_members: number;
+  financial_members: number;
+  financial_rate: number;
+  total_regions: number;
+  dues_ytd: number;
+}
+
+export interface IHQRegionStat {
+  id: string;
+  name: string;
+  abbreviation: string | null;
+  chapter_count: number;
+  member_count: number;
+  financial_rate: number;
+  dues_ytd: number;
+}
+
+export interface IHQChapterStat {
+  id: string;
+  name: string;
+  designation: string | null;
+  region_id: string | null;
+  region_name: string | null;
+  chapter_type: string;
+  city: string | null;
+  state: string | null;
+  member_count: number;
+  financial_rate: number;
+  dues_ytd: number;
+  subscription_tier: string;
+  suspended: boolean;
+  suspension_reason: string | null;
+  deletion_scheduled_at: string | null;
+}
+
+export interface IHQDashboardData {
+  organization: Organization;
+  summary: IHQSummary;
+  regions: IHQRegionStat[];
+  chapters: IHQChapterStat[];
 }

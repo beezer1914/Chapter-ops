@@ -17,6 +17,7 @@ from app.extensions import db
 from app.models import Payment, PaymentPlan, ChapterMembership, User
 from app.services import notification_service
 from app.utils.decorators import chapter_required, role_required
+from app.utils.pagination import paginate
 
 payments_bp = Blueprint("payments", __name__, url_prefix="/api/payments")
 
@@ -66,23 +67,24 @@ def list_payments():
         except ValueError:
             pass
 
-    payments = query.order_by(Payment.created_at.desc()).all()
+    from sqlalchemy.orm import joinedload
+    query = query.options(joinedload(Payment.user)).order_by(Payment.created_at.desc())
+    paged, meta = paginate(query)
 
     result = []
-    for payment in payments:
+    for payment in paged.items:
         data = payment.to_dict()
-        user = db.session.get(User, payment.user_id)
-        if user:
+        if payment.user:
             data["user"] = {
-                "id": user.id,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "full_name": user.full_name,
+                "id": payment.user.id,
+                "email": payment.user.email,
+                "first_name": payment.user.first_name,
+                "last_name": payment.user.last_name,
+                "full_name": payment.user.full_name,
             }
         result.append(data)
 
-    return jsonify({"payments": result}), 200
+    return jsonify({"payments": result, "pagination": meta}), 200
 
 
 @payments_bp.route("", methods=["POST"])

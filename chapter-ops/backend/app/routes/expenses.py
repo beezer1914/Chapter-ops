@@ -23,6 +23,7 @@ from app.extensions import db
 from app.models.expense import Expense, EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS, EXPENSE_STATUSES
 from app.models import ChapterMembership
 from app.utils.decorators import chapter_required, role_required
+from app.utils.pagination import paginate
 
 expenses_bp = Blueprint("expenses", __name__, url_prefix="/api/expenses")
 
@@ -73,32 +74,35 @@ def list_expenses():
     if status and status in EXPENSE_STATUSES:
         query = query.filter_by(status=status)
 
-    expenses = query.order_by(Expense.created_at.desc()).all()
+    paged, meta = paginate(query.order_by(Expense.created_at.desc()))
 
-    # Summary for officers
+    # Summary for officers — uses aggregate queries instead of loading all rows
     summary = None
     if is_officer:
-        all_expenses = Expense.query.filter_by(chapter_id=chapter.id).all()
-        total_pending = sum(
-            Decimal(str(e.amount)) for e in all_expenses if e.status == "pending"
-        )
-        total_approved = sum(
-            Decimal(str(e.amount)) for e in all_expenses if e.status == "approved"
-        )
-        total_paid = sum(
-            Decimal(str(e.amount)) for e in all_expenses if e.status == "paid"
-        )
+        from sqlalchemy import case
+        from sqlalchemy.sql import func as sqlfunc
+        rows = db.session.query(
+            Expense.status,
+            sqlfunc.count(Expense.id).label("cnt"),
+            sqlfunc.sum(Expense.amount).label("total"),
+        ).filter_by(chapter_id=chapter.id).group_by(Expense.status).all()
+
+        stats: dict = {}
+        for row in rows:
+            stats[row.status] = {"count": row.cnt, "total": Decimal(str(row.total or 0))}
+
         summary = {
-            "pending_count": sum(1 for e in all_expenses if e.status == "pending"),
-            "pending_amount": str(total_pending),
-            "approved_amount": str(total_approved),
-            "paid_amount": str(total_paid),
+            "pending_count": stats.get("pending", {}).get("count", 0),
+            "pending_amount": str(stats.get("pending", {}).get("total", Decimal("0"))),
+            "approved_amount": str(stats.get("approved", {}).get("total", Decimal("0"))),
+            "paid_amount": str(stats.get("paid", {}).get("total", Decimal("0"))),
         }
 
     return jsonify({
-        "expenses": [e.to_dict() for e in expenses],
+        "expenses": [e.to_dict() for e in paged.items],
         "is_officer": is_officer,
         "summary": summary,
+        "pagination": meta,
     }), 200
 
 

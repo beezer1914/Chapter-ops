@@ -139,7 +139,13 @@ export default function Login() {
               </div>
             </form>
 
-            <div className="mt-8 text-center anim-card-reveal" style={{ animationDelay: "540ms" }}>
+            <div className="mt-4 text-center anim-card-reveal" style={{ animationDelay: "500ms" }}>
+              <Link to="/forgot-password" className="text-sm text-content-muted hover:text-brand-primary-main transition-colors">
+                Forgot your password?
+              </Link>
+            </div>
+
+            <div className="mt-4 text-center anim-card-reveal" style={{ animationDelay: "540ms" }}>
               <p className="text-sm text-content-muted">
                 Don't have an account?{" "}
                 <Link to="/register" className="font-semibold text-brand-primary-main hover:text-brand-primary-dark transition-colors">

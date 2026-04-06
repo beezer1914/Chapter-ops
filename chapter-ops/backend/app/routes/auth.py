@@ -5,9 +5,10 @@ Handles login, registration (with invite codes), logout, and current user.
 These routes are tenant-exempt (no chapter context needed).
 """
 
-from datetime import date, datetime, timezone
+import secrets
+from datetime import date, datetime, timedelta, timezone
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, current_app, jsonify, request, session
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app.extensions import bcrypt, db, limiter
@@ -16,6 +17,7 @@ from app.models.workflow import WorkflowTemplate
 from app.models.auth_event import AuthEvent
 from app.services import notification_service, workflow_engine
 from app.utils.password import validate_password
+from app.utils.email import send_password_reset_email
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -310,6 +312,108 @@ def change_password():
     current_user.set_password(new_password)
     db.session.commit()
     _log_auth_event("password_change", user_id=current_user.id)
+    return jsonify({"success": True}), 200
+
+
+@auth_bp.route("/forgot-password", methods=["POST"])
+@limiter.limit("5 per hour")
+def forgot_password():
+    """
+    Request a password reset link.
+
+    Always returns 200 to avoid leaking whether an email is registered.
+    """
+    data = request.get_json() or {}
+    email = data.get("email", "").strip().lower()
+    if not email:
+        return jsonify({"success": True}), 200
+
+    user = User.query.filter_by(email=email).first()
+    if user and user.active:
+        token = secrets.token_urlsafe(32)
+        user.password_reset_token = token
+        user.password_reset_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        db.session.commit()
+        send_password_reset_email(to=user.email, reset_token=token, user_name=user.first_name)
+
+    # Always return success to avoid email enumeration
+    return jsonify({"success": True}), 200
+
+
+@auth_bp.route("/reset-password", methods=["POST"])
+@limiter.limit("10 per hour")
+def reset_password():
+    """Reset a user's password using a valid reset token."""
+    data = request.get_json() or {}
+    token = data.get("token", "").strip()
+    new_password = data.get("password", "")
+
+    if not token or not new_password:
+        return jsonify({"error": "Token and password are required."}), 400
+
+    user = User.query.filter_by(password_reset_token=token).first()
+    if not user or not user.password_reset_expires_at:
+        return jsonify({"error": "Invalid or expired reset link."}), 400
+
+    expires = user.password_reset_expires_at
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) > expires:
+        return jsonify({"error": "Invalid or expired reset link."}), 400
+
+    is_valid, error_msg = validate_password(new_password)
+    if not is_valid:
+        return jsonify({"error": error_msg}), 400
+
+    user.set_password(new_password)
+    user.password_reset_token = None
+    user.password_reset_expires_at = None
+    db.session.commit()
+    _log_auth_event("password_change", user_id=user.id)
+
+    return jsonify({"success": True}), 200
+
+
+@auth_bp.route("/account", methods=["DELETE"])
+@login_required
+@limiter.limit("3 per hour")
+def delete_account():
+    """
+    Self-service account deletion.
+
+    Anonymizes the user's PII so they cannot log in and are no longer
+    identifiable, but preserves FK references on financial records for
+    the 7-year retention requirement. Requires password confirmation.
+    """
+    data = request.get_json() or {}
+    password = data.get("password", "")
+
+    if not password or not current_user.check_password(password):
+        return jsonify({"error": "Incorrect password."}), 400
+
+    user_id = current_user.id
+
+    # Deactivate all chapter memberships
+    ChapterMembership.query.filter_by(user_id=user_id).update({"active": False})
+
+    # Anonymize PII — preserve the row for FK integrity on financial records
+    current_user.email = f"deleted_{user_id}@deleted.invalid"
+    current_user.first_name = "Deleted"
+    current_user.last_name = "User"
+    current_user.phone = None
+    current_user.profile_picture_url = None
+    current_user.active = False
+    current_user.active_chapter_id = None
+    current_user.password_hash = ""
+    current_user.password_reset_token = None
+    current_user.password_reset_expires_at = None
+
+    db.session.commit()
+
+    _log_auth_event("account_deleted", user_id=user_id)
+    logout_user()
+    session.clear()
+
     return jsonify({"success": True}), 200
 
 

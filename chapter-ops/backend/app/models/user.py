@@ -8,6 +8,8 @@ Cross-organization membership (belonging to two different Greek letter orgs) is
 also forbidden and must never be allowed by the platform.
 """
 
+from datetime import datetime
+
 from flask_login import UserMixin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,6 +31,14 @@ class User(BaseModel, UserMixin):
     # The chapter the user is currently operating in (session-level context)
     active_chapter_id: Mapped[str | None] = mapped_column(
         db.String(36), db.ForeignKey("chapter.id"), nullable=True
+    )
+
+    # Password reset
+    password_reset_token: Mapped[str | None] = mapped_column(
+        db.String(100), nullable=True, index=True
+    )
+    password_reset_expires_at: Mapped[datetime | None] = mapped_column(
+        db.DateTime(timezone=True), nullable=True
     )
 
     # Relationships

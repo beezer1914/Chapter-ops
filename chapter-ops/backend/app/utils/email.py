@@ -127,3 +127,96 @@ def send_password_reset_email(to: str, reset_token: str, user_name: str) -> bool
         subject="Reset your ChapterOps password",
         html=html,
     )
+
+
+# ---------------------------------------------------------------------------
+# Chapter data export email (sent before scheduled deletion)
+# ---------------------------------------------------------------------------
+
+def send_chapter_data_export_email(
+    to: str,
+    chapter_name: str,
+    deletion_date: str,
+    members_csv: str,
+    payments_csv: str,
+    donations_csv: str,
+) -> bool:
+    """
+    Send a chapter data export email with CSV attachments via SendGrid.
+
+    Called when a president requests chapter deletion. The 30-day grace
+    period gives the chapter time to download their data before purge.
+    """
+    import base64
+
+    sender = current_app.config["SENDGRID_FROM_EMAIL"]
+
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Chapter Data Export — {chapter_name}</h2>
+        <p>Your chapter deletion request has been received. Your chapter and all associated
+           data will be permanently deleted on <strong>{deletion_date}</strong>.</p>
+        <p>Your data export is attached to this email as CSV files:</p>
+        <ul>
+            <li><strong>members.csv</strong> — Full member roster with roles and financial status</li>
+            <li><strong>payments.csv</strong> — Complete payment history</li>
+            <li><strong>donations.csv</strong> — Donation records</li>
+        </ul>
+        <p style="color:#6b7280;font-size:14px;">
+            To cancel the deletion request, log in to ChapterOps and visit
+            Settings → Chapter before {deletion_date}.
+        </p>
+        <p style="color:#dc2626;font-size:14px;">
+            <strong>This action is irreversible after the grace period.</strong>
+            Financial records are anonymized and retained for 7 years per accounting regulations.
+        </p>
+    </div>
+    """
+
+    try:
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import (
+            Mail, Attachment, FileContent, FileName, FileType, Disposition
+        )
+
+        message = Mail(
+            from_email=sender,
+            to_emails=to,
+            subject=f"Chapter Data Export — {chapter_name} (deletion scheduled {deletion_date})",
+            html_content=html,
+        )
+
+        for filename, csv_content in [
+            ("members.csv", members_csv),
+            ("payments.csv", payments_csv),
+            ("donations.csv", donations_csv),
+        ]:
+            encoded = base64.b64encode(csv_content.encode()).decode()
+            attachment = Attachment(
+                FileContent(encoded),
+                FileName(filename),
+                FileType("text/csv"),
+                Disposition("attachment"),
+            )
+            message.add_attachment(attachment)
+
+        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
+        sg.send(message)
+        logger.info(f"Chapter data export email sent to {to} for '{chapter_name}'")
+        return True
+    except Exception as exc:
+        logger.error(f"Failed to send chapter data export email: {exc}")
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Ops agent digest email
+# ---------------------------------------------------------------------------
+
+def send_digest(subject: str, html_body: str) -> bool:
+    """Send the ops agent morning digest to the founder email."""
+    founder_email = current_app.config.get("FOUNDER_EMAIL")
+    if not founder_email:
+        logger.warning("FOUNDER_EMAIL not configured — digest not sent")
+        return False
+    return send_email(to=founder_email, subject=subject, html=html_body)

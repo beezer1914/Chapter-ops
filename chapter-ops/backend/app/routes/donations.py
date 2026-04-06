@@ -14,6 +14,7 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.models import Donation, ChapterMembership, User
 from app.utils.decorators import chapter_required, role_required
+from app.utils.pagination import paginate
 
 donations_bp = Blueprint("donations", __name__, url_prefix="/api/donations")
 
@@ -33,22 +34,22 @@ def list_donations():
     if method and method in VALID_METHODS:
         query = query.filter_by(method=method)
 
-    donations = query.order_by(Donation.created_at.desc()).all()
+    from sqlalchemy.orm import joinedload
+    query = query.options(joinedload(Donation.user)).order_by(Donation.created_at.desc())
+    paged, meta = paginate(query)
 
     result = []
-    for donation in donations:
+    for donation in paged.items:
         data = donation.to_dict()
-        if donation.user_id:
-            user = db.session.get(User, donation.user_id)
-            if user:
-                data["user"] = {
-                    "id": user.id,
-                    "full_name": user.full_name,
-                    "email": user.email,
-                }
+        if donation.user:
+            data["user"] = {
+                "id": donation.user.id,
+                "full_name": donation.user.full_name,
+                "email": donation.user.email,
+            }
         result.append(data)
 
-    return jsonify({"donations": result}), 200
+    return jsonify({"donations": result, "pagination": meta}), 200
 
 
 @donations_bp.route("", methods=["POST"])

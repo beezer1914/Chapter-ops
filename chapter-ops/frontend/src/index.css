@@ -91,6 +91,11 @@ body::before {
   background-size: 256px 256px;
 }
 
+/* Reduce noise in light mode — it reads as grime on white */
+[data-color-scheme="light"] body::before {
+  opacity: 0.008;
+}
+
 /* ── Background Patterns ─────────────────────────────────────── */
 
 .bg-dot-grid {
@@ -310,3 +315,186 @@ option {
 .glass-card:hover {
   border-color: var(--color-border-brand);
 }
+
+/* ── Light Mode Overrides ────────────────────────────────────────
+   Dark-theme patterns that go invisible or lose contrast on white.
+   Scoped to [data-color-scheme="light"] for zero dark-mode impact.
+   ─────────────────────────────────────────────────────────────── */
+
+/* Translucent-white backgrounds — invisible on white surfaces */
+[data-color-scheme="light"] .bg-white\/5  { background-color: rgba(0, 0, 0, 0.035); }
+[data-color-scheme="light"] .bg-white\/10 { background-color: rgba(0, 0, 0, 0.06);  }
+[data-color-scheme="light"] .bg-white\/20 { background-color: rgba(0, 0, 0, 0.08);  }
+[data-color-scheme="light"] .bg-white\/90 { background-color: #ffffff; }
+
+/* White-opacity hover states */
+[data-color-scheme="light"] .hover\:bg-white\/5:hover  { background-color: rgba(0, 0, 0, 0.04); }
+[data-color-scheme="light"] .hover\:bg-white\/10:hover { background-color: rgba(0, 0, 0, 0.06); }
+
+/* White-opacity dividers — invisible on light */
+[data-color-scheme="light"] .divide-white\/5 > * + *  { border-color: rgba(0, 0, 0, 0.07); }
+[data-color-scheme="light"] .divide-white\/10 > * + * { border-color: rgba(0, 0, 0, 0.10); }
+
+/* Border overrides */
+[data-color-scheme="light"] .border-white\/40 { border-color: rgba(0, 0, 0, 0.12); }
+
+/* ── Status badge pattern: *-900/30 bg + *-400 text ─────────────
+   These dark-mode badge combos (faint tint + muted color) go
+   near-invisible on white. Flip to solid-100 bg + 700/800 text.
+   ─────────────────────────────────────────────────────────────── */
+
+/* Amber / Warning */
+[data-color-scheme="light"] .bg-amber-900\/10 { background-color: rgb(255 251 235); }
+[data-color-scheme="light"] .bg-amber-900\/20 { background-color: rgb(254 243 199); }
+[data-color-scheme="light"] .bg-amber-900\/30 { background-color: rgb(254 243 199); }
+[data-color-scheme="light"] .text-amber-300   { color: rgb(146 64 14);             }
+[data-color-scheme="light"] .text-amber-400   { color: rgb(146 64 14);             }
+[data-color-scheme="light"] .border-amber-900\/20 { border-color: rgb(253 230 138); }
+[data-color-scheme="light"] .border-amber-900\/30 { border-color: rgb(253 230 138); }
+[data-color-scheme="light"] .border-amber-800\/30 { border-color: rgb(253 230 138); }
+
+/* Emerald / Success */
+[data-color-scheme="light"] .bg-emerald-900\/20 { background-color: rgb(209 250 229); }
+[data-color-scheme="light"] .bg-emerald-900\/30 { background-color: rgb(209 250 229); }
+[data-color-scheme="light"] .text-emerald-400   { color: rgb(6 95 70);              }
+[data-color-scheme="light"] .border-emerald-800\/30 { border-color: rgb(167 243 208); }
+[data-color-scheme="light"] .border-emerald-900\/30 { border-color: rgb(167 243 208); }
+
+/* Red / Danger */
+[data-color-scheme="light"] .bg-red-900\/20 { background-color: rgb(254 226 226); }
+[data-color-scheme="light"] .bg-red-900\/30 { background-color: rgb(254 226 226); }
+[data-color-scheme="light"] .text-red-400   { color: rgb(153 27 27);              }
+[data-color-scheme="light"] .border-red-800\/30 { border-color: rgb(252 165 165); }
+[data-color-scheme="light"] .border-red-900\/30 { border-color: rgb(252 165 165); }
+
+/* Blue / Info */
+[data-color-scheme="light"] .bg-blue-900\/20 { background-color: rgb(219 234 254); }
+[data-color-scheme="light"] .bg-blue-900\/30 { background-color: rgb(219 234 254); }
+[data-color-scheme="light"] .text-blue-400   { color: rgb(30 64 175);             }
+[data-color-scheme="light"] .border-blue-800\/30 { border-color: rgb(191 219 254); }
+
+/* Purple */
+[data-color-scheme="light"] .bg-purple-900\/20 { background-color: rgb(243 232 255); }
+[data-color-scheme="light"] .bg-purple-900\/30 { background-color: rgb(243 232 255); }
+[data-color-scheme="light"] .text-purple-400   { color: rgb(107 33 168);            }
+[data-color-scheme="light"] .border-purple-800\/30 { border-color: rgb(216 180 254); }
+
+/* Orange / Suspension */
+[data-color-scheme="light"] .bg-orange-900\/5  { background-color: rgb(255 247 237); }
+[data-color-scheme="light"] .bg-orange-900\/10 { background-color: rgb(255 247 237); }
+[data-color-scheme="light"] .bg-orange-900\/20 { background-color: rgb(254 215 170); }
+[data-color-scheme="light"] .bg-orange-900\/30 { background-color: rgb(254 215 170); }
+[data-color-scheme="light"] .text-orange-400   { color: rgb(154 52 18);             }
+[data-color-scheme="light"] .border-orange-800\/30 { border-color: rgb(253 186 116); }
+[data-color-scheme="light"] .border-orange-800\/50 { border-color: rgb(253 186 116); }
+
+/* Teal */
+[data-color-scheme="light"] .bg-teal-900\/30 { background-color: rgb(204 251 241); }
+[data-color-scheme="light"] .text-teal-400   { color: rgb(19 78 74);              }
+
+/* Sky */
+[data-color-scheme="light"] .bg-sky-900\/30 { background-color: rgb(224 242 254); }
+[data-color-scheme="light"] .text-sky-400   { color: rgb(7 89 133);              }
+
+/* Indigo */
+[data-color-scheme="light"] .bg-indigo-900\/30 { background-color: rgb(224 231 255); }
+[data-color-scheme="light"] .text-indigo-400   { color: rgb(55 48 163);             }
+
+/* Zinc / Gray muted badges */
+[data-color-scheme="light"] .bg-gray-800\/50 { background-color: rgb(229 231 235); }
+[data-color-scheme="light"] .text-gray-400   { color: rgb(75 85 99);              }
+[data-color-scheme="light"] .bg-zinc-800\/60 { background-color: rgb(229 231 235); }
+[data-color-scheme="light"] .text-zinc-400   { color: rgb(82 82 91);              }
+
+/* Progress ring track — SVG presentation attribute, overridable by CSS */
+[data-color-scheme="light"] .ring-track { stroke: rgba(0, 0, 0, 0.10) !important; }
+
+/* Loading skeleton — bg-white/5 invisible on light */
+[data-color-scheme="light"] .animate-pulse { background-color: rgba(0, 0, 0, 0.06); }
+
+/* ── Additional white-opacity backgrounds ──────────────────────── */
+[data-color-scheme="light"] .bg-white\/15        { background-color: rgba(0, 0, 0, 0.04); }
+[data-color-scheme="light"] .bg-white\/60        { background-color: rgba(255, 255, 255, 0.95); }
+[data-color-scheme="light"] .bg-white\/80        { background-color: #ffffff; }
+[data-color-scheme="light"] .bg-white\/\[0\.01\] { background-color: rgba(0, 0, 0, 0.015); }
+[data-color-scheme="light"] .bg-white\/\[0\.02\] { background-color: rgba(0, 0, 0, 0.025); }
+[data-color-scheme="light"] .bg-white\/\[0\.03\] { background-color: rgba(0, 0, 0, 0.03);  }
+[data-color-scheme="light"] .bg-white\/\[0\.04\] { background-color: rgba(0, 0, 0, 0.035); }
+[data-color-scheme="light"] .bg-white\/\[0\.05\] { background-color: rgba(0, 0, 0, 0.04);  }
+[data-color-scheme="light"] .bg-white\/\[0\.06\] { background-color: rgba(0, 0, 0, 0.045); }
+
+/* ── Additional white-opacity hover states ─────────────────────── */
+[data-color-scheme="light"] .hover\:bg-white\/15:hover { background-color: rgba(0, 0, 0, 0.04); }
+[data-color-scheme="light"] .hover\:bg-white\/20:hover { background-color: rgba(0, 0, 0, 0.05); }
+
+/* ── White-opacity borders ─────────────────────────────────────── */
+[data-color-scheme="light"] .border-white\/5          { border-color: rgba(0, 0, 0, 0.08); }
+[data-color-scheme="light"] .border-white\/20         { border-color: rgba(0, 0, 0, 0.12); }
+[data-color-scheme="light"] .border-white\/\[0\.03\]  { border-color: rgba(0, 0, 0, 0.06); }
+[data-color-scheme="light"] .border-white\/\[0\.05\]  { border-color: rgba(0, 0, 0, 0.07); }
+[data-color-scheme="light"] .border-white\/\[0\.06\]  { border-color: rgba(0, 0, 0, 0.07); }
+[data-color-scheme="light"] .border-white\/\[0\.07\]  { border-color: rgba(0, 0, 0, 0.08); }
+[data-color-scheme="light"] .border-white\/\[0\.08\]  { border-color: rgba(0, 0, 0, 0.09); }
+[data-color-scheme="light"] .border-white\/\[0\.12\]  { border-color: rgba(0, 0, 0, 0.10); }
+
+/* ── Green / Success ───────────────────────────────────────────── */
+[data-color-scheme="light"] .bg-green-900\/20   { background-color: rgb(220 252 231); }
+[data-color-scheme="light"] .bg-green-900\/30   { background-color: rgb(220 252 231); }
+[data-color-scheme="light"] .text-green-300     { color: rgb(20 83 45);              }
+[data-color-scheme="light"] .text-green-400     { color: rgb(20 83 45);              }
+[data-color-scheme="light"] .border-green-800\/30 { border-color: rgb(167 243 208);  }
+[data-color-scheme="light"] .border-green-900\/30 { border-color: rgb(167 243 208);  }
+
+/* ── Yellow / Caution ──────────────────────────────────────────── */
+[data-color-scheme="light"] .bg-yellow-900\/20    { background-color: rgb(254 252 232); }
+[data-color-scheme="light"] .bg-yellow-900\/30    { background-color: rgb(254 252 232); }
+[data-color-scheme="light"] .text-yellow-400      { color: rgb(133 77 14);             }
+[data-color-scheme="light"] .border-yellow-800\/30 { border-color: rgb(253 224 71);    }
+[data-color-scheme="light"] .border-yellow-900\/30 { border-color: rgb(253 224 71);    }
+
+/* ── Slate / Neutral ───────────────────────────────────────────── */
+[data-color-scheme="light"] .bg-slate-900\/30 { background-color: rgb(226 232 240); }
+[data-color-scheme="light"] .text-slate-300   { color: rgb(30 41 59);              }
+[data-color-scheme="light"] .text-slate-400   { color: rgb(51 65 85);              }
+
+/* ── Fuchsia / Pink / Rose / Cyan / Lime (catch-all for future use) */
+[data-color-scheme="light"] .bg-fuchsia-900\/30 { background-color: rgb(250 232 255); }
+[data-color-scheme="light"] .text-fuchsia-400   { color: rgb(134 25 143);            }
+[data-color-scheme="light"] .bg-pink-900\/30    { background-color: rgb(252 231 243); }
+[data-color-scheme="light"] .text-pink-400      { color: rgb(157 23 77);             }
+[data-color-scheme="light"] .bg-rose-900\/30    { background-color: rgb(255 228 230); }
+[data-color-scheme="light"] .text-rose-400      { color: rgb(159 18 57);             }
+[data-color-scheme="light"] .bg-cyan-900\/30    { background-color: rgb(207 250 254); }
+[data-color-scheme="light"] .text-cyan-400      { color: rgb(21 94 117);             }
+[data-color-scheme="light"] .bg-lime-900\/30    { background-color: rgb(236 252 203); }
+[data-color-scheme="light"] .text-lime-400      { color: rgb(63 98 18);              }
+[data-color-scheme="light"] .bg-violet-900\/30  { background-color: rgb(237 233 254); }
+[data-color-scheme="light"] .text-violet-400    { color: rgb(91 33 182);             }
+
+/* ── *-300 text shades (light text that disappears on white) ───── */
+[data-color-scheme="light"] .text-amber-300   { color: rgb(146 64 14);   }
+[data-color-scheme="light"] .text-blue-300    { color: rgb(30 64 175);   }
+[data-color-scheme="light"] .text-emerald-300 { color: rgb(6 95 70);     }
+[data-color-scheme="light"] .text-orange-300  { color: rgb(154 52 18);   }
+[data-color-scheme="light"] .text-red-300     { color: rgb(153 27 27);   }
+[data-color-scheme="light"] .text-green-300   { color: rgb(20 83 45);    }
+[data-color-scheme="light"] .text-purple-300  { color: rgb(107 33 168);  }
+[data-color-scheme="light"] .text-indigo-300  { color: rgb(55 48 163);   }
+[data-color-scheme="light"] .text-teal-300    { color: rgb(19 78 74);    }
+[data-color-scheme="light"] .text-sky-300     { color: rgb(7 89 133);    }
+[data-color-scheme="light"] .text-yellow-300  { color: rgb(133 77 14);   }
+[data-color-scheme="light"] .text-pink-300    { color: rgb(157 23 77);   }
+[data-color-scheme="light"] .text-rose-300    { color: rgb(159 18 57);   }
+[data-color-scheme="light"] .text-cyan-300    { color: rgb(21 94 117);   }
+[data-color-scheme="light"] .text-violet-300  { color: rgb(91 33 182);   }
+[data-color-scheme="light"] .text-gray-300    { color: rgb(55 65 81);    }
+[data-color-scheme="light"] .text-slate-300   { color: rgb(30 41 59);    }
+
+/* ── Brand-primary opacity variants ────────────────────────────── */
+/* bg-brand-primary-50/30 and /60 — brand-tinted hover states, fine on light */
+[data-color-scheme="light"] .bg-brand-primary-950\/40 { background-color: rgba(0, 0, 0, 0.35); }
+
+/* ── Backdrop/modal overlays ───────────────────────────────────── */
+/* Dark overlay behind modals — needs to stay dark in both modes */
+[data-color-scheme="light"] .bg-brand-primary-950\/40 { background-color: rgba(0, 0, 0, 0.35); }
+[data-color-scheme="light"] .bg-black\/60             { background-color: rgba(0, 0, 0, 0.50); }

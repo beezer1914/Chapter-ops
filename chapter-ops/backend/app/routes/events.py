@@ -18,6 +18,7 @@ from app.models.event import Event, EventAttendance
 from app.models.workflow import WorkflowTemplate
 from app.services import notification_service, workflow_engine
 from app.utils.decorators import chapter_required, role_required
+from app.utils.pagination import paginate
 
 events_bp = Blueprint("events", __name__, url_prefix="/api/events")
 
@@ -61,12 +62,12 @@ def list_events():
         query = query.filter(Event.start_datetime >= now)
         query = query.order_by(Event.start_datetime.asc())
 
-    events = query.all()
+    paged, meta = paginate(query)
 
     from app.models.workflow import WorkflowInstance
 
     result = []
-    for event in events:
+    for event in paged.items:
         data = event.to_dict()
         data["attendee_count"] = EventAttendance.query.filter_by(
             event_id=event.id, rsvp_status="going"
@@ -75,7 +76,6 @@ def list_events():
             event_id=event.id, user_id=current_user.id
         ).first()
         data["my_attendance"] = my_attendance.to_dict() if my_attendance else None
-        # For draft events, surface the active workflow instance ID so the UI can link to it
         if event.status == "draft":
             wi = WorkflowInstance.query.filter_by(
                 trigger_type="event",
@@ -85,7 +85,7 @@ def list_events():
             data["workflow_instance_id"] = wi.id if wi else None
         result.append(data)
 
-    return jsonify({"events": result}), 200
+    return jsonify({"events": result, "pagination": meta}), 200
 
 
 @events_bp.route("", methods=["POST"])

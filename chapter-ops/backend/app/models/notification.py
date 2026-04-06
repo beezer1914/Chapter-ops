@@ -7,6 +7,7 @@ If recipient_id is NULL, the notification is chapter-wide (visible to all member
 
 from datetime import datetime
 
+from sqlalchemy import Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.extensions import db
@@ -15,6 +16,11 @@ from app.models.base import BaseModel
 
 class Notification(BaseModel):
     __tablename__ = "notification"
+    __table_args__ = (
+        # Composite index for the notification polling query:
+        # WHERE chapter_id = ? AND (recipient_id = ? OR recipient_id IS NULL) AND is_read = false
+        Index("ix_notification_chapter_recipient_read", "chapter_id", "recipient_id", "is_read"),
+    )
 
     # Multi-tenant scoping
     chapter_id: Mapped[str] = mapped_column(

@@ -4,7 +4,7 @@ Donation model — tenant-scoped donation tracking.
 Donations are separate from dues and can come from members or non-members.
 """
 
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.extensions import db
 from app.models.base import BaseModel
@@ -23,12 +23,13 @@ class Donation(BaseModel):
         db.String(50), nullable=False, default="stripe"
     )  # "stripe", "cash", "check", etc.
     notes: Mapped[str | None] = mapped_column(db.String(500), nullable=True)
-    stripe_session_id: Mapped[str | None] = mapped_column(db.String(200), nullable=True)
+    stripe_session_id: Mapped[str | None] = mapped_column(db.String(200), nullable=True, index=True)
 
     # Optional link to a user (if the donor is a registered member)
     user_id: Mapped[str | None] = mapped_column(
         db.String(36), db.ForeignKey("user.id"), nullable=True
     )
+    user: Mapped["User | None"] = relationship("User", foreign_keys=[user_id])
 
     def to_dict(self) -> dict:
         return {

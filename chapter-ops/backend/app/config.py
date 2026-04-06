@@ -20,6 +20,9 @@ class BaseConfig:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # Limit incoming request bodies to 32 MB (file uploads have their own per-route limits)
+    MAX_CONTENT_LENGTH = 32 * 1024 * 1024
+
     # Session
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"

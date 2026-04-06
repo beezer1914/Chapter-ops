@@ -9,6 +9,8 @@ Endpoints:
   DELETE /api/kb/<id>         delete article (secretary+)
 """
 
+import nh3
+
 from flask import Blueprint, g, jsonify, request
 from flask_login import current_user, login_required
 from sqlalchemy import or_
@@ -18,8 +20,34 @@ from app.models.knowledge_article import KnowledgeArticle, KB_CATEGORIES, KB_SCO
 from app.models.organization import Organization
 from app.models.chapter import Chapter
 from app.utils.decorators import chapter_required, role_required
+from app.utils.pagination import paginate
 
 kb_bp = Blueprint("kb", __name__, url_prefix="/api/kb")
+
+# Tags and attributes allowed in article bodies (Tiptap output)
+_ALLOWED_TAGS = {
+    "p", "br", "strong", "em", "u", "s", "del",
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "ul", "ol", "li",
+    "blockquote", "pre", "code",
+    "a", "img",
+    "table", "thead", "tbody", "tr", "th", "td",
+    "hr", "div", "span",
+}
+_ALLOWED_ATTRS = {
+    "a": {"href", "title", "target", "rel"},
+    "img": {"src", "alt", "width", "height"},
+    "td": {"colspan", "rowspan"},
+    "th": {"colspan", "rowspan"},
+    "*": {"class"},
+}
+
+
+def _sanitize_body(html: str) -> str:
+    """Strip disallowed tags/attributes from Tiptap HTML to prevent XSS."""
+    # link_rel=None lets us manage the "rel" attribute ourselves via _ALLOWED_ATTRS;
+    # nh3's default non-None link_rel conflicts with "rel" being in the attributes dict.
+    return nh3.clean(html, tags=_ALLOWED_TAGS, attributes=_ALLOWED_ATTRS, link_rel=None)
 
 
 def _get_chapter_prefix(chapter: Chapter) -> str:
@@ -98,12 +126,15 @@ def list_articles():
             )
         )
 
-    articles = query.order_by(
+    paged, meta = paginate(query.order_by(
         KnowledgeArticle.is_featured.desc(),
         KnowledgeArticle.updated_at.desc()
-    ).all()
+    ))
 
-    return jsonify([a.to_dict(include_body=False) for a in articles])
+    return jsonify({
+        "articles": [a.to_dict(include_body=False) for a in paged.items],
+        "pagination": meta,
+    })
 
 
 # ── Create article ─────────────────────────────────────────────────────────────
@@ -152,7 +183,7 @@ def create_article():
         created_by_id=current_user.id,
         article_number=article_number,
         title=title,
-        body=body,
+        body=_sanitize_body(body),
         category=category,
         status=status,
         is_featured=is_featured,
@@ -220,7 +251,7 @@ def update_article(article_id: str):
             return jsonify({"error": "Title cannot be empty."}), 400
         article.title = data["title"].strip()
     if "body" in data:
-        article.body = data["body"]
+        article.body = _sanitize_body(data["body"])
     if "category" in data:
         if data["category"] not in KB_CATEGORIES:
             return jsonify({"error": "Invalid category."}), 400

@@ -59,6 +59,24 @@ def init_agent(app) -> None:
         misfire_grace_time=3600,
     )
 
+    scheduler.add_job(
+        func=lambda: _purge_notifications(app),
+        trigger=CronTrigger(hour=3, minute=45),  # 3:45am UTC daily
+        id="ops_agent_purge_notifications",
+        name="Ops Agent — Notification 90-day Purge",
+        replace_existing=True,
+        misfire_grace_time=3600,
+    )
+
+    scheduler.add_job(
+        func=lambda: _process_chapter_deletions(app),
+        trigger=CronTrigger(hour=2, minute=0),  # 2:00am UTC daily
+        id="ops_agent_chapter_deletions",
+        name="Ops Agent — Process Scheduled Chapter Deletions",
+        replace_existing=True,
+        misfire_grace_time=3600,
+    )
+
     scheduler.start()
     logger.info(
         f"Ops agent scheduler started — checks every 15m, digest at {digest_hour:02d}:00 UTC"
@@ -152,6 +170,169 @@ def _purge_auth_events(app) -> None:
                 logger.info(f"Purged {deleted} AuthEvent records older than 90 days")
         except Exception as exc:
             logger.exception(f"AuthEvent purge failed: {exc}")
+
+
+def _purge_notifications(app) -> None:
+    """Delete Notification records older than 90 days."""
+    from datetime import timedelta
+    with app.app_context():
+        try:
+            from app.extensions import db
+            from app.models.notification import Notification
+
+            cutoff = datetime.now(timezone.utc) - timedelta(days=90)
+            deleted = (
+                db.session.query(Notification)
+                .filter(Notification.created_at < cutoff)
+                .delete(synchronize_session=False)
+            )
+            db.session.commit()
+            if deleted:
+                logger.info(f"Purged {deleted} Notification records older than 90 days")
+        except Exception as exc:
+            logger.exception(f"Notification purge failed: {exc}")
+
+
+def _process_chapter_deletions(app) -> None:
+    """
+    Hard-delete chapters whose deletion_scheduled_at has passed.
+
+    Cascades through all tenant-scoped tables in dependency order,
+    then anonymizes financial record FK references (7-year retention).
+    """
+    with app.app_context():
+        try:
+            from app.extensions import db
+            from app.models.chapter import Chapter
+            from sqlalchemy import text
+
+            now = datetime.now(timezone.utc)
+            due = (
+                db.session.query(Chapter)
+                .filter(
+                    Chapter.deletion_scheduled_at != None,
+                    Chapter.deletion_scheduled_at <= now,
+                )
+                .all()
+            )
+
+            if not due:
+                return
+
+            for chapter in due:
+                chapter_id = chapter.id
+                chapter_name = chapter.name
+                try:
+                    _delete_chapter_data(db, chapter_id)
+                    logger.info(f"Chapter '{chapter_name}' ({chapter_id}) hard-deleted successfully")
+                except Exception as exc:
+                    logger.exception(f"Failed to delete chapter {chapter_id}: {exc}")
+                    db.session.rollback()
+
+        except Exception as exc:
+            logger.exception(f"Chapter deletion job failed: {exc}")
+
+
+def _delete_chapter_data(db, chapter_id: str) -> None:
+    """
+    Delete all data for a chapter in dependency order, then remove the chapter row.
+
+    Financial records (Payment, Donation, PaymentPlan, Invoice, Expense) are NOT
+    deleted — they are de-linked from the chapter (chapter_id set to NULL) to
+    satisfy the 7-year accounting retention requirement. The chapter row itself
+    is hard-deleted.
+    """
+    from sqlalchemy import text
+
+    # Helper for raw deletes (faster than ORM for bulk operations)
+    def raw_delete(table: str, column: str = "chapter_id") -> int:
+        result = db.session.execute(
+            text(f"DELETE FROM {table} WHERE {column} = :cid"),
+            {"cid": chapter_id},
+        )
+        return result.rowcount
+
+    # ── 1. Clear user active_chapter_id references ───────────────────────────
+    db.session.execute(
+        text("UPDATE \"user\" SET active_chapter_id = NULL WHERE active_chapter_id = :cid"),
+        {"cid": chapter_id},
+    )
+
+    # ── 2. Workflow instances (children before parents) ──────────────────────
+    db.session.execute(
+        text("""
+            DELETE FROM workflow_step_instance
+            WHERE workflow_instance_id IN (
+                SELECT id FROM workflow_instance WHERE chapter_id = :cid
+            )
+        """),
+        {"cid": chapter_id},
+    )
+    raw_delete("workflow_instance")
+    db.session.execute(
+        text("""
+            DELETE FROM workflow_step
+            WHERE workflow_template_id IN (
+                SELECT id FROM workflow_template WHERE chapter_id = :cid
+            )
+        """),
+        {"cid": chapter_id},
+    )
+    raw_delete("workflow_template")
+
+    # ── 3. Events and attendance ─────────────────────────────────────────────
+    db.session.execute(
+        text("""
+            DELETE FROM event_attendance
+            WHERE event_id IN (SELECT id FROM event WHERE chapter_id = :cid)
+        """),
+        {"cid": chapter_id},
+    )
+    raw_delete("event")
+
+    # ── 4. Intake candidates and documents ───────────────────────────────────
+    db.session.execute(
+        text("""
+            DELETE FROM intake_document
+            WHERE candidate_id IN (
+                SELECT id FROM intake_candidate WHERE chapter_id = :cid
+            )
+        """),
+        {"cid": chapter_id},
+    )
+    raw_delete("intake_candidate")
+
+    # ── 5. Other chapter-scoped content ──────────────────────────────────────
+    for table in [
+        "document", "announcement", "knowledge_article", "invite_code",
+        "chapter_transfer_request", "notification", "chapter_milestone",
+        "region_membership",
+    ]:
+        try:
+            raw_delete(table)
+        except Exception:
+            pass  # Table may not exist in all deployments
+
+    # ── 6. Memberships ────────────────────────────────────────────────────────
+    raw_delete("chapter_membership")
+
+    # ── 7. De-link financial records (retain for 7-year requirement) ──────────
+    for table in ["payment", "payment_plan", "donation", "invoice", "expense"]:
+        try:
+            db.session.execute(
+                text(f"UPDATE {table} SET chapter_id = NULL WHERE chapter_id = :cid"),
+                {"cid": chapter_id},
+            )
+        except Exception:
+            pass
+
+    # ── 8. Delete the chapter itself ──────────────────────────────────────────
+    db.session.execute(
+        text("DELETE FROM chapter WHERE id = :cid"),
+        {"cid": chapter_id},
+    )
+
+    db.session.commit()
 
 
 def _persist_run(ctx, run_type: str) -> None:

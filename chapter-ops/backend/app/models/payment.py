@@ -29,7 +29,7 @@ class Payment(BaseModel):
         db.String(50), nullable=False, default="stripe"
     )  # "stripe", "cash", "check", "bank_transfer", "manual"
     notes: Mapped[str | None] = mapped_column(db.String(500), nullable=True)
-    stripe_session_id: Mapped[str | None] = mapped_column(db.String(200), nullable=True)
+    stripe_session_id: Mapped[str | None] = mapped_column(db.String(200), nullable=True, index=True)
 
     # Fee type reference (from chapter.config.fee_types)
     fee_type_id: Mapped[str | None] = mapped_column(db.String(50), nullable=True)

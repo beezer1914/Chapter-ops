@@ -5,6 +5,8 @@ Every chapter belongs to an organization and is the unit of data isolation.
 All tenant-scoped data (payments, events, documents) references a chapter.
 """
 
+from datetime import datetime
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.extensions import db
@@ -33,7 +35,7 @@ class Chapter(BaseModel):
     logo_url: Mapped[str | None] = mapped_column(db.String(500), nullable=True)
 
     # Stripe Connect — each chapter has its own Stripe account
-    stripe_account_id: Mapped[str | None] = mapped_column(db.String(100), nullable=True)
+    stripe_account_id: Mapped[str | None] = mapped_column(db.String(100), nullable=True, index=True)
     stripe_onboarding_complete: Mapped[bool] = mapped_column(db.Boolean, default=False, nullable=False)
 
     # Subscription tier: "starter", "pro", "elite", "organization"
@@ -41,6 +43,18 @@ class Chapter(BaseModel):
 
     # Chapter-level configuration (fee types, operational settings)
     config: Mapped[dict] = mapped_column(db.JSON, nullable=False, default=dict)
+
+    # Suspension — set by IHQ (org admin), blocks all chapter access until lifted
+    suspended: Mapped[bool] = mapped_column(db.Boolean, default=False, nullable=False)
+    suspension_reason: Mapped[str | None] = mapped_column(db.String(500), nullable=True)
+
+    # Scheduled deletion — set by president, processed by background job after 30-day grace period
+    deletion_requested_at: Mapped[datetime | None] = mapped_column(
+        db.DateTime(timezone=True), nullable=True
+    )
+    deletion_scheduled_at: Mapped[datetime | None] = mapped_column(
+        db.DateTime(timezone=True), nullable=True, index=True
+    )
 
     # Relationships
     organization: Mapped["Organization"] = relationship("Organization", back_populates="chapters")
@@ -62,9 +76,12 @@ class Chapter(BaseModel):
             "country": self.country,
             "timezone": self.timezone,
             "active": self.active,
+            "suspended": self.suspended,
+            "suspension_reason": self.suspension_reason,
             "logo_url": self.logo_url,
             "stripe_onboarding_complete": self.stripe_onboarding_complete,
             "subscription_tier": self.subscription_tier,
             "config": self.config,
             "created_at": self.created_at.isoformat() if self.created_at else None,
+            "deletion_scheduled_at": self.deletion_scheduled_at.isoformat() if self.deletion_scheduled_at else None,
         }

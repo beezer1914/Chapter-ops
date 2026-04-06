@@ -22,7 +22,7 @@ export const BRANDING_PRESETS: BrandingPreset[] = [
   {
     id: "royal-blue-gold",
     name: "Royal Blue & Gold",
-    description: "Classic collegiate — ΦΒΣ",
+    description: "Classic collegiate",
     colors: {
       primary: { light: "#6BA3E8", main: "#0047AB", dark: "#002F6C" },
       secondary: { light: "#0d1630", main: "#0f1a3a", dark: "#132248" },
@@ -32,7 +32,7 @@ export const BRANDING_PRESETS: BrandingPreset[] = [
   {
     id: "crimson-cream",
     name: "Crimson & Cream",
-    description: "Bold and warm — ΔΣΘ / ΑΚΑ",
+    description: "Bold and warm",
     colors: {
       primary: { light: "#F07080", main: "#DC143C", dark: "#8B0000" },
       secondary: { light: "#0d1630", main: "#0f1a3a", dark: "#132248" },
@@ -42,7 +42,7 @@ export const BRANDING_PRESETS: BrandingPreset[] = [
   {
     id: "old-gold-black",
     name: "Old Gold & Black",
-    description: "Timeless and refined — ΑΦΑ",
+    description: "Timeless and refined",
     colors: {
       primary: { light: "#E8C94A", main: "#CFB53B", dark: "#9E8400" },
       secondary: { light: "#0d1630", main: "#0f1a3a", dark: "#132248" },
@@ -52,7 +52,7 @@ export const BRANDING_PRESETS: BrandingPreset[] = [
   {
     id: "purple-gold",
     name: "Purple & Gold",
-    description: "Regal and commanding — ΩΨΦ",
+    description: "Regal and commanding",
     colors: {
       primary: { light: "#B06ED6", main: "#6A0DAD", dark: "#4B0082" },
       secondary: { light: "#0d1630", main: "#0f1a3a", dark: "#132248" },
@@ -72,7 +72,7 @@ export const BRANDING_PRESETS: BrandingPreset[] = [
   {
     id: "maroon-white",
     name: "Maroon & White",
-    description: "Strong and classic — ΚΑΨ",
+    description: "Strong and classic",
     colors: {
       primary: { light: "#C44A5A", main: "#800000", dark: "#4A0000" },
       secondary: { light: "#0d1630", main: "#0f1a3a", dark: "#132248" },

@@ -204,18 +204,25 @@ def delete_file(filename: str) -> bool:
 
 def extract_filename_from_url(url: str) -> Optional[str]:
     """
-    Extract S3 object key from public URL.
+    Extract S3 object key from a public URL.
 
-    Example:
-        https://account.r2.cloudflarestorage.com/bucket/users/123/file.jpg
-        -> users/123/file.jpg
+    Handles two URL formats:
+      1. R2.dev public URL (no bucket in path):
+         https://pub-xxx.r2.dev/users/123/file.jpg  ->  users/123/file.jpg
+      2. R2 / S3 API URL (bucket in path):
+         https://account.r2.cloudflarestorage.com/bucket/users/123/file.jpg  ->  users/123/file.jpg
     """
     if not url:
         return None
 
+    # Try R2.dev public URL first — strip the configured public base URL prefix
+    public_base = current_app.config.get('S3_PUBLIC_URL', '').rstrip('/')
+    if public_base and url.startswith(public_base + '/'):
+        return url[len(public_base) + 1:]
+
+    # Fall back to bucket-in-path format (R2 API / standard S3)
     bucket = current_app.config['S3_BUCKET_NAME']
     parts = url.split(f"/{bucket}/")
-
     if len(parts) == 2:
         return parts[1]
 

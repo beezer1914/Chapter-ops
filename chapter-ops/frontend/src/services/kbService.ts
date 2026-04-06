@@ -14,8 +14,8 @@ export async function fetchArticles(params?: {
   status?: KbStatus;
   q?: string;
 }): Promise<KnowledgeArticle[]> {
-  const { data } = await api.get<KnowledgeArticle[]>("/kb", { params });
-  return data;
+  const { data } = await api.get<{ articles: KnowledgeArticle[] }>("/kb", { params });
+  return data.articles;
 }
 
 export async function fetchArticle(id: string): Promise<KnowledgeArticle> {
