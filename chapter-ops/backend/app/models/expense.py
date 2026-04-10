@@ -70,6 +70,12 @@ class Expense(BaseModel):
         db.DateTime(timezone=True), nullable=True
     )
 
+    # Committee tag (optional)
+    committee_id: Mapped[str | None] = mapped_column(
+        db.String(36), db.ForeignKey("committee.id", ondelete="SET NULL"),
+        nullable=True, index=True,
+    )
+
     # Receipt (optional R2-backed file)
     receipt_url: Mapped[str | None] = mapped_column(db.String(500), nullable=True)
     receipt_key: Mapped[str | None] = mapped_column(db.String(500), nullable=True)
@@ -80,6 +86,7 @@ class Expense(BaseModel):
     # Relationships
     submitted_by: Mapped["User"] = relationship("User", foreign_keys=[submitted_by_id])
     reviewer: Mapped["User | None"] = relationship("User", foreign_keys=[reviewer_id])
+    committee: Mapped["Committee | None"] = relationship("Committee", foreign_keys=[committee_id])
 
     def to_dict(self) -> dict:
         return {
@@ -110,6 +117,11 @@ class Expense(BaseModel):
             "receipt_name": self.receipt_name,
             "receipt_size": self.receipt_size,
             "receipt_mime": self.receipt_mime,
+            "committee_id": self.committee_id,
+            "committee": {
+                "id": self.committee.id,
+                "name": self.committee.name,
+            } if self.committee else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

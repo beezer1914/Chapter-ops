@@ -929,65 +929,84 @@ function EventCard({
   const navigate = useNavigate();
   const myStatus = event.my_attendance?.rsvp_status;
 
-  return (
-    <div className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] p-5 flex flex-col gap-4 hover:shadow-lg transition-shadow">
-      {/* Type badge + title */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${EVENT_TYPE_COLORS[event.event_type]}`}>
-            {EVENT_TYPE_LABELS[event.event_type]}
-          </span>
-          {event.is_paid && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-900/30 text-yellow-400">
-              ${parseFloat(event.ticket_price ?? "0").toFixed(2)}
-            </span>
-          )}
-          {event.status === "draft" && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-900/30 text-amber-400">
-              Pending Approval
-            </span>
-          )}
-          {event.is_public && (
-            <ExternalLink className="w-3.5 h-3.5 text-content-muted" />
-          )}
-        </div>
-        <h3 className="font-semibold text-content-primary text-base leading-snug">{event.title}</h3>
-      </div>
+  // Parse date for the large date badge
+  const eventDate = new Date(event.start_datetime);
+  const dayNum = eventDate.toLocaleDateString("en-US", { day: "numeric" });
+  const monthShort = eventDate.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+  const timeStr = eventDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
-      {/* Meta */}
-      <div className="space-y-1.5 text-sm text-content-secondary">
-        <div className="flex items-center gap-2">
-          <Clock className="w-3.5 h-3.5 text-content-muted shrink-0" />
-          {formatDateShort(event.start_datetime)}
+  return (
+    <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] flex flex-col hover:bg-[var(--color-bg-card-hover)] transition-colors">
+
+      {/* Top strip: date badge + meta */}
+      <div className="flex items-stretch border-b border-[var(--color-border)]">
+        {/* Date badge */}
+        <div className="flex flex-col items-center justify-center px-4 py-3 border-r border-[var(--color-border)] min-w-[56px] bg-[var(--color-bg-deep)]">
+          <span className="text-[9px] font-semibold uppercase tracking-widest text-content-muted">{monthShort}</span>
+          <span className="font-heading font-black text-2xl leading-none text-content-heading">{dayNum}</span>
         </div>
-        {event.location && (
-          <div className="flex items-center gap-2">
-            <MapPin className="w-3.5 h-3.5 text-content-muted shrink-0" />
-            <span className="truncate">{event.location}</span>
+
+        {/* Title + badges */}
+        <div className="flex-1 px-4 py-3 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+            <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 ${EVENT_TYPE_COLORS[event.event_type]}`}>
+              {EVENT_TYPE_LABELS[event.event_type]}
+            </span>
+            {event.is_paid && (
+              <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 bg-yellow-900/30 text-yellow-400">
+                ${parseFloat(event.ticket_price ?? "0").toFixed(2)}
+              </span>
+            )}
+            {event.status === "draft" && (
+              <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 bg-amber-900/30 text-amber-400">
+                Draft
+              </span>
+            )}
+          </div>
+          <h3 className="font-heading font-bold text-content-heading text-[15px] leading-snug truncate">{event.title}</h3>
+        </div>
+
+        {/* Public link icon */}
+        {event.is_public && (
+          <div className="px-3 flex items-center">
+            <ExternalLink className="w-3.5 h-3.5 text-content-muted" />
           </div>
         )}
-        <div className="flex items-center gap-2">
-          <Users className="w-3.5 h-3.5 text-content-muted shrink-0" />
-          {event.attendee_count ?? 0} attending
-          {event.capacity && ` / ${event.capacity}`}
-        </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2 mt-auto pt-2 border-t border-[var(--color-border)]">
+      {/* Meta row */}
+      <div className="flex items-center gap-4 px-4 py-2.5 text-xs text-content-muted border-b border-[var(--color-border)]">
+        <span className="flex items-center gap-1.5">
+          <Clock className="w-3 h-3 shrink-0" />
+          {timeStr}
+        </span>
+        {event.location && (
+          <span className="flex items-center gap-1.5 truncate">
+            <MapPin className="w-3 h-3 shrink-0" />
+            <span className="truncate">{event.location}</span>
+          </span>
+        )}
+        <span className="flex items-center gap-1.5 ml-auto shrink-0">
+          <Users className="w-3 h-3 shrink-0" />
+          {event.attendee_count ?? 0}{event.capacity ? `/${event.capacity}` : ""}
+        </span>
+      </div>
+
+      {/* Action row — full-width buttons, easy tap targets */}
+      <div className="px-4 py-3">
         {isOfficer ? (
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex gap-2">
             {event.status === "draft" && event.workflow_instance_id && (
               <button
                 onClick={() => navigate(`/workflows?instance=${event.workflow_instance_id}`)}
-                className="flex-1 text-center px-4 py-2 text-sm font-medium bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                className="flex-1 py-2.5 text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors"
               >
-                Review & Approve
+                Review &amp; Approve
               </button>
             )}
             <button
               onClick={onOpen}
-              className="flex-1 text-center px-4 py-2 text-sm font-medium bg-surface-card-solid border border-[var(--color-border)] text-content-secondary rounded-lg hover:bg-white/5 hover:border-[var(--color-border-brand)] transition-colors"
+              className="flex-1 py-2.5 text-sm font-semibold border border-[var(--color-border)] text-content-secondary hover:border-brand-primary-main hover:text-brand-primary-dark transition-colors"
             >
               {event.status === "draft" ? "View Details" : "Manage"}
             </button>
@@ -995,35 +1014,35 @@ function EventCard({
         ) : (
           <>
             {myStatus ? (
-              <div className="flex items-center gap-2 flex-1">
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  myStatus === "going" ? "bg-green-900/30 text-green-400" :
-                  myStatus === "maybe" ? "bg-yellow-900/30 text-yellow-400" :
-                  "bg-gray-800/50 text-content-muted"
+              <div className="flex items-center gap-3">
+                <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-1 ${
+                  myStatus === "going" ? "bg-emerald-50 text-emerald-700" :
+                  myStatus === "maybe" ? "bg-amber-50 text-amber-700" :
+                  "bg-[var(--color-bg-surface)] text-content-muted"
                 }`}>
                   {RSVP_LABELS[myStatus]}
                 </span>
-                {myStatus !== "going" ? (
-                  <button onClick={() => onRsvp("going")} className="text-xs text-brand-primary-dark hover:underline">
+                {myStatus !== "going" && (
+                  <button onClick={() => onRsvp("going")} className="text-xs font-semibold text-brand-primary-dark hover:underline underline-offset-2">
                     Change to Going
                   </button>
-                ) : null}
-                <button onClick={onCancelRsvp} className="ml-auto text-xs text-red-500 hover:underline">
-                  Cancel
+                )}
+                <button onClick={onCancelRsvp} className="ml-auto text-xs font-semibold text-red-500 hover:underline underline-offset-2">
+                  Cancel RSVP
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 flex-1">
+              <div className="flex gap-2">
                 <button
                   onClick={() => onRsvp("going")}
-                  className="flex-1 px-3 py-2 text-sm font-medium bg-brand-primary-main text-white rounded-lg hover:bg-brand-primary-dark transition-colors"
+                  className="flex-1 py-2.5 text-sm font-semibold bg-[var(--color-text-heading)] text-[var(--color-bg-deep)] hover:opacity-90 transition-opacity"
                 >
-                  {event.is_paid ? `Buy Ticket` : "Going"}
+                  {event.is_paid ? `Buy Ticket — $${parseFloat(event.ticket_price ?? "0").toFixed(2)}` : "RSVP Going"}
                 </button>
                 {!event.is_paid && (
                   <button
                     onClick={() => onRsvp("maybe")}
-                    className="px-3 py-2 text-sm font-medium text-content-secondary bg-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                    className="px-4 py-2.5 text-sm font-semibold border border-[var(--color-border)] text-content-secondary hover:border-[var(--color-border-brand)] transition-colors"
                   >
                     Maybe
                   </button>

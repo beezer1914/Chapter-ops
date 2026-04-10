@@ -9,12 +9,14 @@ import {
   uploadReceipt,
   getExportUrl,
 } from "@/services/expenseService";
+import { fetchCommittees } from "@/services/committeeService";
 import type {
   Expense,
   ExpenseStatus,
   ExpenseCategory,
   ExpenseSummary,
   CreateExpenseRequest,
+  Committee,
 } from "@/types";
 import {
   Receipt,
@@ -250,7 +252,14 @@ export default function Expenses() {
                             <p className="text-sm font-semibold text-content-primary group-hover:text-brand-primary-dark">
                               {expense.title}
                             </p>
-                            <p className="text-xs text-content-muted">{expense.category_label}</p>
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              <p className="text-xs text-content-muted">{expense.category_label}</p>
+                              {expense.committee && (
+                                <span className="text-[10px] font-semibold uppercase tracking-widest px-1.5 py-0.5 bg-[var(--color-bg-card)] border border-[var(--color-border)] text-content-muted">
+                                  {expense.committee.name}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           {expense.receipt_url && (
                             <Paperclip className="w-3.5 h-3.5 text-content-muted shrink-0" />
@@ -304,9 +313,16 @@ export default function Expenses() {
                       {new Date(expense.expense_date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                     </span>
                   </div>
-                  {isOfficer && expense.submitted_by && (
-                    <p className="text-xs text-content-secondary mt-1">{expense.submitted_by.full_name}</p>
-                  )}
+                  <div className="flex items-center justify-between mt-1">
+                    {isOfficer && expense.submitted_by ? (
+                      <p className="text-xs text-content-secondary">{expense.submitted_by.full_name}</p>
+                    ) : <span />}
+                    {expense.committee && (
+                      <span className="text-[10px] font-semibold uppercase tracking-widest px-1.5 py-0.5 bg-[var(--color-bg-card)] border border-[var(--color-border)] text-content-muted">
+                        {expense.committee.name}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -368,10 +384,15 @@ function SubmitExpenseModal({
   const [form, setForm] = useState<CreateExpenseRequest>({
     title: "", amount: 0, category: "other",
     expense_date: new Date().toISOString().split("T")[0],
-    notes: "",
+    notes: "", committee_id: null,
   });
+  const [committees, setCommittees] = useState<Committee[]>([]);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchCommittees().then(setCommittees).catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -440,6 +461,22 @@ function SubmitExpenseModal({
               {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
+
+          {committees.length > 0 && (
+            <div>
+              <label className="block text-xs font-semibold text-content-secondary mb-1">Committee (optional)</label>
+              <select
+                value={form.committee_id ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, committee_id: e.target.value || null }))}
+                className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main"
+              >
+                <option value="">— No committee —</option>
+                {committees.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-content-secondary mb-1">Notes</label>

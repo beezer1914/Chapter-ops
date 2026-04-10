@@ -8,11 +8,14 @@ Handles the chapter creation flow:
 4. User becomes the chapter's first admin/president
 """
 
+from datetime import date
+
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import Organization, OrganizationMembership, Region, Chapter, ChapterMembership
+from app.models.chapter_period import ChapterPeriod
 
 onboarding_bp = Blueprint("onboarding", __name__, url_prefix="/api/onboarding")
 
@@ -203,6 +206,38 @@ def create_chapter():
         )
         db.session.add(chapter)
         db.session.flush()  # Get chapter.id
+
+        # Auto-create the first billing period based on chapter type
+        today = date.today()
+        year = today.year
+        month = today.month
+        if data["chapter_type"] == "undergraduate":
+            # Semester-based: Spring = Jan–May, Fall = Aug–Dec, Summer = Jun–Jul
+            if month <= 5:
+                period_name = f"Spring {year}"
+                p_start, p_end = date(year, 1, 1), date(year, 5, 31)
+            elif month <= 7:
+                period_name = f"Summer {year}"
+                p_start, p_end = date(year, 6, 1), date(year, 7, 31)
+            else:
+                period_name = f"Fall {year}"
+                p_start, p_end = date(year, 8, 1), date(year, 12, 31)
+            period_type = "semester"
+        else:
+            # Annual (graduate/alumni)
+            period_name = f"FY {year}"
+            p_start, p_end = date(year, 1, 1), date(year, 12, 31)
+            period_type = "annual"
+
+        first_period = ChapterPeriod(
+            chapter_id=chapter.id,
+            name=period_name,
+            period_type=period_type,
+            start_date=p_start,
+            end_date=p_end,
+            is_active=True,
+        )
+        db.session.add(first_period)
 
         # Make the creator the president of this chapter
         membership = ChapterMembership(

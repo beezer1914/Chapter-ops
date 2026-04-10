@@ -33,6 +33,19 @@ import {
   denyTransfer,
   type AvailableChapter,
 } from "@/services/transferService";
+import {
+  fetchPeriods,
+  createPeriod,
+  updatePeriod,
+  deletePeriod,
+  activatePeriod,
+} from "@/services/periodService";
+import {
+  fetchCommittees,
+  createCommittee,
+  updateCommittee,
+  deleteCommittee,
+} from "@/services/committeeService";
 import api from "@/lib/api";
 import type {
   MemberRole,
@@ -45,6 +58,9 @@ import type {
   BrandColors,
   Typography,
   ChapterTransferRequest,
+  ChapterPeriod,
+  PeriodType,
+  Committee,
 } from "@/types";
 import { DEFAULT_PERMISSIONS, MODULE_LABELS, ROLE_HIERARCHY as PERM_ROLE_HIERARCHY } from "@/lib/permissions";
 import { BRANDING_PRESETS, getPresetById } from "@/data/brandingPresets";
@@ -802,6 +818,9 @@ function ChapterConfigTab({
   const [settings, setSettings] = useState(config.settings ?? {});
   const [saving, setSaving] = useState(false);
 
+  // Treasurer+ can manage fee types (financial config is their domain)
+  const canEditFees = isAdmin || ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["treasurer"];
+
   async function handleSaveFeeTypes() {
     setSaving(true);
     setError(null);
@@ -868,7 +887,7 @@ function ChapterConfigTab({
                   type="text"
                   value={ft.id}
                   onChange={(e) => updateFeeType(i, { id: e.target.value.replace(/\s/g, "_").toLowerCase() })}
-                  disabled={!isAdmin}
+                  disabled={!canEditFees}
                   placeholder="id"
                   className="w-32 rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
                 />
@@ -876,7 +895,7 @@ function ChapterConfigTab({
                   type="text"
                   value={ft.label}
                   onChange={(e) => updateFeeType(i, { label: e.target.value })}
-                  disabled={!isAdmin}
+                  disabled={!canEditFees}
                   placeholder="Label"
                   className="flex-1 rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
                 />
@@ -888,11 +907,11 @@ function ChapterConfigTab({
                     min="0"
                     value={ft.default_amount}
                     onChange={(e) => updateFeeType(i, { default_amount: parseFloat(e.target.value) || 0 })}
-                    disabled={!isAdmin}
+                    disabled={!canEditFees}
                     className="w-24 rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
                   />
                 </div>
-                {isAdmin && (
+                {canEditFees && (
                   <button
                     onClick={() => removeFeeType(i)}
                     className="text-red-400 hover:text-red-300 text-sm"
@@ -904,7 +923,7 @@ function ChapterConfigTab({
             ))}
           </div>
         )}
-        {isAdmin && (
+        {canEditFees && (
           <div className="flex gap-3">
             <button
               onClick={addFeeType}
@@ -1020,6 +1039,16 @@ function ChapterConfigTab({
         )}
       </div>
 
+      {/* Billing Periods — visible to treasurer+ */}
+      {ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["treasurer"] && (
+        <PeriodsSection setError={setError} setSuccess={setSuccess} />
+      )}
+
+      {/* Committees — visible to treasurer+ */}
+      {ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["treasurer"] && (
+        <CommitteesSection setError={setError} setSuccess={setSuccess} />
+      )}
+
       {/* Transfer Approvals — visible to presidents */}
       {ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["president"] && (
         <TransferApprovalsSection setError={setError} setSuccess={setSuccess} />
@@ -1028,6 +1057,550 @@ function ChapterConfigTab({
       {/* Danger Zone — close chapter (presidents only) */}
       {ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["president"] && (
         <CloseChapterSection setError={setError} setSuccess={setSuccess} />
+      )}
+    </div>
+  );
+}
+
+// ── Billing Periods Section ───────────────────────────────────────────────────
+
+const PERIOD_TYPE_LABELS: Record<PeriodType, string> = {
+  semester: "Semester",
+  annual: "Annual",
+  custom: "Custom",
+};
+
+function PeriodsSection({
+  setError,
+  setSuccess,
+}: {
+  setError: (e: string | null) => void;
+  setSuccess: (s: string | null) => void;
+}) {
+  const [periods, setPeriods] = useState<ChapterPeriod[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [activateTarget, setActivateTarget] = useState<ChapterPeriod | null>(null);
+  const [activateRollover, setActivateRollover] = useState(false);
+  const [activating, setActivating] = useState(false);
+
+  const emptyForm = { name: "", period_type: "semester" as PeriodType, start_date: "", end_date: "", notes: "" };
+  const [form, setForm] = useState(emptyForm);
+
+  useEffect(() => {
+    fetchPeriods()
+      .then(setPeriods)
+      .catch(() => setPeriods([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  function openCreate() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  }
+
+  function openEdit(p: ChapterPeriod) {
+    setEditingId(p.id);
+    setForm({ name: p.name, period_type: p.period_type, start_date: p.start_date, end_date: p.end_date, notes: p.notes ?? "" });
+    setShowForm(true);
+  }
+
+  function cancelForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyForm);
+  }
+
+  async function handleSubmit() {
+    if (!form.name.trim() || !form.start_date || !form.end_date) {
+      setError("Name, start date, and end date are required.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      if (editingId) {
+        const updated = await updatePeriod(editingId, { name: form.name.trim(), period_type: form.period_type, start_date: form.start_date, end_date: form.end_date, notes: form.notes.trim() || undefined });
+        setPeriods((prev) => prev.map((p) => (p.id === editingId ? updated : p)));
+        setSuccess("Period updated.");
+      } else {
+        const created = await createPeriod({ ...form, name: form.name.trim() });
+        setPeriods((prev) => [created, ...prev]);
+        setSuccess("Period created.");
+      }
+      cancelForm();
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? "Failed to save period.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function openActivateModal(p: ChapterPeriod) {
+    setActivateTarget(p);
+    setActivateRollover(false);
+  }
+
+  async function handleConfirmActivate() {
+    if (!activateTarget) return;
+    setActivating(true);
+    try {
+      const { period, rolloverCount } = await activatePeriod(activateTarget.id, { rolloverUnpaid: activateRollover });
+      setPeriods((prev) => prev.map((p) => ({ ...p, is_active: p.id === period.id })));
+      const rolloverMsg = (activateRollover && rolloverCount != null && rolloverCount > 0)
+        ? ` ${rolloverCount} unpaid balance${rolloverCount === 1 ? "" : "s"} carried forward.`
+        : "";
+      setSuccess(`"${period.name}" is now the active period.${rolloverMsg}`);
+      setActivateTarget(null);
+    } catch {
+      setError("Failed to activate period.");
+    } finally {
+      setActivating(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this period? This cannot be undone.")) return;
+    try {
+      await deletePeriod(id);
+      setPeriods((prev) => prev.filter((p) => p.id !== id));
+      setSuccess("Period deleted.");
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? "Failed to delete period.");
+    }
+  }
+
+  return (
+    <div className="bg-surface-card-solid rounded-lg shadow p-6">
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-content-primary mb-1">Billing Periods</h3>
+          <p className="text-sm text-content-secondary">
+            Track dues and activity by semester, fiscal year, or custom period. One period is active at a time.
+          </p>
+        </div>
+        {!showForm && (
+          <button
+            onClick={openCreate}
+            className="shrink-0 ml-4 px-3 py-1.5 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary-dark"
+          >
+            + New Period
+          </button>
+        )}
+      </div>
+
+      {/* Create / Edit form */}
+      {showForm && (
+        <div className="mb-5 p-4 border border-[var(--color-border-brand)] rounded-lg bg-[var(--color-bg-surface)] space-y-3">
+          <p className="text-xs font-semibold text-content-secondary uppercase tracking-wider">
+            {editingId ? "Edit Period" : "New Period"}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              type="text"
+              placeholder="e.g. Spring 2026"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              className="col-span-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            />
+            <div>
+              <label className="block text-xs text-content-muted mb-1">Type</label>
+              <select
+                value={form.period_type}
+                onChange={(e) => setForm((f) => ({ ...f, period_type: e.target.value as PeriodType }))}
+                className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              >
+                <option value="semester">Semester</option>
+                <option value="annual">Annual</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-content-muted mb-1">Start Date</label>
+              <input
+                type="date"
+                value={form.start_date}
+                onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-content-muted mb-1">End Date</label>
+              <input
+                type="date"
+                value={form.end_date}
+                onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))}
+                className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+            </div>
+            <input
+              type="text"
+              placeholder="Notes (optional)"
+              value={form.notes}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              className="col-span-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary-dark disabled:opacity-50"
+            >
+              {saving ? "Saving..." : editingId ? "Save Changes" : "Create Period"}
+            </button>
+            <button onClick={cancelForm} className="px-4 py-2 text-sm font-medium text-content-secondary hover:text-content-primary">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Periods list */}
+      {loading ? (
+        <p className="text-sm text-content-muted">Loading periods…</p>
+      ) : periods.length === 0 ? (
+        <p className="text-sm text-content-muted">No periods yet. Create your first billing period above.</p>
+      ) : (
+        <div className="divide-y divide-[var(--color-border)]">
+          {periods.map((p) => (
+            <div key={p.id} className="flex items-center justify-between py-3 gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                {p.is_active && (
+                  <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Active
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-content-primary truncate">{p.name}</p>
+                  <p className="text-xs text-content-muted">
+                    {PERIOD_TYPE_LABELS[p.period_type]} · {new Date(p.start_date + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} – {new Date(p.end_date + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {!p.is_active && (
+                  <button
+                    onClick={() => openActivateModal(p)}
+                    className="text-xs text-brand-primary-dark font-medium hover:underline"
+                  >
+                    Activate
+                  </button>
+                )}
+                <button
+                  onClick={() => openEdit(p)}
+                  className="text-xs text-content-secondary hover:text-content-primary font-medium"
+                >
+                  Edit
+                </button>
+                {!p.is_active && (
+                  <button
+                    onClick={() => handleDelete(p.id)}
+                    className="text-xs text-red-500 hover:text-red-700 font-medium"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Activate period modal ── */}
+      {activateTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="w-full max-w-sm bg-[var(--color-bg-card-solid)] border border-[var(--color-border)] shadow-xl">
+            <div className="border-t-2 border-[var(--color-text-heading)] border-b border-[var(--color-border)] mt-[2px] px-5 py-3">
+              <h3 className="font-heading font-black text-base text-content-heading tracking-tight">
+                Activate Period
+              </h3>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <p className="text-sm text-content-primary">
+                Set <span className="font-semibold">&ldquo;{activateTarget.name}&rdquo;</span> as the active period?
+                Dues will be seeded for all current members.
+              </p>
+
+              {/* Only show rollover option if there's a currently active period */}
+              {periods.some((p) => p.is_active) && (
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={activateRollover}
+                      onChange={(e) => setActivateRollover(e.target.checked)}
+                      className="w-4 h-4 accent-[var(--color-text-heading)]"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-content-primary">
+                      Carry forward unpaid balances
+                    </p>
+                    <p className="text-xs text-content-muted mt-0.5">
+                      Members with outstanding dues from{" "}
+                      <span className="font-medium">
+                        {periods.find((p) => p.is_active)?.name ?? "the current period"}
+                      </span>{" "}
+                      will have those amounts added to their new period dues.
+                    </p>
+                  </div>
+                </label>
+              )}
+            </div>
+            <div className="px-5 pb-5 flex gap-2 justify-end">
+              <button
+                onClick={() => setActivateTarget(null)}
+                disabled={activating}
+                className="px-4 py-2 text-sm font-medium text-content-secondary hover:text-content-primary disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmActivate}
+                disabled={activating}
+                className="px-4 py-2 text-sm font-medium bg-[var(--color-text-heading)] text-[var(--color-bg-deep)] hover:opacity-90 disabled:opacity-50"
+              >
+                {activating ? "Activating…" : "Activate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Committees Section ────────────────────────────────────────────────────────
+
+function CommitteesSection({
+  setError,
+  setSuccess,
+}: {
+  setError: (e: string | null) => void;
+  setSuccess: (s: string | null) => void;
+}) {
+  const [committees, setCommittees] = useState<Committee[]>([]);
+  const [members, setMembers] = useState<{ id: string; full_name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const emptyForm = { name: "", description: "", budget_amount: "", chair_user_id: "" };
+  const [form, setForm] = useState(emptyForm);
+
+  useEffect(() => {
+    Promise.all([
+      fetchCommittees(true),
+      api.get<{ members: { id: string; full_name: string }[] }>("/members?per_page=200"),
+    ])
+      .then(([comms, membRes]) => {
+        setCommittees(comms);
+        setMembers(membRes.data.members ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  function openCreate() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  }
+
+  function openEdit(c: Committee) {
+    setEditingId(c.id);
+    setForm({
+      name: c.name,
+      description: c.description ?? "",
+      budget_amount: parseFloat(c.budget_amount).toFixed(2),
+      chair_user_id: c.chair_user_id ?? "",
+    });
+    setShowForm(true);
+  }
+
+  function cancelForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyForm);
+  }
+
+  async function handleSubmit() {
+    const name = form.name.trim();
+    if (!name) { setError("Committee name is required."); return; }
+    setSaving(true);
+    try {
+      const payload = {
+        name,
+        description: form.description.trim() || undefined,
+        budget_amount: form.budget_amount ? parseFloat(form.budget_amount) : 0,
+        chair_user_id: form.chair_user_id || null,
+      };
+      if (editingId) {
+        const updated = await updateCommittee(editingId, payload);
+        setCommittees((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+        setSuccess(`"${updated.name}" updated.`);
+      } else {
+        const created = await createCommittee(payload);
+        setCommittees((prev) => [...prev, created]);
+        setSuccess(`"${created.name}" committee created.`);
+      }
+      cancelForm();
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? "Failed to save committee.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleArchive(c: Committee) {
+    try {
+      const updated = await updateCommittee(c.id, { is_active: !c.is_active });
+      setCommittees((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      setSuccess(`"${updated.name}" ${updated.is_active ? "restored" : "archived"}.`);
+    } catch {
+      setError("Failed to update committee.");
+    }
+  }
+
+  async function handleDelete(c: Committee) {
+    if (!confirm(`Delete "${c.name}"? This cannot be undone.`)) return;
+    try {
+      await deleteCommittee(c.id);
+      setCommittees((prev) => prev.filter((x) => x.id !== c.id));
+      setSuccess(`"${c.name}" deleted.`);
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { error?: string } } }).response?.data?.error ?? "Failed to delete committee.");
+    }
+  }
+
+  const active = committees.filter((c) => c.is_active);
+  const archived = committees.filter((c) => !c.is_active);
+
+  return (
+    <div className="bg-surface-card-solid border border-[var(--color-border)] p-6 mt-6">
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-content-primary mb-1">Committees</h3>
+          <p className="text-sm text-content-secondary">
+            Assign chairs and set budgets. Tag expenses to committees for spending oversight.
+          </p>
+        </div>
+        {!showForm && (
+          <button
+            onClick={openCreate}
+            className="shrink-0 ml-4 px-3 py-1.5 text-sm font-medium bg-[var(--color-text-heading)] text-[var(--color-bg-deep)] hover:opacity-90"
+          >
+            + New Committee
+          </button>
+        )}
+      </div>
+
+      {/* Create / Edit form */}
+      {showForm && (
+        <div className="mb-5 p-4 border border-[var(--color-border-brand)] bg-[var(--color-bg-card)] space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-content-muted">
+            {editingId ? "Edit Committee" : "New Committee"}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              type="text"
+              placeholder="Committee name (e.g. Social, Scholarship)"
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              className="col-span-full"
+            />
+            <input
+              type="text"
+              placeholder="Description (optional)"
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              className="col-span-full"
+            />
+            <div>
+              <label className="block text-xs text-content-muted mb-1">Budget ($)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={form.budget_amount}
+                onChange={(e) => setForm((f) => ({ ...f, budget_amount: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-content-muted mb-1">Chair (optional)</label>
+              <select
+                value={form.chair_user_id}
+                onChange={(e) => setForm((f) => ({ ...f, chair_user_id: e.target.value }))}
+              >
+                <option value="">— No chair assigned —</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>{m.full_name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium bg-[var(--color-text-heading)] text-[var(--color-bg-deep)] hover:opacity-90 disabled:opacity-50"
+            >
+              {saving ? "Saving…" : editingId ? "Save Changes" : "Create Committee"}
+            </button>
+            <button onClick={cancelForm} className="px-4 py-2 text-sm font-medium text-content-secondary hover:text-content-primary">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-sm text-content-muted">Loading committees…</p>
+      ) : committees.length === 0 ? (
+        <p className="text-sm text-content-muted">No committees yet. Create your first one above.</p>
+      ) : (
+        <div className="divide-y divide-[var(--color-border)]">
+          {active.map((c) => (
+            <div key={c.id} className="flex items-center justify-between py-3 gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-content-primary">{c.name}</p>
+                  {c.chair && (
+                    <span className="text-[10px] font-semibold uppercase tracking-widest px-1.5 py-0.5 bg-[var(--color-bg-card)] border border-[var(--color-border)] text-content-muted">
+                      Chair: {c.chair.full_name}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-content-muted mt-0.5">
+                  Budget: ${parseFloat(c.budget_amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  {c.description && ` · ${c.description}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={() => openEdit(c)} className="text-xs text-content-secondary hover:text-content-primary font-medium">Edit</button>
+                <button onClick={() => handleArchive(c)} className="text-xs text-amber-600 hover:text-amber-800 font-medium">Archive</button>
+                <button onClick={() => handleDelete(c)} className="text-xs text-red-500 hover:text-red-700 font-medium">Delete</button>
+              </div>
+            </div>
+          ))}
+          {archived.length > 0 && (
+            <div className="pt-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-content-muted mb-2">Archived</p>
+              {archived.map((c) => (
+                <div key={c.id} className="flex items-center justify-between py-2 gap-4 opacity-50">
+                  <p className="text-sm text-content-secondary">{c.name}</p>
+                  <button onClick={() => handleArchive(c)} className="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Restore</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -1423,7 +1996,7 @@ function BrandingTab({
     chapterConfig.branding?.enabled ?? false
   );
   const [colorScheme, setColorScheme] = useState<ColorScheme>(
-    orgConfig.branding?.color_scheme ?? "dark"
+    orgConfig.branding?.color_scheme ?? "light"
   );
   const [saving, setSaving] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>("");
@@ -1461,7 +2034,7 @@ function BrandingTab({
     if (scope === "chapter") {
       setChapterOverrideEnabled(chapterConfig.branding?.enabled ?? false);
     } else {
-      setColorScheme(orgConfig.branding?.color_scheme ?? "dark");
+      setColorScheme(orgConfig.branding?.color_scheme ?? "light");
     }
   }, [scope, orgConfig.branding, chapterConfig.branding, organization?.logo_url, chapter?.logo_url]);
 
@@ -1681,7 +2254,7 @@ function BrandingTab({
                 </div>
               </div>
               <p className="text-sm font-semibold text-content-primary">Dark</p>
-              <p className="text-xs text-content-muted mt-0.5">Luxury dark navy — default</p>
+              <p className="text-xs text-content-muted mt-0.5">Luxury dark navy</p>
               {colorScheme === "dark" && (
                 <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-brand-primary-main flex items-center justify-center">
                   <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -1711,7 +2284,7 @@ function BrandingTab({
                 </div>
               </div>
               <p className="text-sm font-semibold text-content-primary">Light</p>
-              <p className="text-xs text-content-muted mt-0.5">Clean white surface</p>
+              <p className="text-xs text-content-muted mt-0.5">Editorial cream — default</p>
               {colorScheme === "light" && (
                 <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-brand-primary-main flex items-center justify-center">
                   <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>

@@ -84,7 +84,7 @@ Context: g.current_chapter set via middleware on each request
 
 ---
 
-## Data Model (30 Models)
+## Data Model (29 Models)
 
 ```
 User ─────────────────────────────────────────────────────────────────┐
@@ -100,9 +100,7 @@ User ─────────────────────────
         │                        ├── PaymentPlan                      ││
         │                        ├── Donation                         ││
         │                        ├── Invoice                          ││
-        │                        ├── Expense ──► Committee (optional)   ││
-        │                        ├── Committee                         ││
-        │                        │     (chair_user_id FK, budget)      ││
+        │                        ├── Expense                          ││
         │                        ├── Event                            ││
         │                        │     └── EventAttendance            ││
         │                        ├── Announcement                     ││
@@ -169,20 +167,12 @@ dues_service.py — Single source of truth for all dues mutations
 ──────────────────────────────────────────────────────────────
   seed_period_dues(chapter, period)
     → Creates dues rows for all active members × all fee types
-    → Idempotent: skips existing rows, repairs $0-owed "unpaid" rows in-place
-    → $0-owed fee types seed as status="paid" (nothing owed = satisfied)
+    → Idempotent (skips existing rows)
     → Called: period CREATE (if active), period ACTIVATE
 
   seed_member_dues(chapter, user_id)
     → Seeds a new member for the current active period only
     → Called: member registration via invite
-    → Also auto-called by GET /api/periods/<id>/my-dues on first access
-
-  rollover_unpaid_dues(chapter, prev_period, new_period) → int
-    → Carries forward unpaid/partial balances from a completed period
-    → Increases amount_owed on matching new-period rows; creates if missing
-    → Opt-in: activated via { rollover_unpaid: true } on period activate
-    → DOES NOT COMMIT — caller is responsible
 
   apply_payment(chapter, user_id, fee_type_id, amount) → bool
     → Applies payment amount to matching dues rows
@@ -192,25 +182,16 @@ dues_service.py — Single source of truth for all dues mutations
 
   recompute_financial_status(chapter, user_id)
     → Derives financial_status from dues rows:
-        all rows paid (or amount_owed=0) → "financial"
-        any unpaid row with amount_owed > 0 → "not_financial"
+        all paid → "financial"
+        any unpaid → "not_financial"
     → No-op for neophyte/exempt members
     → DOES NOT COMMIT — caller is responsible
-    → Called by: update_dues_record, get_my_dues (every load), apply_payment
 
 Financial Status Lifecycle:
   not_financial ──[payment applied, all dues paid]──► financial
   financial ──[new period seeded with unpaid dues]──► not_financial
   neophyte ──[exempt from dues, never changes via dues system]
   exempt   ──[manually set, never changes via dues system]
-
-Member-safe dues endpoint:
-  GET /api/periods/<id>/my-dues  (@role_required("member"))
-    → Returns current user's dues rows only
-    → Auto-seeds if no rows exist (handles late joiners)
-    → Always recomputes financial_status before responding
-    → Returns { dues: [...], financial_status: "financial"|"not_financial"|... }
-    → MyDues.tsx reads financial_status from this response, not auth store cache
 ```
 
 ---
@@ -502,9 +483,7 @@ Browser ──► React App ──► Axios (/api/*) ──► Flask
 │  ┌─────────────────────────────────────────────────────┐  │
 │  │              Axios Client (lib/api.ts)               │  │
 │  │  baseURL: /api  │  withCredentials: true             │  │
-│  │  Request: inject X-CSRFToken on all non-GET requests │  │
-│  │  Response: 401 → redirect to /login                  │  │
-│  │            400 CSRF error → refresh token + retry 1x │  │
+│  │  401 → redirect to /login                            │  │
 │  └─────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -513,35 +492,34 @@ Browser ──► React App ──► Axios (/api/*) ──► Flask
 
 ## API Surface (22 Blueprints, 100+ Endpoints)
 
-| Blueprint        | Prefix                  | Key Operations                                            |
-|------------------|--------------------------|----------------------------------------------------------|
-| auth             | /api/auth                | login, register, logout, profile, switch, delete acct    |
-| onboarding       | /api/onboarding          | org/region/chapter setup                                 |
-| members          | /api/members             | list, update role/status, suspend/unsuspend, delete      |
-| invites          | /api/invites             | create/delete invite codes                               |
-| payments         | /api/payments            | list, create, checkout, summary                          |
-| payment_plans    | /api/payment-plans       | CRUD recurring plans                                     |
-| donations        | /api/donations           | list, create, checkout                                   |
-| invoices         | /api/invoices            | member + regional billing, bulk create                   |
-| expenses         | /api/expenses            | submit, approve/deny, mark paid, committee tag           |
-| events           | /api/events              | CRUD, RSVP, attendees, public, tickets                   |
-| comms            | /api/comms               | announcements, email blast                               |
-| notifications    | /api/notifications       | list, mark read, unread count                            |
-| documents        | /api/documents           | file vault CRUD, download                               |
-| kb               | /api/kb                  | knowledge articles CRUD                                  |
-| regions          | /api/regions             | CRUD, chapters, members, directory                       |
-| transfers        | /api/transfers           | request, approve/deny, list                              |
-| workflows        | /api/workflows           | templates, steps, instances, tasks                       |
-| stripe_connect   | /api/stripe/connect      | OAuth, account info, disconnect                          |
-| config           | /api/config              | org/chapter config, fee types (treasurer+), branding/permissions (president+) |
-| files            | /api/files               | profile pics, logos, favicons                            |
-| dashboard        | /api/dashboard           | inbox action queue (prioritized CTAs)                    |
-| **periods**      | **/api/periods**         | **CRUD periods, activate + rollover, my-dues, dues edit**|
-| **analytics**    | **/api/analytics**       | **chapter snapshot: dues, members, payments, events, budget** |
-| **ihq**          | **/api/ihq**             | **dashboard, broadcast, chapter suspend/unsuspend**      |
-| **agent**        | **/api/agent**           | **status, manual trigger, approval confirmation**        |
-| **committees**   | **/api/committees**      | **CRUD committees, chair assignment, budget stats**      |
-| webhooks         | /webhook                 | Stripe event handling                                    |
+| Blueprint        | Prefix                  | Key Operations                                        |
+|------------------|--------------------------|-------------------------------------------------------|
+| auth             | /api/auth                | login, register, logout, profile, switch, delete acct |
+| onboarding       | /api/onboarding          | org/region/chapter setup                              |
+| members          | /api/members             | list, update role/status, suspend/unsuspend, delete   |
+| invites          | /api/invites             | create/delete invite codes                            |
+| payments         | /api/payments            | list, create, checkout, summary                       |
+| payment_plans    | /api/payment-plans       | CRUD recurring plans                                  |
+| donations        | /api/donations           | list, create, checkout                                |
+| invoices         | /api/invoices            | member + regional billing, bulk create                |
+| expenses         | /api/expenses            | submit, approve/deny, mark paid                       |
+| events           | /api/events              | CRUD, RSVP, attendees, public, tickets                |
+| comms            | /api/comms               | announcements, email blast                            |
+| notifications    | /api/notifications       | list, mark read, unread count                         |
+| documents        | /api/documents           | file vault CRUD, download                             |
+| kb               | /api/kb                  | knowledge articles CRUD                               |
+| regions          | /api/regions             | CRUD, chapters, members, directory                    |
+| transfers        | /api/transfers           | request, approve/deny, list                           |
+| workflows        | /api/workflows           | templates, steps, instances, tasks                    |
+| stripe_connect   | /api/stripe/connect      | OAuth, account info, disconnect                       |
+| config           | /api/config              | org/chapter config, chapter deletion request/cancel   |
+| files            | /api/files               | profile pics, logos, favicons                         |
+| dashboard        | /api/dashboard           | inbox action queue (prioritized CTAs)                 |
+| **periods**      | **/api/periods**         | **CRUD billing periods, activate, dues list/edit**    |
+| **analytics**    | **/api/analytics**       | **chapter snapshot: dues, members, payments, events** |
+| **ihq**          | **/api/ihq**             | **dashboard, broadcast, chapter suspend/unsuspend**   |
+| **agent**        | **/api/agent**           | **status, manual trigger, approval confirmation**     |
+| webhooks         | /webhook                 | Stripe event handling                                 |
 
 ---
 
@@ -606,10 +584,6 @@ Browser ──► React App ──► Axios (/api/*) ──► Flask
 | e1b3c5d7f9a2     | Suspension fields (chapter.suspended, membership.suspended + reasons) |
 | f1a2b3c4d5e6     | ChapterPeriod model (billing periods with period_type enum) |
 | a2b4c6d8e1f3     | ChapterPeriodDues model (per-member × per-fee-type dues rows) |
-| b3c5d7e9f1a2     | Committee model (chair_user_id FK, budget_amount, is_active) |
-| c4d6e8f0a2b3     | expense.committee_id FK with SET NULL                        |
-| d5e7f9a1b3c2     | Data fix: $0-owed dues rows incorrectly set to "unpaid" → "paid" |
-| e6f8a0b2c4d5     | Data fix: recompute financial_status for members now fully paid |
 
 ---
 
@@ -641,4 +615,4 @@ Mobile-specific patterns:
 
 ---
 
-*Updated 2026-04-08 · ChapterOps v1.4*
+*Updated 2026-04-08 · ChapterOps v1.3*

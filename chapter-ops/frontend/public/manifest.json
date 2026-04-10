@@ -34,9 +34,9 @@
       "description": "View upcoming events"
     },
     {
-      "name": "Payments",
-      "url": "/payments",
-      "description": "View your payments"
+      "name": "My Dues",
+      "url": "/dues",
+      "description": "View your dues balance"
     }
   ]
 }

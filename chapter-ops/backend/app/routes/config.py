@@ -245,20 +245,27 @@ def update_org_config():
 @config_bp.route("/chapter", methods=["PUT"])
 @login_required
 @chapter_required
-@role_required("president")
+@role_required("treasurer")
 def update_chapter_config():
-    """Update chapter-level configuration (president+ or org admin)."""
+    """
+    Update chapter-level configuration.
+
+    fee_types and settings: treasurer+
+    permissions and branding: president+ (or org admin)
+    """
     from flask_login import current_user
     data = request.get_json()
     if not data:
         return jsonify({"error": "Request body required."}), 400
 
     chapter = g.current_chapter
+    is_org_admin = _is_org_admin(current_user, chapter.organization_id)
+    membership = current_user.get_membership(chapter.id)
+    is_president_plus = is_org_admin or (membership and membership.has_role("president"))
 
-    if not _is_org_admin(current_user, chapter.organization_id):
-        membership = current_user.get_membership(chapter.id)
-        if not membership or not membership.has_role("president"):
-            return jsonify({"error": "Insufficient permissions."}), 403
+    # Permissions and branding require president+
+    if ("permissions" in data or "branding" in data) and not is_president_plus:
+        return jsonify({"error": "Only presidents can change access permissions or branding."}), 403
 
     current_config = dict(chapter.config or {})
 

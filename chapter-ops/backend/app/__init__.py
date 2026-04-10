@@ -114,6 +114,10 @@ def create_app(config_class=None):
     from app.routes.lineage import lineage_bp
     from app.routes.agent import agent_bp
     from app.routes.ihq import ihq_bp
+    from app.routes.dashboard import dashboard_bp
+    from app.routes.periods import periods_bp
+    from app.routes.analytics import analytics_bp
+    from app.routes.committees import committees_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(onboarding_bp)
@@ -140,33 +144,19 @@ def create_app(config_class=None):
     app.register_blueprint(lineage_bp)
     app.register_blueprint(agent_bp)
     app.register_blueprint(ihq_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(periods_bp)
+    app.register_blueprint(analytics_bp)
+    app.register_blueprint(committees_bp)
 
-    # Exempt API routes from CSRF (using session cookies + SameSite instead)
-    csrf.exempt(auth_bp)
-    csrf.exempt(onboarding_bp)
-    csrf.exempt(invites_bp)
-    csrf.exempt(members_bp)
-    csrf.exempt(payments_bp)
-    csrf.exempt(payment_plans_bp)
-    csrf.exempt(donations_bp)
-    csrf.exempt(config_bp)
-    csrf.exempt(regions_bp)
-    csrf.exempt(workflows_bp)
-    csrf.exempt(notifications_bp)
-    csrf.exempt(transfers_bp)
-    csrf.exempt(events_bp)
-    csrf.exempt(comms_bp)
-    csrf.exempt(documents_bp)
-    csrf.exempt(kb_bp)
-    csrf.exempt(invoices_bp)
-    csrf.exempt(intake_bp)
-    csrf.exempt(expenses_bp)
-    csrf.exempt(lineage_bp)
-    csrf.exempt(stripe_connect_bp)
+    # Stripe webhooks come from Stripe's servers — exempt the entire blueprint.
     csrf.exempt(webhooks_bp)
-    csrf.exempt(files_bp)
-    csrf.exempt(agent_bp)
-    csrf.exempt(ihq_bp)
+
+    # Logout: CSRF on logout provides negligible security benefit (force-logout
+    # is not a meaningful attack) and causes UX breakage when the session token
+    # is missing (e.g. after a Flask restart). Exempt the specific view function.
+    from app.routes.auth import logout
+    csrf.exempt(logout)
 
     # ── Start ops agent scheduler ──────────────────────────────────────
     if not app.testing:

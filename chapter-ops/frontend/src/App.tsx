@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
+import { refreshCsrfToken } from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -28,11 +29,20 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import StripeCallback from "@/pages/StripeCallback";
 import IHQDashboard from "@/pages/IHQDashboard";
+import MyDues from "@/pages/MyDues";
+import TreasurerDues from "@/pages/TreasurerDues";
+import Analytics from "@/pages/Analytics";
 
 export default function App() {
   const { initializeAuth, isLoading } = useAuthStore();
 
   useEffect(() => {
+    // Fetch CSRF token first, then initialize auth state.
+    // The token is stored in api.ts and injected on all non-GET requests.
+    refreshCsrfToken().catch(() => {
+      // Non-fatal — if the backend is unreachable the rest of the app will
+      // surface the error naturally.
+    });
     initializeAuth();
   }, [initializeAuth]);
 
@@ -87,6 +97,30 @@ export default function App() {
           element={
             <ProtectedRoute module="invites">
               <Invites />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dues"
+          element={
+            <ProtectedRoute>
+              <MyDues />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chapter-dues"
+          element={
+            <ProtectedRoute module="payments">
+              <TreasurerDues />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <Analytics />
             </ProtectedRoute>
           }
         />

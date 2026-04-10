@@ -116,14 +116,24 @@ def _create_payment_from_session(session: dict, metadata: dict, payment_type: st
     db.session.add(payment)
     db.session.flush()
 
-    # Auto-promote member to financial if currently not_financial
+    # Update financial status via dues system, or fall back to legacy auto-promote
     if user_id and chapter_id:
         membership = ChapterMembership.query.filter_by(
             user_id=user_id, chapter_id=chapter_id, active=True
         ).first()
-        if membership and membership.financial_status == "not_financial":
-            membership.financial_status = "financial"
-            logger.info(f"Member {user_id} promoted to financial after payment {payment.id}")
+        if membership:
+            from app.models import Chapter
+            from app.services.dues_service import apply_payment, recompute_financial_status
+            chapter = db.session.get(Chapter, chapter_id)
+            if chapter:
+                fee_type_id = metadata.get("fee_type_id") or None
+                dues_updated = apply_payment(chapter, user_id, fee_type_id, payment.amount)
+                if dues_updated:
+                    recompute_financial_status(chapter, user_id)
+                    logger.info(f"Member {user_id} financial_status recomputed after Stripe payment {payment.id}")
+                elif membership.financial_status == "not_financial":
+                    membership.financial_status = "financial"
+                    logger.info(f"Member {user_id} promoted to financial (legacy) after payment {payment.id}")
 
     # If installment: check if plan is now complete
     if plan_id:

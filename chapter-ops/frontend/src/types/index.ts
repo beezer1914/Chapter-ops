@@ -594,6 +594,127 @@ export interface PaymentSummary {
 }
 
 // ============================================================================
+// Chapter period types
+// ============================================================================
+
+export type PeriodType = "semester" | "annual" | "custom";
+
+export interface ChapterPeriod {
+  id: string;
+  chapter_id: string;
+  name: string;
+  period_type: PeriodType;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  notes: string | null;
+  created_at: string;
+}
+
+// ============================================================================
+// Dues types
+// ============================================================================
+
+export type DuesStatus = "unpaid" | "partial" | "paid" | "exempt";
+
+export interface ChapterPeriodDues {
+  id: string;
+  chapter_id: string;
+  period_id: string;
+  user_id: string;
+  fee_type_id: string;
+  fee_type_label: string;
+  amount_owed: string;
+  amount_paid: string;
+  amount_remaining: string;
+  status: DuesStatus;
+  notes: string | null;
+  created_at: string | null;
+  user?: {
+    id: string;
+    full_name: string;
+    email: string;
+  };
+}
+
+// ============================================================================
+// Analytics types
+// ============================================================================
+
+export interface DuesSummary {
+  total_owed: string;
+  total_paid: string;
+  total_remaining: string;
+  collection_rate: number;
+  member_count: number;
+  fully_paid_members: number;
+  by_fee_type: Array<{
+    fee_type_id: string;
+    label: string;
+    owed: string;
+    paid: string;
+    remaining: string;
+    collection_rate: number;
+    member_count: number;
+  }>;
+}
+
+export interface MemberStatusDistribution {
+  financial: number;
+  not_financial: number;
+  neophyte: number;
+  exempt: number;
+  total: number;
+}
+
+export interface MonthlyPayment {
+  month: string;   // "YYYY-MM"
+  total: string;
+  count: number;
+}
+
+export interface EventStats {
+  total_events: number;
+  avg_attendance_rate: number | null;
+  top_events: Array<{
+    id: string;
+    title: string;
+    date: string;
+    attendee_count: number;
+    capacity: number | null;
+  }>;
+}
+
+export interface ChapterAnalytics {
+  period: ChapterPeriod | null;
+  prev_period: ChapterPeriod | null;
+  all_periods: ChapterPeriod[];
+  dues_summary: DuesSummary | null;
+  prev_dues_summary: DuesSummary | null;
+  member_status: MemberStatusDistribution;
+  monthly_payments: MonthlyPayment[];
+  event_stats: EventStats;
+  budget_summary: CommitteeBudgetStat[];
+}
+
+// ============================================================================
+// Dashboard inbox types
+// ============================================================================
+
+export type ActionItemPriority = "critical" | "warning" | "info";
+
+export interface ActionItem {
+  id: string;
+  type: string;
+  priority: ActionItemPriority;
+  title: string;
+  description: string;
+  cta_label: string;
+  cta_url: string;
+  metadata: Record<string, unknown>;
+}
+
+// ============================================================================
 // Donation types
 // ============================================================================
 
@@ -1161,6 +1282,30 @@ export type ExpenseCategory =
 
 export type ExpenseStatus = "pending" | "approved" | "paid" | "denied";
 
+export interface Committee {
+  id: string;
+  chapter_id: string;
+  name: string;
+  description: string | null;
+  budget_amount: string;
+  chair_user_id: string | null;
+  chair: { id: string; full_name: string } | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface CommitteeBudgetStat {
+  committee_id: string;
+  name: string;
+  chair: { id: string; full_name: string } | null;
+  budget: string;
+  spent: string;
+  pending: string;
+  remaining: string;
+  over_budget: boolean;
+  utilization_rate: number;
+}
+
 export interface Expense {
   id: string;
   chapter_id: string;
@@ -1182,6 +1327,8 @@ export interface Expense {
   receipt_name: string | null;
   receipt_size: number | null;
   receipt_mime: string | null;
+  committee_id: string | null;
+  committee: { id: string; name: string } | null;
   created_at: string;
   updated_at: string;
 }
@@ -1205,6 +1352,7 @@ export interface CreateExpenseRequest {
   category: ExpenseCategory;
   expense_date: string;
   notes?: string;
+  committee_id?: string | null;
 }
 
 export interface UpdateExpenseRequest {
@@ -1215,6 +1363,7 @@ export interface UpdateExpenseRequest {
   notes?: string;
   action?: "approve" | "deny" | "mark_paid" | "reopen";
   denial_reason?: string;
+  committee_id?: string | null;
 }
 
 // ============================================================================

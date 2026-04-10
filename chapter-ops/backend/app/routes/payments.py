@@ -157,9 +157,14 @@ def create_payment():
         plan_id=plan_id,
     )
     db.session.add(payment)
+    db.session.flush()  # Get payment.id before commit
 
-    # Auto-promote to financial if currently not_financial
-    if membership.financial_status == "not_financial":
+    from app.services.dues_service import apply_payment, recompute_financial_status
+    dues_updated = apply_payment(chapter, data["user_id"], fee_type_id or None, amount)
+    if dues_updated:
+        recompute_financial_status(chapter, data["user_id"])
+    elif membership.financial_status == "not_financial":
+        # Legacy fallback: no dues system configured, auto-promote
         membership.financial_status = "financial"
 
     db.session.commit()

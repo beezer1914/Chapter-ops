@@ -68,6 +68,10 @@ class BaseConfig:
     S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID", "")
     S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY", "")
 
+    # CSRF — SPA double-submit pattern via X-CSRFToken header
+    WTF_CSRF_HEADERS = ["X-CSRFToken"]
+    WTF_CSRF_TIME_LIMIT = None  # Token lives as long as the session
+
     # Frontend
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 

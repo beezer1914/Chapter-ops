@@ -8,7 +8,11 @@
       "mcp__plugin_playwright_playwright__browser_fill_form",
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
       "mcp__plugin_playwright_playwright__browser_evaluate",
-      "Bash(git -C \"c:/Users/bholi/Chapter-ops\" remote get-url origin)"
+      "Bash(git -C \"c:/Users/bholi/Chapter-ops\" remote get-url origin)",
+      "mcp__plugin_figma_figma__whoami",
+      "mcp__plugin_figma_figma__create_new_file",
+      "mcp__plugin_figma_figma__use_figma",
+      "mcp__plugin_figma_figma__get_screenshot"
     ]
   }
 }

@@ -35,6 +35,9 @@ from app.models.milestone import ChapterMilestone
 from app.models.auth_event import AuthEvent
 from app.models.agent_run import AgentRun
 from app.models.agent_approval import AgentApproval
+from app.models.chapter_period import ChapterPeriod
+from app.models.chapter_period_dues import ChapterPeriodDues
+from app.models.committee import Committee
 
 __all__ = [
     "BaseModel",
@@ -68,4 +71,7 @@ __all__ = [
     "AuthEvent",
     "AgentRun",
     "AgentApproval",
+    "ChapterPeriod",
+    "ChapterPeriodDues",
+    "Committee",
 ]

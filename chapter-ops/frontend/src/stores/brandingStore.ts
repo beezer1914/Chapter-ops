@@ -9,26 +9,26 @@ const DEFAULT_COLORS: BrandColors = {
 };
 
 const DEFAULT_TYPOGRAPHY: Typography = {
-  heading_font: "Cormorant Garamond",
-  body_font: "Outfit",
+  heading_font: "Playfair Display",
+  body_font: "Instrument Sans",
   font_source: "google",
 };
 
-// Light surface palette — mirrors index.css :root dark values but inverted for bright backgrounds.
+// Editorial light surface palette — cream backgrounds, ink text, always-dark sidebar.
 const LIGHT_SURFACE = {
-  "--color-bg-deep":         "#eef2f9",
-  "--color-bg-primary":      "#f4f7fd",
-  "--color-bg-card":         "rgba(255, 255, 255, 0.80)",
+  "--color-bg-deep":         "#faf9f7",
+  "--color-bg-primary":      "#f4f3f1",
+  "--color-bg-card":         "rgba(255, 255, 255, 0.95)",
   "--color-bg-card-solid":   "#ffffff",
-  "--color-bg-card-hover":   "#f0f4fb",
-  "--color-bg-sidebar":      "rgba(244, 247, 253, 0.97)",
-  "--color-bg-surface":      "#e8eef8",
+  "--color-bg-card-hover":   "#f0efed",
+  "--color-bg-sidebar":      "#0a0a0a",
+  "--color-bg-surface":      "#eceae6",
   "--color-bg-input":        "#ffffff",
-  "--color-text-primary":    "#0f172a",
-  "--color-text-secondary":  "#374151",
-  "--color-text-muted":      "#6b7280",
-  "--color-text-heading":    "#0f172a",
-  "--color-border-subtle":   "rgba(0, 0, 0, 0.06)",
+  "--color-text-primary":    "#1a1a1a",
+  "--color-text-secondary":  "#4a4a4a",
+  "--color-text-muted":      "#6b6b6b",
+  "--color-text-heading":    "#0a0a0a",
+  "--color-border-subtle":   "rgba(0, 0, 0, 0.07)",
 } as const;
 
 // Dark surface palette — matches index.css :root exactly so we can restore it.
@@ -76,7 +76,7 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
     typography: DEFAULT_TYPOGRAPHY,
     custom_css: null,
   },
-  colorScheme: "dark",
+  colorScheme: "light",
   isInitialized: false,
 
   initializeBranding: (orgConfig, chapterConfig) => {
@@ -85,7 +85,7 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
     const chapterOverrideEnabled = chapterBranding.enabled === true;
 
     // Resolve color scheme — org-level only (chapters inherit)
-    const colorScheme: ColorScheme = orgBranding.color_scheme ?? "dark";
+    const colorScheme: ColorScheme = orgBranding.color_scheme ?? "light";
 
     // If no branding has ever been saved, leave index.css defaults untouched
     // but still apply the color scheme in case it was set.
@@ -188,7 +188,9 @@ function loadGoogleFont(fontName: string) {
   const link = document.createElement("link");
   link.id = fontId;
   link.rel = "stylesheet";
-  link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, "+")}:wght@400;500;600;700&display=swap`;
+  const isPlayfair = fontName.includes("Playfair");
+  const weights = isPlayfair ? "ital,wght@0,400;0,700;0,900;1,400;1,700" : "wght@400;500;600;700";
+  link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, "+")}:${weights}&display=swap`;
   document.head.appendChild(link);
 }
 

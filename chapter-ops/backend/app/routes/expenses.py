@@ -73,6 +73,9 @@ def list_expenses():
         query = query.filter_by(submitted_by_id=current_user.id)
     if status and status in EXPENSE_STATUSES:
         query = query.filter_by(status=status)
+    committee_id = request.args.get("committee_id")
+    if committee_id and is_officer:
+        query = query.filter_by(committee_id=committee_id)
 
     paged, meta = paginate(query.order_by(Expense.created_at.desc()))
 
@@ -137,6 +140,14 @@ def submit_expense():
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid expense_date. Use YYYY-MM-DD format."}), 400
 
+    # Optional committee tag — validate it belongs to this chapter
+    committee_id = data.get("committee_id") or None
+    if committee_id:
+        from app.models.committee import Committee
+        comm = Committee.query.filter_by(id=committee_id, chapter_id=chapter.id, is_active=True).first()
+        if not comm:
+            return jsonify({"error": "Committee not found."}), 400
+
     expense = Expense(
         chapter_id=chapter.id,
         submitted_by_id=current_user.id,
@@ -145,6 +156,7 @@ def submit_expense():
         category=data["category"],
         expense_date=expense_date,
         notes=data.get("notes", "").strip() or None,
+        committee_id=committee_id,
     )
     db.session.add(expense)
     db.session.commit()
@@ -300,6 +312,16 @@ def update_expense(expense_id):
         if "notes" in data:
             expense.notes = data["notes"].strip() or None
 
+    # Officers can re-tag the committee on any expense
+    if is_officer and "committee_id" in data:
+        cid = data["committee_id"] or None
+        if cid:
+            from app.models.committee import Committee
+            comm = Committee.query.filter_by(id=cid, chapter_id=chapter.id).first()
+            if not comm:
+                return jsonify({"error": "Committee not found."}), 400
+        expense.committee_id = cid
+
     db.session.commit()
     return jsonify(expense.to_dict()), 200
 
@@ -450,7 +472,7 @@ def export_expenses():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow([
-        "Date", "Title", "Category", "Amount", "Status",
+        "Date", "Title", "Category", "Committee", "Amount", "Status",
         "Submitted By", "Reviewer", "Notes", "Paid At",
     ])
 
@@ -459,6 +481,7 @@ def export_expenses():
             e.expense_date.isoformat(),
             e.title,
             EXPENSE_CATEGORY_LABELS.get(e.category, e.category),
+            e.committee.name if e.committee else "",
             str(e.amount),
             e.status,
             e.submitted_by.full_name if e.submitted_by else "",

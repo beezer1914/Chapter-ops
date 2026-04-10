@@ -15,6 +15,9 @@ import {
   Receipt,
   FileText,
   LayoutDashboard,
+  Globe,
+  Palette,
+  ShieldBan,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────
@@ -38,18 +41,21 @@ const FRAGMENTED_TOOLS = [
 ];
 
 const MODULES = [
-  { icon: CreditCard,  label: "Dues & Payments",    desc: "Stripe-powered collection with payment plans, auto-tracking, and real-time financial status." },
-  { icon: Users,       label: "Member Management",   desc: "Full roster with roles, chapter transfers, lineage tracking, and invite-only onboarding." },
-  { icon: ShieldCheck, label: "Intake Pipeline",     desc: "Stage-by-stage candidate tracking from prospect to crossing, all in one place." },
-  { icon: Calendar,    label: "Events",              desc: "RSVP, ticketing, check-in, and public event pages — branded to your organization." },
-  { icon: Megaphone,   label: "Communications",      desc: "Chapter announcements, pinned posts, and targeted email blasts with audience filters." },
-  { icon: FolderOpen,  label: "Document Vault",      desc: "R2-backed secure storage for bylaws, minutes, financials — searchable and always accessible." },
-  { icon: BookOpen,    label: "Knowledge Base",      desc: "WYSIWYG articles scoped to your org or chapter — from Robert's Rules to officer handbooks." },
-  { icon: GitMerge,    label: "Workflow Automation", desc: "Custom approval flows for reimbursements, onboarding steps, or any multi-stage process." },
-  { icon: GitBranch,   label: "Lineage & History",   desc: "Family tree visualization, line tracking, and chapter milestone records." },
-  { icon: Receipt,     label: "Expense Tracking",    desc: "Submit, review, and approve chapter expenses with full audit trails." },
-  { icon: FileText,    label: "Invoicing",           desc: "Bill members or chapters at the regional level with status tracking and email delivery." },
-  { icon: BarChart3,   label: "Regional Dashboard",  desc: "Cross-chapter visibility for directors — analytics, directory search, and oversight." },
+  { icon: CreditCard,  label: "Dues & Payments",      desc: "Stripe-powered collection with payment plans, auto-tracking, and real-time financial status." },
+  { icon: Users,       label: "Member Management",     desc: "Full roster with roles, chapter transfers, lineage tracking, and invite-only onboarding." },
+  { icon: ShieldCheck, label: "Intake Pipeline",       desc: "Stage-by-stage candidate tracking from prospect to crossing, all in one place." },
+  { icon: Calendar,    label: "Events",                desc: "RSVP, ticketing, check-in, and public event pages — branded to your organization." },
+  { icon: Megaphone,   label: "Communications",        desc: "Chapter announcements, pinned posts, and targeted email blasts with audience filters." },
+  { icon: FolderOpen,  label: "Document Vault",        desc: "R2-backed secure storage for bylaws, minutes, financials — searchable and always accessible." },
+  { icon: BookOpen,    label: "Knowledge Base",        desc: "WYSIWYG articles scoped to your org or chapter — from Robert's Rules to officer handbooks." },
+  { icon: GitMerge,    label: "Workflow Automation",   desc: "Custom approval flows for reimbursements, onboarding steps, or any multi-stage process." },
+  { icon: GitBranch,   label: "Lineage & History",     desc: "Family tree visualization, line tracking, and chapter milestone records." },
+  { icon: Receipt,     label: "Expense Tracking",      desc: "Submit, review, and approve chapter expenses with full audit trails." },
+  { icon: FileText,    label: "Invoicing",             desc: "Bill members or chapters at the regional level with status tracking and email delivery." },
+  { icon: BarChart3,   label: "Regional Dashboard",    desc: "Cross-chapter visibility for directors — analytics, directory search, and oversight." },
+  { icon: Globe,       label: "IHQ Dashboard",         desc: "Org-wide KPIs, per-chapter health scoring, and broadcast messaging for national leadership." },
+  { icon: ShieldBan,   label: "Access Controls",       desc: "Suspend members or chapters with reason tracking — reversible controls that preserve all data." },
+  { icon: Palette,     label: "Custom Branding",       desc: "White-label theming with org colors, logos, fonts, and light/dark scheme per organization." },
 ];
 
 const AUDIENCES = [
@@ -65,13 +71,20 @@ const AUDIENCES = [
     body: "Graduate and alumni chapters operate differently. No semester clock, no annual leadership reset. You manage finances like a small business, run events year-round, and hold institutional knowledge that spans decades. ChapterOps gives you the complete platform to match that level of operation.",
     points: ["Year-round dues & financial management", "Expense tracking & regional invoicing", "Document vault for bylaws, minutes & records", "Knowledge base for history, policy & handbooks"],
   },
+  {
+    type: "National / IHQ Leadership",
+    headline: "Org-wide visibility without the spreadsheet.",
+    body: "National leadership needs a view above the chapter level — financial health across regions, chapter activity at a glance, and the ability to broadcast critical updates instantly. ChapterOps gives IHQ administrators a dedicated dashboard that surfaces what matters without requiring manual reports from every chapter.",
+    points: ["IHQ dashboard with per-chapter health scores", "Org-wide financial and dues collection KPIs", "Instant broadcast to all active chapters", "Chapter suspension controls with reason tracking"],
+  },
 ];
 
 const TRUST_ITEMS = [
-  { stat: "Stripe",      label: "PCI-compliant payments" },
-  { stat: "Invite-only", label: "Controlled member access" },
-  { stat: "Role-based",  label: "Granular permissions" },
-  { stat: "RLS-backed",  label: "Row-level data isolation" },
+  { stat: "Stripe",        label: "PCI-compliant payments" },
+  { stat: "Invite-only",   label: "Controlled member access" },
+  { stat: "Role-based",    label: "Granular permissions" },
+  { stat: "RLS-backed",    label: "Row-level data isolation" },
+  { stat: "White-label",   label: "Full org branding control" },
 ];
 
 const SECTION_LABEL = "text-[11px] font-medium uppercase tracking-[0.2em] text-brand-primary-light mb-5";
@@ -302,7 +315,7 @@ export default function Landing() {
             {/* Floating stat badge — bottom-left */}
             <div className="absolute -bottom-5 -left-6 bg-[#0f1a3a] border border-brand-primary-main/25 rounded-2xl px-4 py-3 shadow-xl backdrop-blur-sm">
               <p className="text-[10px] text-content-muted uppercase tracking-widest">Everything in one place</p>
-              <p className="text-[20px] font-heading font-bold text-white leading-tight">12 modules</p>
+              <p className="text-[20px] font-heading font-bold text-white leading-tight">15 modules</p>
             </div>
 
             {/* Floating stat badge — top-right */}
@@ -369,10 +382,10 @@ export default function Landing() {
                   <span className="text-[14px] text-emerald-400 font-medium">ChapterOps — everything, converged.</span>
                 </div>
 
-                <div className="mt-8 grid grid-cols-3 gap-2">
-                  {["Members","Payments","Intake","Events","Docs","Comms","Lineage","Expenses","Reports"].map((label) => (
-                    <div key={label} className="rounded-lg bg-brand-primary-main/[0.08] border border-brand-primary-main/10 px-3 py-2 text-center">
-                      <span className="text-[11px] text-brand-primary-light font-medium">{label}</span>
+                <div className="mt-8 grid grid-cols-4 gap-2">
+                  {["Members","Payments","Intake","Events","Docs","Comms","Lineage","Expenses","Reports","IHQ","Access","Themes"].map((label) => (
+                    <div key={label} className="rounded-lg bg-brand-primary-main/[0.08] border border-brand-primary-main/10 px-2 py-2 text-center">
+                      <span className="text-[10px] text-brand-primary-light font-medium">{label}</span>
                     </div>
                   ))}
                 </div>
@@ -437,11 +450,11 @@ export default function Landing() {
               One platform. Every chapter type. No exceptions.
             </h2>
             <p className="text-content-muted text-[0.95rem] max-w-xl mx-auto">
-              Whether you're running intake season on a college campus or managing a graduate chapter with a full operating budget, every chapter gets the complete platform. All 12 modules. Zero feature gates. Here's how each chapter type puts it to work.
+              Whether you're running intake season on a college campus or managing a graduate chapter with a full operating budget, every chapter gets the complete platform. All 15 modules. Zero feature gates. Here's how each chapter type puts it to work.
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid lg:grid-cols-3 gap-6">
             {AUDIENCES.map((aud, i) => (
               <div
                 key={aud.type}
@@ -470,7 +483,7 @@ export default function Landing() {
       {/* ── SECURITY STRIP ──────────────────────────── */}
       <section className="py-16 px-6 border-y border-white/[0.05]">
         <div className="max-w-5xl mx-auto">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+          <div className="grid sm:grid-cols-3 lg:grid-cols-5 gap-8 text-center">
             {TRUST_ITEMS.map(({ stat, label }) => (
               <div key={stat}>
                 <p className="font-heading font-bold text-2xl text-white mb-1">{stat}</p>

@@ -6,54 +6,55 @@
   /*
     THEMING SYSTEM
     Organizations customize --color-primary-* to match their brand.
-    The dark surface palette adapts automatically.
+    Default is the Editorial light theme (cream backgrounds, ink text).
+    Dark theme surfaces are applied dynamically via brandingStore.
   */
 
   /* Brand colors (org-customizable) */
   --color-primary-light: #3b7ddb;
   --color-primary-main: #0f52ba;   /* Royal Blue */
   --color-primary-dark: #0a3d8a;
-  --color-primary-glow: rgba(15, 82, 186, 0.14);
+  --color-primary-glow: rgba(15, 82, 186, 0.10);
 
-  /* Dark surface palette */
-  --color-bg-deep: #060b18;
-  --color-bg-primary: #0a1128;
-  --color-bg-card: rgba(12, 20, 45, 0.6);
-  --color-bg-card-solid: #0f1a3a;
-  --color-bg-card-hover: #132248;
-  --color-bg-sidebar: rgba(8, 14, 32, 0.75);
-  --color-bg-surface: #0d1630;
-  --color-bg-input: #0c1530;
+  /* Editorial surface palette (light default) */
+  --color-bg-deep: #faf9f7;              /* cream — page background */
+  --color-bg-primary: #f4f3f1;           /* paper — secondary areas */
+  --color-bg-card: rgba(255, 255, 255, 0.95);
+  --color-bg-card-solid: #ffffff;
+  --color-bg-card-hover: #f0efed;
+  --color-bg-sidebar: #0a0a0a;           /* always-dark sidebar */
+  --color-bg-surface: #eceae6;
+  --color-bg-input: #ffffff;
 
-  /* Text hierarchy */
-  --color-text-primary: #f0f4fa;
-  --color-text-secondary: #94a3c0;
-  --color-text-muted: #5c6d8a;
-  --color-text-heading: #e4ecf7;
+  /* Ink text hierarchy */
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #4a4a4a;
+  --color-text-muted: #6b6b6b;
+  --color-text-heading: #0a0a0a;
 
   /* Borders */
-  --color-border: rgba(15, 82, 186, 0.1);
-  --color-border-brand: rgba(15, 82, 186, 0.22);
-  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-border: rgba(0, 0, 0, 0.10);
+  --color-border-brand: rgba(15, 82, 186, 0.20);
+  --color-border-subtle: rgba(0, 0, 0, 0.07);
 
   /* Status colors */
-  --color-status-paid: #34d399;
-  --color-status-pending: #fbbf24;
-  --color-status-overdue: #f87171;
+  --color-status-paid: #228b22;
+  --color-status-pending: #cc8800;
+  --color-status-overdue: #ba0f0f;
 
   /* Accent (kept for backward compat) */
-  --color-accent-light: rgba(251, 191, 36, 0.1);
-  --color-accent-main: #fbbf24;
-  --color-accent-dark: #d97706;
+  --color-accent-light: rgba(204, 136, 0, 0.10);
+  --color-accent-main: #cc8800;
+  --color-accent-dark: #a36c00;
 
-  /* Secondary (mapped to dark surfaces for compat) */
+  /* Secondary (kept for compat) */
   --color-secondary-light: var(--color-bg-surface);
   --color-secondary-main: var(--color-bg-card-solid);
   --color-secondary-dark: var(--color-border);
 
-  /* Typography */
-  --font-heading: "Cormorant Garamond", Georgia, serif;
-  --font-body: "Outfit", system-ui, -apple-system, sans-serif;
+  /* Typography — Editorial */
+  --font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body: "Instrument Sans", -apple-system, "Segoe UI", sans-serif;
 }
 
 html {
@@ -66,6 +67,26 @@ body {
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Editorial dot grid — slightly darker dots on cream for light mode */
+[data-color-scheme="light"] .bg-dot-grid,
+.bg-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.12) 0.6px,
+    transparent 0.6px
+  );
+  background-size: 24px 24px;
+}
+
+[data-color-scheme="dark"] .bg-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    var(--color-primary-main) 0.6px,
+    transparent 0.6px
+  );
+  background-size: 28px 28px;
 }
 
 h1,

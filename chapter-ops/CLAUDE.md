@@ -8,7 +8,7 @@ The platform is expanding to serve all Greek letter organizations, starting with
 
 ## Tech Stack
 
-- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS v4 + Zustand + React Router v7
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS v3 + Zustand + React Router v7
 - **Backend:** Flask 3.x + Python 3.11+ + SQLAlchemy 2.x + Alembic
 - **Database:** PostgreSQL 16 + Redis 7
 - **Payments:** Stripe Connect (per-chapter payment processing)
@@ -52,7 +52,10 @@ chapter-ops/
 │   │   │   ├── workflow.py          # Workflow + WorkflowStep
 │   │   │   ├── announcement.py      # Chapter announcements
 │   │   │   ├── document.py          # Document vault (R2-backed)
-│   │   │   └── knowledge_article.py # Knowledge base articles
+│   │   │   ├── knowledge_article.py # Knowledge base articles
+│   │   │   ├── chapter_period.py    # ChapterPeriod (semester/annual/custom billing periods)
+│   │   │   ├── chapter_period_dues.py # ChapterPeriodDues (per-member × per-fee-type dues rows)
+│   │   │   └── committee.py         # Committee (chair_user_id FK, budget_amount, is_active)
 │   │   ├── routes/
 │   │   │   ├── __init__.py
 │   │   │   ├── auth.py          # /api/auth/*
@@ -77,11 +80,16 @@ chapter-ops/
 │   │   │   ├── expenses.py      # /api/expenses/*
 │   │   │   ├── intake.py        # /api/intake/* (rush/intake management)
 │   │   │   ├── lineage.py       # /api/lineage/* (family tree + milestones)
+│   │   │   ├── dashboard.py     # /api/dashboard/inbox (action queue)
+│   │   │   ├── periods.py       # /api/periods/* (billing periods, my-dues, dues edit + rollover)
+│   │   │   ├── analytics.py     # /api/analytics/chapter (reporting snapshot + budget summary)
+│   │   │   ├── committees.py    # /api/committees/* (CRUD, chair assignment, budget stats)
 │   │   │   └── webhooks.py      # /webhook (Stripe)
 │   │   ├── services/
 │   │   │   ├── __init__.py
 │   │   │   ├── workflow_engine.py        # Workflow execution engine
-│   │   │   └── notification_service.py   # In-app notification creation helpers
+│   │   │   ├── notification_service.py   # In-app notification creation helpers
+│   │   │   └── dues_service.py           # seed_period_dues, seed_member_dues, apply_payment, recompute_financial_status
 │   │   └── utils/
 │   │       ├── __init__.py
 │   │       ├── password.py    # Password validation
@@ -141,10 +149,14 @@ chapter-ops/
 │       │   ├── commsService.ts
 │       │   ├── documentService.ts
 │       │   ├── kbService.ts
-│       │   └── notificationService.ts
+│       │   ├── notificationService.ts
+│       │   ├── dashboardService.ts  # fetchDashboardInbox()
+│       │   ├── periodService.ts     # fetchPeriods, fetchMyDues, fetchPeriodDues, updateDuesRecord, activatePeriod
+│       │   ├── analyticsService.ts  # fetchChapterAnalytics()
+│       │   └── committeeService.ts  # fetchCommittees, createCommittee, updateCommittee, fetchCommitteeStats
 │       ├── components/        # Shared/reusable components
 │       │   ├── ProtectedRoute.tsx
-│       │   ├── Layout.tsx
+│       │   ├── Layout.tsx         # Includes MobileBottomNav component
 │       │   ├── ImageUpload.tsx
 │       │   ├── NotificationBell.tsx
 │       │   ├── NotificationCard.tsx
@@ -153,15 +165,18 @@ chapter-ops/
 │           ├── Login.tsx
 │           ├── Register.tsx
 │           ├── Landing.tsx        # Public marketing/landing page
-│           ├── Dashboard.tsx
+│           ├── Dashboard.tsx      # Inbox/action queue entry point
 │           ├── Onboarding.tsx
 │           ├── onboarding/        # Multi-step onboarding sub-components
 │           │   ├── OrganizationStep.tsx
 │           │   ├── RegionStep.tsx
 │           │   ├── ChapterStep.tsx
-│           │   └── SuccessStep.tsx
+│           │   └── SuccessStep.tsx  # Progressive checklist
 │           ├── Settings.tsx
 │           ├── Payments.tsx
+│           ├── MyDues.tsx         # Member dues view (/dues) — per-fee-type breakdown + pay CTA
+│           ├── TreasurerDues.tsx  # Officer dues matrix (/chapter-dues) — member × fee type grid
+│           ├── Analytics.tsx      # Chapter analytics (/analytics) — period comparison, charts
 │           ├── Members.tsx
 │           ├── Invites.tsx
 │           ├── Donations.tsx
@@ -175,6 +190,7 @@ chapter-ops/
 │           ├── KnowledgeBase.tsx
 │           ├── Regions.tsx        # Regional management + per-region role gating
 │           ├── RegionDashboard.tsx # Regional officer dashboard
+│           ├── IHQDashboard.tsx   # Org-admin IHQ view
 │           ├── Intake.tsx         # Rush/intake pipeline management
 │           ├── Lineage.tsx        # Chapter family tree + milestone tracking
 │           └── StripeCallback.tsx # Stripe Connect OAuth callback
@@ -244,35 +260,52 @@ Roles are per-chapter (via ChapterMembership), not global:
 - React Hook Form + Zod for form validation
 - Axios for HTTP requests (configured with interceptors for auth)
 - Tailwind CSS for styling — no CSS modules or styled-components
-- **Dark Theme**: The entire app uses a dark luxury theme. All new components must use the semantic color tokens below — never hardcode light colors.
+- **Editorial Theme (default)**: Cream surfaces (`#FAF9F7`), always-black sidebar (`#0a0a0a`), Playfair Display Black headings, Instrument Sans body. This is the default. The dark navy theme remains available as an option.
 - **Dynamic Branding**: Use `brand-*` utilities (e.g., `bg-brand-primary-main`, `text-brand-primary-light`) instead of hardcoded colors for brand-colored elements
 - File naming: PascalCase for components (`Dashboard.tsx`), camelCase for utilities (`authService.ts`)
 - All API response types defined in `src/types/`
 
-### Dark Theme Token Reference
+### Editorial Theme Token Reference
 
-Always use these tokens — never use `bg-white`, `text-gray-*`, `bg-gray-*`, or `border-gray-*`:
+The app uses CSS custom property tokens driven by `brandingStore.ts`. Always use these — never hardcode colors directly:
 
 | Purpose | Token |
 |---|---|
-| Page background | `bg-surface-deep` |
-| Card background | `bg-surface-card-solid` |
-| Subtle hover/row | `bg-white/5` |
-| Sidebar | `bg-surface-sidebar` |
-| Form inputs | `bg-surface-input` (auto-applied via global CSS) |
+| Page background | `bg-surface-deep` / `bg-[var(--color-bg-deep)]` |
+| Card background | `bg-[var(--color-bg-card)]` |
+| Card hover | `bg-[var(--color-bg-card-hover)]` |
+| Solid card | `bg-[var(--color-bg-card-solid)]` |
+| Form inputs | auto-applied via global CSS — no class needed |
 | Primary text | `text-content-primary` |
 | Secondary text | `text-content-secondary` |
 | Muted/label text | `text-content-muted` |
+| Headings | `text-content-heading` |
 | Borders | `border-[var(--color-border)]` |
 | Brand borders | `border-[var(--color-border-brand)]` |
-| Dividers | `divide-white/5` |
-| Status badges | `bg-{color}-900/30 text-{color}-400` (e.g. `bg-emerald-900/30 text-emerald-400`) |
-| Error banners | `bg-red-900/20 border-red-900/30 text-red-400` |
-| Success banners | `bg-emerald-900/20 border-emerald-900/30 text-emerald-400` |
-| Brand button | `bg-brand-primary-main hover:bg-brand-primary-dark text-white` |
-| Glass card | `.glass-card` or `backdrop-blur-xl` with `bg-surface-card` |
+| Dividers | `divide-[var(--color-border)]` (NOT `divide-white/5`) |
+| Status: paid/financial | `bg-emerald-50 text-emerald-700` (light) / `bg-emerald-900/30 text-emerald-400` (dark) |
+| Status: unpaid/error | `bg-red-50 text-red-700` / `bg-red-900/20 text-red-400` |
+| Status: warning | `bg-amber-50 text-amber-700` / `bg-amber-900/30 text-amber-400` |
+| Brand button | `bg-[var(--color-text-heading)] text-[var(--color-bg-deep)] hover:opacity-90` |
+| Brand accent button | `bg-brand-primary-main hover:bg-brand-primary-dark text-white` |
+| Sidebar | Always `bg-[#0a0a0a] text-white` — never themed |
 
-Global CSS in `index.css` automatically styles all `input`, `textarea`, and `select` elements with dark background and light text — no class needed on individual inputs.
+### Typography
+
+- **Headings**: `font-heading` → Playfair Display Black. Use `font-black` weight, `tracking-tight`.
+- **Body**: `font-body` → Instrument Sans.
+- **Section labels**: `text-[10px] font-semibold uppercase tracking-[0.2em] text-content-muted`
+- **Editorial double-rule header pattern**: `border-t-2 border-[var(--color-text-heading)]` top, `border-b border-[var(--color-border)]` bottom with `mt-[2px]` gap.
+
+### Design Principles (Editorial)
+
+- **No rounded corners** on cards, modals, buttons — sharp edges throughout.
+- **No glassmorphism** — flat surfaces, `border-[var(--color-border)]` instead of `backdrop-blur`.
+- **Left-border color strips** for status indicators (e.g. `border-l-4 border-l-red-500`).
+- **Status chips**: small, uppercase, no rounded corners — `text-[10px] font-semibold uppercase tracking-widest px-1.5 py-0.5`.
+- Progress bars: `h-1` or `h-1.5`, no rounded ends.
+
+Global CSS in `index.css` automatically styles all `input`, `textarea`, and `select` elements — no class needed on individual inputs.
 
 ## Key Commands
 
@@ -342,15 +375,29 @@ All foundational and Phase 2 feature work is done. The platform is fully functio
 18. ✅ **Document Vault** — R2-backed file storage (PDF/Word/Excel/images up to 25MB), presigned download URLs, category tabs, officer upload/edit/delete
 19. ✅ **Knowledge Base** — dual-scope articles (org-wide / chapter), Tiptap WYSIWYG editor, full-text search, category filters, view tracking
 20. ✅ **Payment Plan Enhancements** — members can self-create plans, quarterly frequency, auto-calculated end date, adjustable installment amounts
-21. ✅ **Mobile-Responsive UI** — Members and Payments pages use card layout on mobile, table on desktop
-22. ✅ **Regional Invoice Management** — regions can bill chapters; invoices include `billed_chapter` in all API responses
-23. ✅ **Per-Region Authorization** — backend returns `current_user_region_role`; frontend gates all region actions (invoice, manage officers, move chapters) by the user's role in that specific region, not their global org role
-24. ✅ **Additional Payment Methods** — Zelle, Venmo, and Cash App supported alongside Stripe/manual
-25. ✅ **Expense Tracking** — chapter expense submissions with officer approval flow
-26. ✅ **Rush/Intake Pipeline** — intake management with stages and candidate tracking
-27. ✅ **Lineage Management** — chapter family tree visualization and milestone tracking
-28. ✅ **Regional Dashboard** — dedicated dashboard for regional officers showing chapter stats
-29. ✅ **Dark Luxury Theme** — full app reskin: dark navy base, Cormorant Garamond + Outfit fonts, CSS variable theming system (swap 4 vars to re-brand for any org), glassmorphism cards, pill nav
+21. ✅ **Regional Invoice Management** — regions can bill chapters; invoices include `billed_chapter` in all API responses
+22. ✅ **Per-Region Authorization** — backend returns `current_user_region_role`; frontend gates all region actions (invoice, manage officers, move chapters) by the user's role in that specific region, not their global org role
+23. ✅ **Additional Payment Methods** — Zelle, Venmo, and Cash App supported alongside Stripe/manual
+24. ✅ **Expense Tracking** — chapter expense submissions with officer approval flow
+25. ✅ **Rush/Intake Pipeline** — intake management with stages and candidate tracking
+26. ✅ **Lineage Management** — chapter family tree visualization and milestone tracking
+27. ✅ **Regional Dashboard** — dedicated dashboard for regional officers showing chapter stats
+28. ✅ **Editorial Theme (default)** — Playfair Display Black headings, cream surfaces, always-black sidebar, sharp editorial design. Dark navy theme remains as an option. CSS variable theming system supports any org branding.
+29. ✅ **Inbox/Action Queue Dashboard** — dashboard is now an action queue ("what do I need to do?") with prioritized items (critical/warning/info), grouped sections, and direct CTAs. Replaces the financial stats dashboard.
+30. ✅ **ChapterPeriod — Billing Periods** — `ChapterPeriod` model with `period_type` enum (semester/annual/custom). Auto-created on chapter onboarding. Manages dues tracking lifecycle.
+31. ✅ **ChapterPeriodDues — Full Dues Tracking** — per-member × per-fee-type × per-period dues rows. `dues_service.py` handles seeding, payment application, and financial status recomputation. Auto-seeded when a period is activated or a new member joins.
+32. ✅ **Member Dues View (`/dues`)** — `MyDues.tsx`: per-fee-type breakdown, progress bars, Stripe pay CTA for remaining balance. Financial status banner. Empty states handle inactive period gracefully.
+33. ✅ **Treasurer Dues Dashboard (`/chapter-dues`)** — `TreasurerDues.tsx`: member × fee type matrix with period picker, collection stats, inline edit modal (adjust amount owed, mark exempt, add notes).
+34. ✅ **Analytics (`/analytics`)** — `Analytics.tsx`: period comparison (current vs previous), dues by fee type with collection rates, member status distribution stacked bar, 12-month payment bar chart, event stats. CSS-only charts, no charting library.
+35. ✅ **Mobile-First Experience** — Fixed bottom navigation bar (Home/My Dues/Events/More), mobile quick-action strip on Dashboard, redesigned EventCard with date badge + full-width RSVP buttons, always-visible CTAs on touch devices. PWA manifest updated.
+36. ✅ **Progressive Onboarding** — `SuccessStep.tsx` redesigned as a 6-step checklist guiding new presidents through setup in correct order. First step pre-checked.
+37. ✅ **Security Hardening** — XSS protection on KB articles (nh3), password reset flow, pagination on all list endpoints, N+1 fixes, DB indexes, data retention + account deletion (GDPR-compliant), user PII anonymization.
+38. ✅ **CSRF Protection** — Double-submit header pattern (`X-CSRFToken`). `GET /api/auth/csrf` endpoint. Axios request interceptor injects token on all non-GET requests. Response interceptor auto-refreshes stale token and retries once on 400 CSRF errors. Logout exempt (force-logout is not a meaningful attack). Stripe webhooks blueprint exempt.
+39. ✅ **Period Rollover** — `rollover_unpaid_dues(chapter, prev_period, new_period)` in `dues_service.py`. Opt-in via `{ rollover_unpaid: true }` on period activate. Carries forward unpaid/partial balances, increases amount_owed on matching rows, creates new rows if missing. Settings UI shows rollover confirmation modal with checkbox.
+40. ✅ **Committee Chairs + Budget Tracking** — `Committee` model with `chair_user_id` FK (no new role tier), `budget_amount`, `is_active`. Expenses tagged via `committee_id` FK with SET NULL. `/api/committees/<id>/stats` returns spent/pending/remaining/over_budget. Analytics budget breakdown section. Expenses UI shows committee dropdown + badge. Settings CommitteesSection with full CRUD.
+41. ✅ **Fee Type Permissions Fix** — Treasurer can now manage fee types in Settings. Backend: `update_chapter_config` lowered to `@role_required("treasurer")` with per-section guard (permissions/branding require president+). Frontend: `canEditFees` check replaces `isAdmin` gate on fee types UI.
+42. ✅ **Financial Status Accuracy** — Fixed `seed_period_dues`/`seed_member_dues` to seed $0-owed fee types as `status="paid"` instead of "unpaid". `recompute_financial_status` now treats `amount_owed=0` rows as satisfied regardless of status. `update_dues_record` calls `recompute_financial_status` after every treasurer edit. Data migrations `d5e7f9a1b3c2` + `e6f8a0b2c4d5` retroactively fixed existing bad rows.
+43. ✅ **Member-Safe Dues Endpoint** — `GET /api/periods/<id>/my-dues` accessible to all members. Auto-seeds rows on first access (handles late joiners + accounts created outside invite flow). Always recomputes financial_status. Returns `{ dues, financial_status }` so MyDues banner never reads stale auth store cache.
 
 ## Key Implementation Notes
 
@@ -387,9 +434,50 @@ All foundational and Phase 2 feature work is done. The platform is fully functio
 - `/api/events/public/` is exempt from tenant middleware
 - Paid event tickets use same Stripe Connect pattern with `payment_type=event_ticket` metadata
 
+### Dues System Architecture
+
+The dues system uses a three-layer model:
+
+1. **Fee Types** — configured in `chapter.config.fee_types[]` (JSON). Each has an `id`, `label`, and `amount`. Examples: "Chapter Dues" ($200), "National & Regional" ($225).
+2. **ChapterPeriod** — a billing period (semester/annual/custom) with `start_date`, `end_date`, `is_active`. One active period per chapter at a time.
+3. **ChapterPeriodDues** — one row per (member × fee_type × period). Tracks `amount_owed`, `amount_paid`, `status` (unpaid/partial/paid/exempt).
+
+**`dues_service.py` — the single source of truth for dues mutations:**
+- `seed_period_dues(chapter, period)` — creates dues rows for all active members × all fee types. Idempotent. Called on period CREATE (if active) and ACTIVATE.
+- `seed_member_dues(chapter, user_id)` — seeds a new member for the active period only. Called when a member registers via invite.
+- `apply_payment(chapter, user_id, fee_type_id, amount) → bool` — applies a payment to dues rows. Returns `False` if no dues system is configured (caller falls back to legacy auto-promote).
+- `recompute_financial_status(chapter, user_id)` — derives `financial_status` from dues rows (all paid → financial, any unpaid → not_financial). No-op for neophyte/exempt.
+- **None of these functions commit** — callers are responsible for `db.session.commit()`.
+
+**Backward compatibility**: Chapters without fee types configured or without an active period continue to use the legacy auto-promote behavior (`not_financial → financial` on any payment). `apply_payment` returns `False` to signal this.
+
+### Dashboard Inbox
+
+`GET /api/dashboard/inbox` returns prioritized action items for the current user. Items have:
+- `priority`: `"critical"` | `"warning"` | `"info"`
+- `type`: e.g. `"dues_overdue"`, `"workflow_task"`, `"transfer_pending"`
+- `cta_url`: frontend route to navigate to
+
+The `dues_overdue` item links to `/dues` (not `/payments`). Officers receive additional chapter-level items (expense approvals, members not financial, etc.).
+
+### Analytics
+
+`GET /api/analytics/chapter?period_id=<optional>` returns a full snapshot including:
+- Dues aggregates from `ChapterPeriodDues` (by fee type and overall)
+- Period-over-period comparison (current vs previous)
+- Member status distribution
+- Monthly payment totals (last 12 months)
+- Event stats for the period date range
+
+Role gate: secretary+. Uses SQLAlchemy `func` and `case` from `sqlalchemy` — never `db.case`.
+
 ### Mobile Responsiveness Pattern
-- Use `md:hidden` for mobile cards + `hidden md:table` (or `hidden md:block`) for desktop views
-- Both views are rendered in the DOM; CSS controls which is visible — no JS breakpoint detection needed
+- Layout includes a **fixed bottom navigation bar** (`MobileBottomNav` in `Layout.tsx`) for mobile — Home, My Dues, Events, More. Always-visible on `< md` breakpoint.
+- Main content has `pb-24 md:pb-8` to clear the bottom nav on mobile.
+- Use `md:hidden` for mobile-only layouts + `hidden md:block` / `hidden md:table` for desktop.
+- Both views are rendered in the DOM; CSS controls which is visible — no JS breakpoint detection needed.
+- Mobile tap targets: buttons should be at minimum `py-2.5` for comfortable thumb use.
+- CTAs that use `group-hover:opacity-100` must also be always-visible on mobile: `sm:opacity-0 sm:group-hover:opacity-100` (hide hover-only behavior only on sm+).
 
 ## Patterns Carried Over from Sigma Finance
 
@@ -412,10 +500,19 @@ These patterns were proven in the original app and should be maintained:
 - The frontend uses TypeScript — all props, state, and API responses should be typed
 - Prefer `Mapped[]` annotations for SQLAlchemy model columns (2.x style)
 - All new API endpoints need corresponding TypeScript types in `frontend/src/types/`
+- All new blueprints must be registered AND csrf-exempted in `app/__init__.py`
 - Test multi-tenant isolation: a query for Chapter A's data should never return Chapter B's data
 - Follow DRY (Don't Repeat Yourself) method of coding
-- **Never use light-theme Tailwind classes** (`bg-white`, `text-gray-*`, `bg-gray-*`, `border-gray-*`) — always use the dark theme tokens from the token reference table above
-- **Form inputs do not need explicit background/text classes** — `index.css` applies dark styles globally to all `input`, `textarea`, and `select` elements
+- **Never hardcode colors** — always use CSS variable tokens from the token reference above
+- **Form inputs do not need explicit background/text classes** — `index.css` applies styles globally to all `input`, `textarea`, and `select` elements
+- **Theme is editorial by default** — cream surfaces, sharp corners, no glassmorphism, Playfair Display headings. Do not reintroduce rounded-xl cards or backdrop-blur unless explicitly asked.
+- **Dues mutations go through `dues_service.py`** — never update `ChapterPeriodDues` directly from routes. Use the service functions and let the caller commit.
+- **`dues_service.apply_payment` returns False** if no dues system is configured — callers must handle the fallback to legacy auto-promote.
+- **$0-owed fee types seed as `status="paid"`** — a fee type with `default_amount=0` means nothing is owed; seeding it as "unpaid" would block financial status. `seed_period_dues` also repairs existing $0/unpaid rows in-place on each call.
+- **`recompute_financial_status` treats `amount_owed=0` rows as satisfied** regardless of their `status` field — handles legacy data without a migration.
+- **`GET /api/periods/<id>/my-dues` is the member-safe endpoint** — use this in member-facing views, not `GET /api/periods/<id>/dues` which is treasurer-only. It auto-seeds, always recomputes, and returns `financial_status` in the response body.
+- **Financial status in MyDues comes from the API response**, not from the Zustand auth store — the auth store can be stale after dues changes.
+- **SQLAlchemy `case()`** must be imported from `sqlalchemy` directly (`from sqlalchemy import case`), not from `db`.
 - **BGLO membership rules are sacred** — never build features that allow: (1) simultaneous active membership in two chapters of the same org, or (2) membership in two different Greek letter organizations. These are non-negotiable cultural rules, not just business logic.
 
 ## Ops Agent — Lightweight Agentic Monitor
