@@ -24,6 +24,52 @@ from app.models import InviteCode, User
 from app.models.intake import IntakeCandidate, IntakeDocument, INTAKE_STAGES, INTAKE_DOC_TYPES
 from app.utils.decorators import chapter_required, role_required, intake_access_required
 
+# ── Config helpers ─────────────────────────────────────────────────────────────
+
+DEFAULT_INTAKE_STAGES = [
+    {"id": "interested",          "label": "Interested",          "color": "slate",   "is_terminal": False},
+    {"id": "applied",             "label": "Applied",             "color": "sky",     "is_terminal": False},
+    {"id": "under_review",        "label": "Under Review",        "color": "amber",   "is_terminal": False},
+    {"id": "chapter_vote",        "label": "Chapter Vote",        "color": "orange",  "is_terminal": False},
+    {"id": "national_submission", "label": "National Submission", "color": "purple",  "is_terminal": False},
+    {"id": "approved",            "label": "Approved",            "color": "emerald", "is_terminal": False},
+    {"id": "crossed",             "label": "Crossed",             "color": "brand",   "is_terminal": True},
+]
+
+DEFAULT_DOC_TYPES = [
+    {"id": "transcript",        "label": "Transcript"},
+    {"id": "background_check",  "label": "Background Check"},
+    {"id": "recommendation",    "label": "Recommendation Letter"},
+    {"id": "other",             "label": "Other"},
+]
+
+
+def _chapter_stages(chapter) -> list[dict]:
+    """Return configured intake stages, falling back to NPHC defaults."""
+    return (chapter.config or {}).get("intake_stages") or DEFAULT_INTAKE_STAGES
+
+
+def _chapter_doc_types(chapter) -> list[dict]:
+    """Return configured doc types, falling back to defaults."""
+    return (chapter.config or {}).get("intake_doc_types") or DEFAULT_DOC_TYPES
+
+
+def _terminal_stage_id(chapter) -> str:
+    """Return the id of the terminal (crossing) stage."""
+    for s in _chapter_stages(chapter):
+        if s.get("is_terminal"):
+            return s["id"]
+    return "crossed"  # Absolute fallback
+
+
+def _pre_terminal_stage_id(chapter) -> str | None:
+    """Return the id of the stage immediately before the terminal stage."""
+    stages = _chapter_stages(chapter)
+    for i, s in enumerate(stages):
+        if s.get("is_terminal") and i > 0:
+            return stages[i - 1]["id"]
+    return None
+
 intake_bp = Blueprint("intake", __name__, url_prefix="/api/intake")
 
 ALLOWED_DOC_EXTENSIONS = {
@@ -51,23 +97,26 @@ def _get_s3_client():
 def list_candidates():
     """List all active intake candidates, optionally filtered by stage."""
     chapter = g.current_chapter
-    stage = request.args.get("stage")
+    stages = _chapter_stages(chapter)
+    stage_ids = [s["id"] for s in stages]
+    stage_filter = request.args.get("stage")
 
     query = IntakeCandidate.query.filter_by(chapter_id=chapter.id, active=True)
-    if stage and stage in INTAKE_STAGES:
-        query = query.filter_by(stage=stage)
+    if stage_filter and stage_filter in stage_ids:
+        query = query.filter_by(stage=stage_filter)
 
     candidates = query.order_by(IntakeCandidate.created_at.asc()).all()
 
     # Group by stage for pipeline view
-    grouped = {s: [] for s in INTAKE_STAGES}
+    grouped = {sid: [] for sid in stage_ids}
     for c in candidates:
-        grouped[c.stage].append(c.to_dict())
+        bucket = c.stage if c.stage in grouped else stage_ids[0]
+        grouped[bucket].append(c.to_dict())
 
     return jsonify({
         "candidates": [c.to_dict() for c in candidates],
         "by_stage": grouped,
-        "stages": INTAKE_STAGES,
+        "stages": stages,
     }), 200
 
 
@@ -96,9 +145,12 @@ def create_candidate():
         except (ValueError, TypeError):
             return jsonify({"error": "Invalid GPA value."}), 400
 
-    stage = data.get("stage", "interested")
-    if stage not in INTAKE_STAGES:
-        return jsonify({"error": f"Invalid stage. Must be one of: {', '.join(INTAKE_STAGES)}"}), 400
+    stages = _chapter_stages(chapter)
+    stage_ids = [s["id"] for s in stages]
+    first_stage_id = stage_ids[0]
+    stage = data.get("stage", first_stage_id)
+    if stage not in stage_ids:
+        return jsonify({"error": f"Invalid stage. Must be one of: {', '.join(stage_ids)}"}), 400
 
     assigned_to_id = data.get("assigned_to_id")
     if assigned_to_id:
@@ -191,13 +243,15 @@ def update_candidate(candidate_id):
                 return jsonify({"error": "Assigned officer not found."}), 404
         candidate.assigned_to_id = data["assigned_to_id"] or None
 
-    # Stage update — cannot manually set to "crossed" (use the /cross endpoint)
+    # Stage update — cannot manually set to the terminal stage (use the /cross endpoint)
     if "stage" in data:
         new_stage = data["stage"]
-        if new_stage not in INTAKE_STAGES:
-            return jsonify({"error": f"Invalid stage."}), 400
-        if new_stage == "crossed":
-            return jsonify({"error": "Use the /cross endpoint to cross a candidate."}), 400
+        stage_ids = [s["id"] for s in _chapter_stages(chapter)]
+        terminal = _terminal_stage_id(chapter)
+        if new_stage not in stage_ids:
+            return jsonify({"error": "Invalid stage."}), 400
+        if new_stage == terminal:
+            return jsonify({"error": "Use the /cross endpoint to initiate a candidate."}), 400
         candidate.stage = new_stage
 
     db.session.commit()
@@ -242,11 +296,15 @@ def cross_candidate(candidate_id):
     if not candidate or candidate.chapter_id != chapter.id or not candidate.active:
         return jsonify({"error": "Candidate not found."}), 404
 
-    if candidate.stage != "approved":
-        return jsonify({"error": "Candidate must be in 'approved' stage before crossing."}), 400
+    terminal = _terminal_stage_id(chapter)
+    pre_terminal = _pre_terminal_stage_id(chapter)
 
-    if candidate.stage == "crossed":
-        return jsonify({"error": "Candidate has already crossed."}), 400
+    if candidate.stage == terminal:
+        return jsonify({"error": "Candidate has already been initiated."}), 400
+
+    if pre_terminal and candidate.stage != pre_terminal:
+        stage_label = next((s["label"] for s in _chapter_stages(chapter) if s["id"] == pre_terminal), pre_terminal)
+        return jsonify({"error": f"Candidate must be in '{stage_label}' stage before initiating."}), 400
 
     # Optionally set line data from request
     data = request.get_json() or {}
@@ -270,8 +328,8 @@ def cross_candidate(candidate_id):
     db.session.add(invite)
     db.session.flush()  # get invite.id
 
-    # Cross the candidate
-    candidate.stage = "crossed"
+    # Initiate the candidate
+    candidate.stage = terminal
     candidate.crossed_at = datetime.now(timezone.utc)
     candidate.invite_code_id = invite.id
 
@@ -308,8 +366,9 @@ def upload_document(candidate_id):
 
     if not title:
         return jsonify({"error": "Title is required."}), 400
-    if document_type not in INTAKE_DOC_TYPES:
-        return jsonify({"error": f"Invalid document type. Must be one of: {', '.join(INTAKE_DOC_TYPES)}"}), 400
+    valid_doc_type_ids = [dt["id"] for dt in _chapter_doc_types(chapter)]
+    if document_type not in valid_doc_type_ids:
+        return jsonify({"error": f"Invalid document type. Must be one of: {', '.join(valid_doc_type_ids)}"}), 400
     if not file.filename:
         return jsonify({"error": "No file selected."}), 400
 

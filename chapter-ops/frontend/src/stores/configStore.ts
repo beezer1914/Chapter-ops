@@ -4,6 +4,8 @@ import type {
   ChapterConfig,
   CustomFieldDefinition,
   FeeType,
+  IntakeStageConfig,
+  IntakeDocTypeConfig,
   MemberRole,
   Organization,
   Chapter,
@@ -35,6 +37,8 @@ interface ConfigState {
   getRoleLabel: (role: MemberRole) => string;
   getFeeTypes: () => FeeType[];
   getCustomFields: () => CustomFieldDefinition[];
+  getIntakeStages: () => IntakeStageConfig[];
+  getIntakeDocTypes: () => IntakeDocTypeConfig[];
 }
 
 export const useConfigStore = create<ConfigState>((set, get) => ({
@@ -89,5 +93,28 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   getCustomFields: (): CustomFieldDefinition[] => {
     const { orgConfig } = get();
     return orgConfig.custom_member_fields ?? [];
+  },
+
+  getIntakeStages: (): IntakeStageConfig[] => {
+    const { chapterConfig } = get();
+    return chapterConfig.intake_stages ?? [
+      { id: "interested",          label: "Interested",          color: "slate",   is_terminal: false },
+      { id: "applied",             label: "Applied",             color: "sky",     is_terminal: false },
+      { id: "under_review",        label: "Under Review",        color: "amber",   is_terminal: false },
+      { id: "chapter_vote",        label: "Chapter Vote",        color: "orange",  is_terminal: false },
+      { id: "national_submission", label: "National Submission", color: "purple",  is_terminal: false },
+      { id: "approved",            label: "Approved",            color: "emerald", is_terminal: false },
+      { id: "crossed",             label: "Crossed",             color: "brand",   is_terminal: true  },
+    ];
+  },
+
+  getIntakeDocTypes: (): IntakeDocTypeConfig[] => {
+    const { chapterConfig } = get();
+    return chapterConfig.intake_doc_types ?? [
+      { id: "transcript",       label: "Transcript" },
+      { id: "background_check", label: "Background Check" },
+      { id: "recommendation",   label: "Recommendation Letter" },
+      { id: "other",            label: "Other" },
+    ];
   },
 }));

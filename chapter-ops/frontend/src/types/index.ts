@@ -144,11 +144,25 @@ export type ModuleKey =
   | "events" | "communications" | "documents" | "knowledge_base" | "lineage"
   | "members" | "invites" | "intake" | "regions" | "workflows";
 
+export interface IntakeStageConfig {
+  id: string;
+  label: string;
+  color: "slate" | "sky" | "amber" | "orange" | "purple" | "emerald" | "rose" | "teal" | "brand";
+  is_terminal: boolean;
+}
+
+export interface IntakeDocTypeConfig {
+  id: string;
+  label: string;
+}
+
 export interface ChapterConfig {
   fee_types?: FeeType[];
   settings?: ChapterSettings;
   branding?: BrandingConfig & { enabled?: boolean };
   permissions?: Partial<Record<ModuleKey, MemberRole>>;
+  intake_stages?: IntakeStageConfig[];
+  intake_doc_types?: IntakeDocTypeConfig[];
 }
 
 // ============================================================================
@@ -456,20 +470,13 @@ export interface UpdateMemberRequest {
 // Intake / MIP types
 // ============================================================================
 
-export type IntakeStage =
-  | "interested"
-  | "applied"
-  | "under_review"
-  | "chapter_vote"
-  | "national_submission"
-  | "approved"
-  | "crossed";
+// IntakeStage is now a string — stages are configured per chapter.
+// The default NPHC stages are: interested, applied, under_review,
+// chapter_vote, national_submission, approved, crossed.
+export type IntakeStage = string;
 
-export type IntakeDocType =
-  | "transcript"
-  | "background_check"
-  | "recommendation"
-  | "other";
+// IntakeDocType is now a string — doc types are configured per chapter.
+export type IntakeDocType = string;
 
 export interface IntakeCandidate {
   id: string;
@@ -513,8 +520,8 @@ export interface IntakeDocument {
 
 export interface IntakePipelineResponse {
   candidates: IntakeCandidate[];
-  by_stage: Record<IntakeStage, IntakeCandidate[]>;
-  stages: IntakeStage[];
+  by_stage: Record<string, IntakeCandidate[]>;
+  stages: IntakeStageConfig[];
 }
 
 export interface CreateCandidateRequest {

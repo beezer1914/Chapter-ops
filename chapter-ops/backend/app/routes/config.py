@@ -345,6 +345,68 @@ def update_chapter_config():
             validated_perms[module] = role
         current_config["permissions"] = validated_perms
 
+    # ── Intake stages ─────────────────────────────────────────────────
+    if "intake_stages" in data:
+        if not is_president_plus:
+            return jsonify({"error": "Only presidents can configure intake stages."}), 403
+        stages = data["intake_stages"]
+        if not isinstance(stages, list) or len(stages) < 2:
+            return jsonify({"error": "intake_stages must be an array with at least 2 stages."}), 400
+
+        seen_ids = set()
+        terminal_count = 0
+        validated_stages = []
+        VALID_COLORS = {"slate", "sky", "amber", "orange", "purple", "emerald", "rose", "teal", "brand"}
+        for stage in stages:
+            if not isinstance(stage, dict):
+                return jsonify({"error": "Each stage must be an object."}), 400
+            sid = (stage.get("id") or "").strip()
+            label = (stage.get("label") or "").strip()
+            color = (stage.get("color") or "slate").strip()
+            is_terminal = bool(stage.get("is_terminal", False))
+
+            if not sid or not label:
+                return jsonify({"error": "Each stage must have 'id' and 'label'."}), 400
+            if sid in seen_ids:
+                return jsonify({"error": f"Duplicate stage id: {sid}"}), 400
+            if color not in VALID_COLORS:
+                return jsonify({"error": f"Invalid color '{color}'. Must be one of: {', '.join(sorted(VALID_COLORS))}"}), 400
+            if is_terminal:
+                terminal_count += 1
+            seen_ids.add(sid)
+            validated_stages.append({"id": sid, "label": label, "color": color, "is_terminal": is_terminal})
+
+        if terminal_count != 1:
+            return jsonify({"error": "Exactly one stage must be marked as terminal (is_terminal: true)."}), 400
+        if not validated_stages[-1]["is_terminal"]:
+            return jsonify({"error": "The terminal stage must be last in the list."}), 400
+
+        current_config["intake_stages"] = validated_stages
+
+    # ── Intake doc types ──────────────────────────────────────────────
+    if "intake_doc_types" in data:
+        if not is_president_plus:
+            return jsonify({"error": "Only presidents can configure intake document types."}), 403
+        doc_types = data["intake_doc_types"]
+        if not isinstance(doc_types, list) or len(doc_types) < 1:
+            return jsonify({"error": "intake_doc_types must be a non-empty array."}), 400
+
+        seen_ids = set()
+        validated_types = []
+        for dt in doc_types:
+            if not isinstance(dt, dict):
+                return jsonify({"error": "Each doc type must be an object."}), 400
+            dtid = (dt.get("id") or "").strip()
+            label = (dt.get("label") or "").strip()
+            if not dtid or not label:
+                return jsonify({"error": "Each doc type must have 'id' and 'label'."}), 400
+            if dtid in seen_ids:
+                return jsonify({"error": f"Duplicate doc type id: {dtid}"}), 400
+            seen_ids.add(dtid)
+            validated_types.append({"id": dtid, "label": label})
+
+        current_config["intake_doc_types"] = validated_types
+
     # ── Branding ─────────────────────────────────────────────────────
     if "branding" in data:
         branding = data["branding"]

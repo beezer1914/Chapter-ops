@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import Layout from "@/components/Layout";
 import { useAuthStore } from "@/stores/authStore";
+import { useConfigStore } from "@/stores/configStore";
 import {
   fetchPipeline,
   createCandidate,
@@ -13,7 +14,8 @@ import {
 } from "@/services/intakeService";
 import type {
   IntakeCandidate,
-  IntakeStage,
+  IntakeStageConfig,
+  IntakeDocTypeConfig,
   IntakeDocument,
   CreateCandidateRequest,
   UpdateCandidateRequest,
@@ -32,44 +34,30 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// ── Stage config ───────────────────────────────────────────────────────────────
+// ── Color palette for dynamic stages ──────────────────────────────────────────
 
-const STAGES: IntakeStage[] = [
-  "interested",
-  "applied",
-  "under_review",
-  "chapter_vote",
-  "national_submission",
-  "approved",
-  "crossed",
-];
+type StageColor = IntakeStageConfig["color"];
 
-const STAGE_LABELS: Record<IntakeStage, string> = {
-  interested: "Interested",
-  applied: "Applied",
-  under_review: "Under Review",
-  chapter_vote: "Chapter Vote",
-  national_submission: "National Submission",
-  approved: "Approved",
-  crossed: "Crossed",
+const COLOR_CLASSES: Record<StageColor, { bg: string; text: string; dot: string; badge: string }> = {
+  slate:   { bg: "bg-slate-900/30",   text: "text-slate-400",           dot: "bg-slate-400",           badge: "bg-slate-900/30 text-slate-400 border-slate-700" },
+  sky:     { bg: "bg-sky-900/30",     text: "text-sky-400",             dot: "bg-sky-500",             badge: "bg-sky-900/30 text-sky-400 border-sky-700" },
+  amber:   { bg: "bg-amber-900/30",   text: "text-amber-400",           dot: "bg-amber-500",           badge: "bg-amber-900/30 text-amber-400 border-amber-700" },
+  orange:  { bg: "bg-orange-900/30",  text: "text-orange-400",          dot: "bg-orange-500",          badge: "bg-orange-900/30 text-orange-400 border-orange-700" },
+  purple:  { bg: "bg-purple-900/30",  text: "text-purple-400",          dot: "bg-purple-500",          badge: "bg-purple-900/30 text-purple-400 border-purple-700" },
+  emerald: { bg: "bg-emerald-900/30", text: "text-emerald-400",         dot: "bg-emerald-500",         badge: "bg-emerald-900/30 text-emerald-400 border-emerald-700" },
+  rose:    { bg: "bg-rose-900/30",    text: "text-rose-400",            dot: "bg-rose-500",            badge: "bg-rose-900/30 text-rose-400 border-rose-700" },
+  teal:    { bg: "bg-teal-900/30",    text: "text-teal-400",            dot: "bg-teal-500",            badge: "bg-teal-900/30 text-teal-400 border-teal-700" },
+  brand:   { bg: "bg-brand-primary-50", text: "text-brand-primary-dark", dot: "bg-brand-primary-main", badge: "bg-brand-primary-100 text-brand-primary-dark border-brand-primary-200" },
 };
 
-const STAGE_COLORS: Record<IntakeStage, { bg: string; text: string; dot: string; badge: string }> = {
-  interested:          { bg: "bg-slate-900/30",   text: "text-slate-400",  dot: "bg-slate-400",   badge: "bg-slate-900/30 text-slate-400 border-slate-700" },
-  applied:             { bg: "bg-sky-900/30",     text: "text-sky-400",    dot: "bg-sky-500",     badge: "bg-sky-900/30 text-sky-400 border-sky-700" },
-  under_review:        { bg: "bg-amber-900/30",   text: "text-amber-400",  dot: "bg-amber-500",   badge: "bg-amber-900/30 text-amber-400 border-amber-700" },
-  chapter_vote:        { bg: "bg-orange-900/30",  text: "text-orange-400", dot: "bg-orange-500",  badge: "bg-orange-900/30 text-orange-400 border-orange-700" },
-  national_submission: { bg: "bg-purple-900/30",  text: "text-purple-400", dot: "bg-purple-500",  badge: "bg-purple-900/30 text-purple-400 border-purple-700" },
-  approved:            { bg: "bg-emerald-900/30", text: "text-emerald-400",dot: "bg-emerald-500", badge: "bg-emerald-900/30 text-emerald-400 border-emerald-700" },
-  crossed:             { bg: "bg-brand-primary-50", text: "text-brand-primary-dark", dot: "bg-brand-primary-main", badge: "bg-brand-primary-100 text-brand-primary-dark border-brand-primary-200" },
-};
+function stageColors(stage: IntakeStageConfig) {
+  return COLOR_CLASSES[stage.color] ?? COLOR_CLASSES.slate;
+}
 
-const DOC_TYPE_LABELS: Record<string, string> = {
-  transcript: "Transcript",
-  background_check: "Background Check",
-  recommendation: "Recommendation Letter",
-  other: "Other",
-};
+function stageColorsById(id: string, stages: IntakeStageConfig[]) {
+  const stage = stages.find((s) => s.id === id);
+  return stageColors(stage ?? { id, label: id, color: "slate", is_terminal: false });
+}
 
 const LINE_SEASONS = [
   "Spring 2025 Line", "Fall 2025 Line",
@@ -79,16 +67,18 @@ const LINE_SEASONS = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function nextStage(stage: IntakeStage): IntakeStage | null {
-  const idx = STAGES.indexOf(stage);
-  if (idx === -1 || idx >= STAGES.length - 2) return null; // can't advance past "approved" manually
-  return STAGES[idx + 1] as IntakeStage;
+function nextStage(stageId: string, stages: IntakeStageConfig[]): string | null {
+  const idx = stages.findIndex((s) => s.id === stageId);
+  // Can't manually advance to terminal stage (use Cross button) or past end
+  if (idx === -1 || idx >= stages.length - 2) return null;
+  return stages[idx + 1]!.id;
 }
 
-function prevStage(stage: IntakeStage): IntakeStage | null {
-  const idx = STAGES.indexOf(stage);
-  if (idx <= 0 || stage === "crossed") return null;
-  return STAGES[idx - 1] as IntakeStage;
+function prevStage(stageId: string, stages: IntakeStageConfig[]): string | null {
+  const idx = stages.findIndex((s) => s.id === stageId);
+  const stage = stages[idx];
+  if (idx <= 0 || stage?.is_terminal) return null;
+  return stages[idx - 1]!.id;
 }
 
 function formatFileSize(bytes: number): string {
@@ -101,15 +91,20 @@ function formatFileSize(bytes: number): string {
 
 export default function Intake() {
   const { memberships, user } = useAuthStore();
+  const { getIntakeStages, getIntakeDocTypes } = useConfigStore();
+  const stages = getIntakeStages();
+  const docTypes = getIntakeDocTypes();
+  const firstStageId = stages[0]?.id ?? "interested";
+
   const currentMembership = memberships.find(
     (m) => m.chapter_id === user?.active_chapter_id
   );
   const isPresident = currentMembership?.role === "president";
 
-  const [byStage, setByStage] = useState<Record<IntakeStage, IntakeCandidate[]>>(
-    Object.fromEntries(STAGES.map((s) => [s, []])) as Record<IntakeStage, IntakeCandidate[]>
+  const [byStage, setByStage] = useState<Record<string, IntakeCandidate[]>>(
+    Object.fromEntries(stages.map((s) => [s.id, []]))
   );
-  const [activeStage, setActiveStage] = useState<IntakeStage>("interested");
+  const [activeStage, setActiveStage] = useState<string>(firstStageId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -143,7 +138,7 @@ export default function Intake() {
   }
 
   async function handleAdvance(candidate: IntakeCandidate) {
-    const next = nextStage(candidate.stage);
+    const next = nextStage(candidate.stage, stages);
     if (!next) return;
     try {
       const updated = await updateCandidate(candidate.id, { stage: next });
@@ -155,7 +150,7 @@ export default function Intake() {
   }
 
   async function handleRevert(candidate: IntakeCandidate) {
-    const prev = prevStage(candidate.stage);
+    const prev = prevStage(candidate.stage, stages);
     if (!prev) return;
     try {
       const updated = await updateCandidate(candidate.id, { stage: prev });
@@ -172,7 +167,9 @@ export default function Intake() {
       await deactivateCandidate(candidate.id);
       setByStage((prev) => {
         const updated = { ...prev };
-        updated[candidate.stage] = updated[candidate.stage].filter((c) => c.id !== candidate.id);
+        if (updated[candidate.stage]) {
+          updated[candidate.stage] = updated[candidate.stage]!.filter((c) => c.id !== candidate.id);
+        }
         return updated;
       });
       if (detailCandidate?.id === candidate.id) setDetailCandidate(null);
@@ -185,17 +182,17 @@ export default function Intake() {
     setByStage((prev) => {
       const next = { ...prev };
       // Remove from all stages first
-      for (const s of STAGES) {
-        next[s] = next[s].filter((c) => c.id !== updated.id);
+      for (const s of stages) {
+        if (next[s.id]) next[s.id] = next[s.id]!.filter((c) => c.id !== updated.id);
       }
-      // Add to correct stage
-      next[updated.stage] = [...next[updated.stage], updated];
+      // Add to correct stage (create bucket if it doesn't exist)
+      next[updated.stage] = [...(next[updated.stage] ?? []), updated];
       return next;
     });
   }
 
   const stageCandidates = byStage[activeStage] ?? [];
-  const totalCount = STAGES.reduce((sum, s) => sum + (byStage[s]?.length ?? 0), 0);
+  const totalCount = stages.reduce((sum, s) => sum + (byStage[s.id]?.length ?? 0), 0);
 
   return (
     <Layout>
@@ -229,14 +226,14 @@ export default function Intake() {
 
         {/* Stage tabs */}
         <div className="flex gap-1 overflow-x-auto pb-1 mb-6 scrollbar-hide">
-          {STAGES.map((stage) => {
-            const count = byStage[stage]?.length ?? 0;
-            const colors = STAGE_COLORS[stage];
-            const isActive = stage === activeStage;
+          {stages.map((stage) => {
+            const count = byStage[stage.id]?.length ?? 0;
+            const colors = stageColors(stage);
+            const isActive = stage.id === activeStage;
             return (
               <button
-                key={stage}
-                onClick={() => setActiveStage(stage)}
+                key={stage.id}
+                onClick={() => setActiveStage(stage.id)}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all border ${
                   isActive
                     ? `${colors.bg} ${colors.text} border-current/20 shadow-glass`
@@ -244,7 +241,7 @@ export default function Intake() {
                 }`}
               >
                 <span className={`w-2 h-2 rounded-full ${isActive ? colors.dot : "bg-content-muted"}`} />
-                {STAGE_LABELS[stage]}
+                {stage.label}
                 {count > 0 && (
                   <span className={`text-xs px-1.5 py-0.5 rounded-md font-bold ${isActive ? "bg-white/60" : "bg-white/10"}`}>
                     {count}
@@ -266,10 +263,10 @@ export default function Intake() {
               <UserPlus className="w-7 h-7 text-content-muted" />
             </div>
             <h3 className="text-base font-semibold text-content-primary mb-1">
-              No candidates in {STAGE_LABELS[activeStage]}
+              No candidates in {stages.find((s) => s.id === activeStage)?.label ?? activeStage}
             </h3>
             <p className="text-sm text-content-secondary">
-              {activeStage === "interested"
+              {activeStage === firstStageId
                 ? "Add a candidate to start the pipeline."
                 : "Advance candidates from earlier stages."}
             </p>
@@ -280,6 +277,7 @@ export default function Intake() {
               <CandidateCard
                 key={c.id}
                 candidate={c}
+                stages={stages}
                 isPresident={isPresident}
                 onOpen={() => openDetail(c)}
                 onAdvance={() => handleAdvance(c)}
@@ -295,6 +293,7 @@ export default function Intake() {
       {/* Add Candidate Modal */}
       {addOpen && (
         <AddCandidateModal
+          stages={stages}
           onClose={() => setAddOpen(false)}
           onCreated={(c) => {
             refreshCandidate(c);
@@ -308,6 +307,8 @@ export default function Intake() {
       {detailCandidate && !crossOpen && (
         <CandidateDetailModal
           candidate={detailCandidate}
+          stages={stages}
+          docTypes={docTypes}
           isPresident={isPresident}
           onClose={() => setDetailCandidate(null)}
           onUpdated={(updated) => {
@@ -355,9 +356,10 @@ export default function Intake() {
 // ── Candidate Card ─────────────────────────────────────────────────────────────
 
 function CandidateCard({
-  candidate, isPresident, onOpen, onAdvance, onRevert, onCross, onDeactivate,
+  candidate, stages, isPresident, onOpen, onAdvance, onRevert, onCross, onDeactivate,
 }: {
   candidate: IntakeCandidate;
+  stages: IntakeStageConfig[];
   isPresident: boolean;
   onOpen: () => void;
   onAdvance: () => void;
@@ -365,10 +367,12 @@ function CandidateCard({
   onCross: () => void;
   onDeactivate: () => void;
 }) {
-  const colors = STAGE_COLORS[candidate.stage];
-  const canAdvance = candidate.stage !== "crossed" && candidate.stage !== "approved";
-  const canCross = candidate.stage === "approved" && isPresident;
-  const canRevert = candidate.stage !== "interested" && candidate.stage !== "crossed";
+  const colors = stageColorsById(candidate.stage, stages);
+  const stageLabel = stages.find((s) => s.id === candidate.stage)?.label ?? candidate.stage;
+  const canAdvance = nextStage(candidate.stage, stages) !== null;
+  const canCross = stages[stages.length - 2]?.id === candidate.stage && isPresident;
+  const canRevert = prevStage(candidate.stage, stages) !== null;
+  const isTerminal = stages.find((s) => s.id === candidate.stage)?.is_terminal ?? false;
 
   return (
     <div
@@ -385,7 +389,7 @@ function CandidateCard({
         </div>
         <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${colors.badge}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-          {STAGE_LABELS[candidate.stage]}
+          {stageLabel}
         </span>
       </div>
 
@@ -433,7 +437,7 @@ function CandidateCard({
         ) : (
           <div className="flex-1" />
         )}
-        {isPresident && (
+        {isPresident && !isTerminal && (
           <button
             onClick={onDeactivate}
             className="p-1.5 text-content-muted hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
@@ -450,11 +454,12 @@ function CandidateCard({
 // ── Add Candidate Modal ────────────────────────────────────────────────────────
 
 function AddCandidateModal({
-  onClose, onCreated,
-}: { onClose: () => void; onCreated: (c: IntakeCandidate) => void }) {
+  stages, onClose, onCreated,
+}: { stages: IntakeStageConfig[]; onClose: () => void; onCreated: (c: IntakeCandidate) => void }) {
+  const firstNonTerminalId = stages.find((s) => !s.is_terminal)?.id ?? "interested";
   const [form, setForm] = useState<CreateCandidateRequest>({
     first_name: "", last_name: "", email: "", phone: "",
-    stage: "interested", semester: "", gpa: undefined, notes: "",
+    stage: firstNonTerminalId, semester: "", gpa: undefined, notes: "",
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -541,10 +546,10 @@ function AddCandidateModal({
             <div>
               <label className="block text-xs font-semibold text-content-secondary mb-1">Initial Stage</label>
               <select value={form.stage}
-                onChange={(e) => setForm((f) => ({ ...f, stage: e.target.value as IntakeStage }))}
+                onChange={(e) => setForm((f) => ({ ...f, stage: e.target.value }))}
                 className="w-full rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm bg-surface-input focus:bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
-                {STAGES.filter((s) => s !== "crossed").map((s) => (
-                  <option key={s} value={s}>{STAGE_LABELS[s]}</option>
+                {stages.filter((s) => !s.is_terminal).map((s) => (
+                  <option key={s.id} value={s.id}>{s.label}</option>
                 ))}
               </select>
             </div>
@@ -585,9 +590,11 @@ function AddCandidateModal({
 // ── Candidate Detail Modal ─────────────────────────────────────────────────────
 
 function CandidateDetailModal({
-  candidate, isPresident, onClose, onUpdated, onAdvance, onRevert, onCross, onDeactivate, onDocumentChange,
+  candidate, stages, docTypes, isPresident, onClose, onUpdated, onAdvance, onRevert, onCross, onDeactivate, onDocumentChange,
 }: {
   candidate: IntakeCandidate;
+  stages: IntakeStageConfig[];
+  docTypes: IntakeDocTypeConfig[];
   isPresident: boolean;
   onClose: () => void;
   onUpdated: (c: IntakeCandidate) => void;
@@ -614,13 +621,15 @@ function CandidateDetailModal({
   const [uploadOpen, setUploadOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadTitle, setUploadTitle] = useState("");
-  const [uploadType, setUploadType] = useState("other");
+  const [uploadType, setUploadType] = useState(() => docTypes[docTypes.length - 1]?.id ?? "other");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const canAdvance = candidate.stage !== "crossed" && candidate.stage !== "approved";
-  const canCross = candidate.stage === "approved" && isPresident;
-  const canRevert = candidate.stage !== "interested" && candidate.stage !== "crossed";
+  const canAdvance = nextStage(candidate.stage, stages) !== null;
+  const canCross = stages[stages.length - 2]?.id === candidate.stage && isPresident;
+  const canRevert = prevStage(candidate.stage, stages) !== null;
+  const isTerminal = stages.find((s) => s.id === candidate.stage)?.is_terminal ?? false;
+  const stageLabel = stages.find((s) => s.id === candidate.stage)?.label ?? candidate.stage;
 
   async function handleSave() {
     setSaving(true);
@@ -653,7 +662,7 @@ function CandidateDetailModal({
       await onDocumentChange();
       setUploadOpen(false);
       setUploadTitle("");
-      setUploadType("other");
+      setUploadType(docTypes[docTypes.length - 1]?.id ?? "other");
       setUploadFile(null);
     } catch {
       setErr("Failed to upload document.");
@@ -672,7 +681,7 @@ function CandidateDetailModal({
     }
   }
 
-  const colors = STAGE_COLORS[candidate.stage];
+  const colors = stageColorsById(candidate.stage, stages);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 backdrop-blur-sm p-4">
@@ -685,7 +694,7 @@ function CandidateDetailModal({
               <h3 className="text-lg font-heading font-bold text-content-primary">{candidate.full_name}</h3>
               <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${colors.badge}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-                {STAGE_LABELS[candidate.stage]}
+                {stageLabel}
               </span>
             </div>
             <p className="text-sm text-content-secondary mt-0.5">{candidate.email}</p>
@@ -815,7 +824,7 @@ function CandidateDetailModal({
                     <label className="block text-xs font-semibold text-content-secondary mb-1">Type</label>
                     <select value={uploadType} onChange={(e) => setUploadType(e.target.value)}
                       className="w-full rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm bg-surface-input focus:outline-none focus:ring-2 focus:ring-brand-primary-main">
-                      {Object.entries(DOC_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      {docTypes.map((dt) => <option key={dt.id} value={dt.id}>{dt.label}</option>)}
                     </select>
                   </div>
                 </div>
@@ -852,7 +861,7 @@ function CandidateDetailModal({
                           {doc.title}
                         </a>
                         <p className="text-xs text-content-muted">
-                          {DOC_TYPE_LABELS[doc.document_type]} · {formatFileSize(doc.file_size)}
+                          {docTypes.find((dt) => dt.id === doc.document_type)?.label ?? doc.document_type} · {formatFileSize(doc.file_size)}
                         </p>
                       </div>
                     </div>
@@ -889,7 +898,7 @@ function CandidateDetailModal({
               </button>
             )}
           </div>
-          {isPresident && candidate.stage !== "crossed" && (
+          {isPresident && !isTerminal && (
             <button onClick={() => { onDeactivate(); onClose(); }}
               className="text-sm text-red-400 hover:text-red-300 font-medium">
               Remove from pipeline
