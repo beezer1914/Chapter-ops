@@ -25,6 +25,7 @@ import Intake from "@/pages/Intake";
 import Expenses from "@/pages/Expenses";
 import Lineage from "@/pages/Lineage";
 import Landing from "@/pages/Landing";
+import LegalPage from "@/pages/LegalPage";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import StripeCallback from "@/pages/StripeCallback";
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/legal/:doc" element={<LegalPage />} />
 
         {/* Protected: requires auth but NOT a chapter */}
         <Route

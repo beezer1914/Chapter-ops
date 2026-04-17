@@ -43,7 +43,12 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       const currentPath = window.location.pathname;
-      if (currentPath !== "/" && currentPath !== "/login" && currentPath !== "/register" && !currentPath.startsWith("/e/")) {
+      const publicPaths = ["/", "/login", "/register", "/forgot-password", "/reset-password"];
+      const isPublic =
+        publicPaths.includes(currentPath) ||
+        currentPath.startsWith("/e/") ||
+        currentPath.startsWith("/legal/");
+      if (!isPublic) {
         window.location.href = "/login";
       }
     }

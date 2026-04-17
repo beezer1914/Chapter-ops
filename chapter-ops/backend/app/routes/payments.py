@@ -300,6 +300,7 @@ def create_dues_checkout():
                 "notes": data.get("notes", ""),
                 "invoice_id": data.get("invoice_id", ""),
             },
+            stripe_account=chapter.stripe_account_id,
         )
     except stripe.error.StripeError as e:
         return jsonify({"error": str(e.user_message or e)}), 502
@@ -378,6 +379,7 @@ def create_installment_checkout(plan_id: str):
                 "user_id": plan.user_id,
                 "plan_id": plan_id,
             },
+            stripe_account=chapter.stripe_account_id,
         )
     except stripe.error.StripeError as e:
         return jsonify({"error": str(e.user_message or e)}), 502

@@ -12,7 +12,10 @@
       "mcp__plugin_figma_figma__whoami",
       "mcp__plugin_figma_figma__create_new_file",
       "mcp__plugin_figma_figma__use_figma",
-      "mcp__plugin_figma_figma__get_screenshot"
+      "mcp__plugin_figma_figma__get_screenshot",
+      "Bash(wc -l /c/Users/bholi/Chapter-ops/chapter-ops/frontend/src/pages/*.tsx)",
+      "Bash(wc -l /c/Users/bholi/Chapter-ops/chapter-ops/backend/app/routes/*.py)",
+      "mcp__plugin_playwright_playwright__browser_console_messages"
     ]
   }
 }

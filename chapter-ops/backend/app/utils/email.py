@@ -1,5 +1,5 @@
 """
-Email sending utilities via SendGrid.
+Email sending utilities via Resend.
 
 Usage:
     from app.utils.email import send_email, send_invite_email
@@ -10,11 +10,15 @@ not raised, so a failed email never breaks the request that triggered it).
 
 import logging
 
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+import resend
 from flask import current_app
 
 logger = logging.getLogger(__name__)
+
+
+def _client() -> None:
+    """Set the Resend API key from app config (must be called inside a request context)."""
+    resend.api_key = current_app.config["RESEND_API_KEY"]
 
 
 def send_email(
@@ -24,29 +28,28 @@ def send_email(
     from_email: str | None = None,
 ) -> bool:
     """
-    Send an email via SendGrid.
+    Send an email via Resend.
 
     Args:
         to: Recipient address or list of addresses.
         subject: Email subject line.
         html: HTML body content.
-        from_email: Sender address. Defaults to SENDGRID_FROM_EMAIL config value.
+        from_email: Sender address. Defaults to RESEND_FROM_EMAIL config value.
 
     Returns:
-        True if the email was accepted by SendGrid, False otherwise.
+        True if the email was accepted by Resend, False otherwise.
     """
-    sender = from_email or current_app.config["SENDGRID_FROM_EMAIL"]
+    _client()
+    sender = from_email or current_app.config["RESEND_FROM_EMAIL"]
     recipients = [to] if isinstance(to, str) else to
 
     try:
-        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
-        message = Mail(
-            from_email=sender,
-            to_emails=recipients,
-            subject=subject,
-            html_content=html,
-        )
-        sg.send(message)
+        resend.Emails.send({
+            "from": sender,
+            "to": recipients,
+            "subject": subject,
+            "html": html,
+        })
         logger.info(f"Email sent: '{subject}' → {recipients}")
         return True
     except Exception as exc:
@@ -142,14 +145,13 @@ def send_chapter_data_export_email(
     donations_csv: str,
 ) -> bool:
     """
-    Send a chapter data export email with CSV attachments via SendGrid.
+    Send a chapter data export email with CSV attachments via Resend.
 
     Called when a president requests chapter deletion. The 30-day grace
     period gives the chapter time to download their data before purge.
     """
-    import base64
-
-    sender = current_app.config["SENDGRID_FROM_EMAIL"]
+    _client()
+    sender = current_app.config["RESEND_FROM_EMAIL"]
 
     html = f"""
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
@@ -174,34 +176,17 @@ def send_chapter_data_export_email(
     """
 
     try:
-        from sendgrid import SendGridAPIClient
-        from sendgrid.helpers.mail import (
-            Mail, Attachment, FileContent, FileName, FileType, Disposition
-        )
-
-        message = Mail(
-            from_email=sender,
-            to_emails=to,
-            subject=f"Chapter Data Export — {chapter_name} (deletion scheduled {deletion_date})",
-            html_content=html,
-        )
-
-        for filename, csv_content in [
-            ("members.csv", members_csv),
-            ("payments.csv", payments_csv),
-            ("donations.csv", donations_csv),
-        ]:
-            encoded = base64.b64encode(csv_content.encode()).decode()
-            attachment = Attachment(
-                FileContent(encoded),
-                FileName(filename),
-                FileType("text/csv"),
-                Disposition("attachment"),
-            )
-            message.add_attachment(attachment)
-
-        sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
-        sg.send(message)
+        resend.Emails.send({
+            "from": sender,
+            "to": [to],
+            "subject": f"Chapter Data Export — {chapter_name} (deletion scheduled {deletion_date})",
+            "html": html,
+            "attachments": [
+                {"filename": "members.csv", "content": list(members_csv.encode("utf-8"))},
+                {"filename": "payments.csv", "content": list(payments_csv.encode("utf-8"))},
+                {"filename": "donations.csv", "content": list(donations_csv.encode("utf-8"))},
+            ],
+        })
         logger.info(f"Chapter data export email sent to {to} for '{chapter_name}'")
         return True
     except Exception as exc:

@@ -44,6 +44,7 @@ import {
 
 const ROLE_HIERARCHY: Record<MemberRole, number> = {
   member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
+  regional_director: 3, regional_1st_vice: 2,
 };
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
@@ -75,13 +76,6 @@ function formatDateTime(iso: string): string {
   });
 }
 
-function formatDateShort(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 type Tab = "upcoming" | "past" | "my_rsvps" | "service_hours";
 
@@ -408,7 +402,7 @@ export default function Events() {
               </div>
 
               {isOfficer && (
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-2">
                   {selectedEvent.is_public && selectedEvent.public_slug && (
                     <button
                       onClick={() => copyPublicLink(selectedEvent)}
@@ -501,42 +495,39 @@ export default function Events() {
               ) : attendees.length === 0 ? (
                 <div className="py-12 text-center text-sm text-content-muted">No RSVPs yet.</div>
               ) : (
-                <table className="min-w-full">
-                  <thead className="bg-white/5">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Attendee</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">RSVP</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Payment</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Check-In</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
+                <>
+                  {/* Mobile card list */}
+                  <div className="md:hidden divide-y divide-[var(--color-border)]">
                     {attendees.map((attendance) => (
-                      <tr key={attendance.id} className="hover:bg-white/5/50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
+                      <div key={attendance.id} className="p-4 space-y-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
                             {attendance.user?.profile_picture_url ? (
-                              <img
-                                src={attendance.user.profile_picture_url}
-                                alt={attendance.user.full_name}
-                                className="w-8 h-8 rounded-full object-cover"
-                              />
+                              <img src={attendance.user.profile_picture_url} alt={attendance.user.full_name} className="w-9 h-9 rounded-full object-cover shrink-0" />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-primary-light to-brand-primary-main flex items-center justify-center text-white text-xs font-bold">
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-primary-light to-brand-primary-main flex items-center justify-center text-white text-xs font-bold shrink-0">
                                 {(attendance.user?.full_name ?? attendance.attendee_name ?? "?")[0]}
                               </div>
                             )}
-                            <div>
-                              <p className="text-sm font-medium text-content-primary">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-content-primary truncate">
                                 {attendance.user?.full_name ?? attendance.attendee_name ?? "Unknown"}
                               </p>
-                              <p className="text-xs text-content-secondary">
+                              <p className="text-xs text-content-muted truncate">
                                 {attendance.user?.email ?? attendance.attendee_email}
                               </p>
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => void handleToggleCheckIn(selectedEvent.id, attendance.id)}
+                            className="flex items-center gap-1 shrink-0 py-1"
+                          >
+                            {attendance.checked_in
+                              ? <CheckCircle className="w-5 h-5 text-green-500" />
+                              : <Circle className="w-5 h-5 text-content-muted" />}
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap pl-11">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                             attendance.rsvp_status === "going" ? "bg-green-900/30 text-green-400" :
                             attendance.rsvp_status === "maybe" ? "bg-yellow-900/30 text-yellow-400" :
@@ -544,8 +535,6 @@ export default function Events() {
                           }`}>
                             {RSVP_LABELS[attendance.rsvp_status]}
                           </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
                           {selectedEvent.is_paid ? (
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                               attendance.payment_status === "paid" ? "bg-green-900/30 text-green-400" :
@@ -557,29 +546,91 @@ export default function Events() {
                           ) : (
                             <span className="text-xs text-content-muted">Free</span>
                           )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => void handleToggleCheckIn(selectedEvent.id, attendance.id)}
-                            className="flex items-center gap-1.5 text-sm transition-colors"
-                          >
-                            {attendance.checked_in ? (
-                              <>
-                                <CheckCircle className="w-5 h-5 text-green-500" />
-                                <span className="text-green-400 font-medium">Checked In</span>
-                              </>
-                            ) : (
-                              <>
-                                <Circle className="w-5 h-5 text-content-muted" />
-                                <span className="text-content-muted">Not Checked In</span>
-                              </>
-                            )}
-                          </button>
-                        </td>
-                      </tr>
+                          {attendance.checked_in && (
+                            <span className="text-xs text-green-400 font-medium">Checked In</span>
+                          )}
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+
+                  {/* Desktop table */}
+                  <table className="hidden md:table min-w-full">
+                    <thead className="bg-white/5">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Attendee</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">RSVP</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Payment</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Check-In</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {attendees.map((attendance) => (
+                        <tr key={attendance.id} className="hover:bg-white/5/50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              {attendance.user?.profile_picture_url ? (
+                                <img src={attendance.user.profile_picture_url} alt={attendance.user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-primary-light to-brand-primary-main flex items-center justify-center text-white text-xs font-bold">
+                                  {(attendance.user?.full_name ?? attendance.attendee_name ?? "?")[0]}
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-sm font-medium text-content-primary">
+                                  {attendance.user?.full_name ?? attendance.attendee_name ?? "Unknown"}
+                                </p>
+                                <p className="text-xs text-content-secondary">
+                                  {attendance.user?.email ?? attendance.attendee_email}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              attendance.rsvp_status === "going" ? "bg-green-900/30 text-green-400" :
+                              attendance.rsvp_status === "maybe" ? "bg-yellow-900/30 text-yellow-400" :
+                              "bg-gray-800/50 text-content-muted"
+                            }`}>
+                              {RSVP_LABELS[attendance.rsvp_status]}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {selectedEvent.is_paid ? (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                attendance.payment_status === "paid" ? "bg-green-900/30 text-green-400" :
+                                attendance.payment_status === "pending" ? "bg-yellow-900/30 text-yellow-400" :
+                                "bg-gray-800/50 text-content-muted"
+                              }`}>
+                                {attendance.payment_status.charAt(0).toUpperCase() + attendance.payment_status.slice(1)}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-content-muted">Free</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() => void handleToggleCheckIn(selectedEvent.id, attendance.id)}
+                              className="flex items-center gap-1.5 text-sm transition-colors"
+                            >
+                              {attendance.checked_in ? (
+                                <>
+                                  <CheckCircle className="w-5 h-5 text-green-500" />
+                                  <span className="text-green-400 font-medium">Checked In</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Circle className="w-5 h-5 text-content-muted" />
+                                  <span className="text-content-muted">Not Checked In</span>
+                                </>
+                              )}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
             </div>
           )}
@@ -596,15 +647,15 @@ export default function Events() {
     <Layout>
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1">
             <h1 className="text-3xl font-bold text-content-primary font-heading">Events</h1>
             <p className="text-content-secondary mt-1">Manage chapter events and attendance.</p>
           </div>
           {isOfficer && (
             <button
               onClick={openCreateForm}
-              className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary-main text-white font-semibold rounded-xl shadow-glass ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark transition-colors"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-primary-main text-white font-semibold rounded-xl shadow-glass ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark transition-colors sm:w-auto w-full"
             >
               <Plus className="w-4 h-4" />
               Create Event
@@ -620,7 +671,8 @@ export default function Events() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
+        <div className="overflow-x-auto pb-0.5">
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit min-w-0">
           {(isOfficer
             ? [["upcoming", "Upcoming"], ["past", "Past"], ["service_hours", "Service Hours"]]
             : [["upcoming", "Upcoming"], ["my_rsvps", "My RSVPs"]]
@@ -637,6 +689,7 @@ export default function Events() {
               {label}
             </button>
           ))}
+        </div>
         </div>
 
         {/* Service Hours tab content */}
@@ -1122,7 +1175,7 @@ function EventFormModal({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-content-secondary mb-1">Start Date & Time *</label>
               <input
@@ -1165,7 +1218,7 @@ function EventFormModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-content-secondary mb-1">Capacity (optional)</label>
               <input
@@ -1239,17 +1292,17 @@ function EventFormModal({
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex justify-end gap-3">
+        <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex flex-col-reverse sm:flex-row justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-xl hover:bg-white/5 transition-colors"
+            className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-xl hover:bg-white/5 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onSave}
             disabled={saving}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-brand-primary-main rounded-xl hover:bg-brand-primary-dark disabled:opacity-50 transition-colors"
+            className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-white bg-brand-primary-main rounded-xl hover:bg-brand-primary-dark disabled:opacity-50 transition-colors"
           >
             {saving ? "Saving…" : editingEvent ? "Save Changes" : "Create Event"}
           </button>

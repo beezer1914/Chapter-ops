@@ -171,6 +171,7 @@ def create_donation_checkout():
                 "donor_email": donor_email,
                 "notes": data.get("notes", ""),
             },
+            stripe_account=chapter.stripe_account_id,
         )
     except stripe.error.StripeError as e:
         return jsonify({"error": str(e.user_message or e)}), 502

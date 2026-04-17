@@ -67,7 +67,8 @@ export default function Communications() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
+        <div className="overflow-x-auto pb-0.5">
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit min-w-0">
           <button
             onClick={() => setTab("announcements")}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
@@ -88,6 +89,7 @@ export default function Communications() {
               Email Blast
             </button>
           )}
+        </div>
         </div>
 
         {tab === "announcements" && (
@@ -388,8 +390,8 @@ function AnnouncementFormModal({
             />
           </div>
 
-          <div className="flex items-center gap-6">
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-content-secondary">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-content-secondary shrink-0">
               <input
                 type="checkbox"
                 checked={isPinned}
@@ -410,18 +412,18 @@ function AnnouncementFormModal({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5 transition-colors"
+              className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2 text-sm font-medium text-white bg-brand-primary-main rounded-lg hover:bg-brand-primary-dark disabled:opacity-50 transition-colors"
+              className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-white bg-brand-primary-main rounded-lg hover:bg-brand-primary-dark disabled:opacity-50 transition-colors"
             >
               {saving ? "Saving…" : editing ? "Save Changes" : "Post Announcement"}
             </button>

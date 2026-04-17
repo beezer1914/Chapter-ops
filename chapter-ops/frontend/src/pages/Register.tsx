@@ -21,6 +21,9 @@ const registerSchema = z
     phone: z.string().optional(),
     invite_code: z.string().optional(),
     initiation_date: z.string().optional(),
+    accept_terms: z.boolean().refine((val) => val === true, {
+      message: "You must agree to the Terms of Service and Privacy Policy to continue.",
+    }),
   })
   .refine((data) => data.password === data.confirm_password, {
     message: "Passwords do not match",
@@ -58,6 +61,7 @@ export default function Register() {
       phone: "",
       invite_code: "",
       initiation_date: "",
+      accept_terms: false,
     },
   });
 
@@ -235,6 +239,35 @@ export default function Register() {
             <p className="mt-1 text-xs text-content-secondary">
               Have an invite code from your chapter? Enter it here to join automatically.
             </p>
+          </div>
+
+          <div>
+            <label htmlFor="accept_terms" className="flex items-start gap-2 cursor-pointer">
+              <input
+                id="accept_terms"
+                type="checkbox"
+                {...register("accept_terms")}
+                className="mt-1 shrink-0"
+              />
+              <span className="text-xs text-content-secondary leading-relaxed">
+                I agree to the{" "}
+                <Link to="/legal/terms" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">
+                  Terms of Service
+                </Link>
+                ,{" "}
+                <Link to="/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">
+                  Privacy Policy
+                </Link>
+                , and{" "}
+                <Link to="/legal/cookies" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">
+                  Cookie Policy
+                </Link>
+                .
+              </span>
+            </label>
+            {errors.accept_terms && (
+              <p className="mt-1 text-xs text-red-400">{errors.accept_terms.message}</p>
+            )}
           </div>
 
           <button

@@ -51,14 +51,9 @@ class BaseConfig:
         os.environ.get("STRIPE_PLATFORM_FEE_PERCENT", "0")
     )
 
-    # SendGrid (Email)
-    SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
-    SENDGRID_FROM_EMAIL = os.environ.get("SENDGRID_FROM_EMAIL", "noreply@chapterops.com")
-
-    # Twilio
-    TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
-    TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
-    TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER", "")
+    # Resend (Email)
+    RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+    RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "noreply@chapterops.com")
 
     # S3-Compatible Storage
     S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", "chapterops-files")

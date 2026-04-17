@@ -20,8 +20,7 @@ redis==5.2.1
 stripe==11.4.1
 
 # Communications
-sendgrid==6.11.0
-twilio==9.4.0
+resend==2.10.0
 
 # Storage
 boto3==1.35.86

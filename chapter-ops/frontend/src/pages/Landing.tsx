@@ -1,5 +1,7 @@
+import React from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
+import CookieBanner from "@/components/CookieBanner";
 import {
   ArrowRight,
   Users,
@@ -98,7 +100,17 @@ export default function Landing() {
   if (user) return <Navigate to="/dashboard" replace />;
 
   return (
-    <div className="min-h-screen font-body bg-surface-deep text-white overflow-x-hidden">
+    <div
+      className="min-h-screen font-body bg-surface-deep text-white overflow-x-hidden"
+      style={{
+        "--color-bg-deep": "#07101e",
+        "--color-text-primary": "rgba(255, 255, 255, 0.88)",
+        "--color-text-secondary": "rgba(255, 255, 255, 0.68)",
+        "--color-text-muted": "rgba(255, 255, 255, 0.50)",
+        "--color-text-heading": "#ffffff",
+        "--color-border": "rgba(255, 255, 255, 0.07)",
+      } as React.CSSProperties}
+    >
 
       {/* ── NAV ─────────────────────────────────────── */}
       <nav className="fixed top-0 inset-x-0 z-50 bg-surface-deep/80 backdrop-blur-xl border-b border-white/[0.06]">
@@ -524,22 +536,33 @@ export default function Landing() {
 
       {/* ── FOOTER ──────────────────────────────────── */}
       <footer className="border-t border-white/[0.06] py-10 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <span className="font-heading font-semibold text-lg text-white">
-              Chapter<span className="text-brand-primary-light">Ops</span>
-            </span>
-            <span className="text-[12px] text-content-muted">© {CURRENT_YEAR}</span>
+        <div className="max-w-7xl mx-auto flex flex-col gap-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2">
+              <span className="font-heading font-semibold text-lg text-white">
+                Chapter<span className="text-brand-primary-light">Ops</span>
+              </span>
+              <span className="text-[12px] text-content-muted">© {CURRENT_YEAR} Blue Column Systems LLC</span>
+            </div>
+            <div className="flex items-center gap-8 text-[13px] text-content-muted">
+              {NAV_LINKS.map(({ href, label }) => (
+                <a key={href} href={href} className="hover:text-white transition-colors">{label}</a>
+              ))}
+              <Link to="/login" className="hover:text-white transition-colors">Sign In</Link>
+            </div>
           </div>
-          <div className="flex items-center gap-8 text-[13px] text-content-muted">
-            {NAV_LINKS.map(({ href, label }) => (
-              <a key={href} href={href} className="hover:text-white transition-colors">{label}</a>
-            ))}
-            <Link to="/login" className="hover:text-white transition-colors">Sign In</Link>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 border-t border-white/[0.04] text-[12px] text-content-muted">
+            <span>A Blue Column Systems product.</span>
+            <div className="flex items-center gap-6">
+              <Link to="/legal/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              <Link to="/legal/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link to="/legal/cookies" className="hover:text-white transition-colors">Cookie Policy</Link>
+            </div>
           </div>
         </div>
       </footer>
 
+      <CookieBanner />
     </div>
   );
 }
