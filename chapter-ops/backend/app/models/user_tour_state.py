@@ -26,7 +26,6 @@ class UserTourState(BaseModel):
         ForeignKey("user.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,
-        index=True,
     )
     seen: Mapped[dict[str, Any]] = mapped_column(
         JSON().with_variant(JSONB(), "postgresql"),

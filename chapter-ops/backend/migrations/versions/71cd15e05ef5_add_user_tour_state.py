@@ -27,9 +27,7 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("user_id"),
     )
-    op.create_index("ix_user_tour_state_user_id", "user_tour_state", ["user_id"])
 
 
 def downgrade():
-    op.drop_index("ix_user_tour_state_user_id", table_name="user_tour_state")
     op.drop_table("user_tour_state")
