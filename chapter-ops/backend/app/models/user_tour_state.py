@@ -32,6 +32,7 @@ class UserTourState(BaseModel):
         JSON().with_variant(JSONB(), "postgresql"),
         nullable=False,
         default=dict,
+        server_default=db.text("'{}'"),
     )
 
     user = relationship("User", backref=db.backref("tour_state", uselist=False))
