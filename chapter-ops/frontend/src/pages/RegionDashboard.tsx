@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { Map, Building2, Users } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Map, Building2, Users, AlertTriangle } from "lucide-react";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
-import type { RegionDashboardData } from "@/types";
+import type { RegionDashboardData, IncidentStats } from "@/types";
+import { fetchIncidentStats } from "@/services/incidentService";
 
 export default function RegionDashboard() {
   const [data, setData] = useState<RegionDashboardData | null>(null);
+  const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,6 +23,12 @@ export default function RegionDashboard() {
       })
       .finally(() => {
         setLoading(false);
+      });
+
+    fetchIncidentStats()
+      .then(setIncidentStats)
+      .catch(() => {
+        // Incidents tile is optional — non-fatal if user lacks scope.
       });
   }, []);
 
@@ -51,7 +60,7 @@ export default function RegionDashboard() {
         {!loading && !error && data && (
           <>
             {/* Top stat cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className={`grid grid-cols-1 gap-4 ${incidentStats ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
               <div className="bg-surface-card-solid rounded-lg shadow border border-[var(--color-border)] p-6 flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-brand-primary-light">
                   <Map className="w-6 h-6 text-brand-primary-dark" />
@@ -93,6 +102,52 @@ export default function RegionDashboard() {
                   </p>
                 </div>
               </div>
+
+              {incidentStats && (
+                <Link
+                  to="/incidents"
+                  className={`rounded-lg shadow border p-6 flex items-center gap-4 transition-colors ${
+                    incidentStats.critical_open > 0
+                      ? "bg-red-50 border-red-300 hover:bg-red-100"
+                      : incidentStats.open > 0
+                        ? "bg-amber-50 border-amber-300 hover:bg-amber-100"
+                        : "bg-surface-card-solid border-[var(--color-border)] hover:bg-[var(--color-bg-card-hover)]"
+                  }`}
+                >
+                  <div
+                    className={`p-3 rounded-lg ${
+                      incidentStats.critical_open > 0
+                        ? "bg-red-200"
+                        : incidentStats.open > 0
+                          ? "bg-amber-200"
+                          : "bg-brand-primary-light"
+                    }`}
+                  >
+                    <AlertTriangle
+                      className={`w-6 h-6 ${
+                        incidentStats.critical_open > 0
+                          ? "text-red-800"
+                          : incidentStats.open > 0
+                            ? "text-amber-800"
+                            : "text-brand-primary-dark"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs text-content-muted font-medium uppercase tracking-wide">
+                      Open Incidents
+                    </p>
+                    <p className="text-2xl font-heading font-extrabold text-content-primary mt-0.5">
+                      {incidentStats.open}
+                    </p>
+                    {incidentStats.critical_open > 0 && (
+                      <p className="text-[11px] font-semibold text-red-700 uppercase tracking-wide mt-0.5">
+                        {incidentStats.critical_open} critical
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              )}
             </div>
 
             {/* Per-region cards */}

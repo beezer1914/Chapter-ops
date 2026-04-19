@@ -31,6 +31,7 @@ import {
   Globe,
   Wallet,
   TableProperties,
+  AlertTriangle,
 } from "lucide-react";
 
 type NavSection = {
@@ -179,6 +180,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, memberships, logout } = useAuthStore();
   const { organization, chapter } = useConfigStore();
   const { isRegionalDirector, isOrgAdmin, loadRegions } = useRegionStore();
+
+  const activeMembership = memberships.find((m) => m.chapter_id === user?.active_chapter_id);
+  const isPresident = activeMembership?.role === "president" || activeMembership?.role === "admin";
+  const canSeeIncidents = isPresident || isRegionalDirector || isOrgAdmin;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -215,8 +220,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       if (extra.length === 0) return section;
       return { ...section, items: [...section.items, ...extra] };
     }
+    if (section.label === "Admin" && canSeeIncidents) {
+      const incidentsItem = {
+        to: "/incidents",
+        label: "Incidents",
+        icon: AlertTriangle,
+        module: "dashboard" as ModuleKey,
+      };
+      return { ...section, items: [incidentsItem, ...section.items] };
+    }
     return section;
   });
+
+  // If user has access but the Admin section was filtered out entirely, restore it with just Incidents
+  if (canSeeIncidents && !navSections.some((s) => s.items.some((i) => i.to === "/incidents"))) {
+    navSections.push({
+      label: "Admin",
+      items: [{ to: "/incidents", label: "Incidents", icon: AlertTriangle, module: "dashboard" as ModuleKey }],
+    });
+  }
 
   const { startPolling, stopPolling } = useNotificationStore();
   const navigate = useNavigate();

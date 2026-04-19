@@ -33,6 +33,7 @@ import IHQDashboard from "@/pages/IHQDashboard";
 import MyDues from "@/pages/MyDues";
 import TreasurerDues from "@/pages/TreasurerDues";
 import Analytics from "@/pages/Analytics";
+import Incidents from "@/pages/Incidents";
 
 export default function App() {
   const { initializeAuth, isLoading } = useAuthStore();
@@ -251,6 +252,15 @@ export default function App() {
           element={
             <ProtectedRoute requireChapter={false}>
               <IHQDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/incidents"
+          element={
+            <ProtectedRoute requireChapter={false}>
+              <Incidents />
             </ProtectedRoute>
           }
         />

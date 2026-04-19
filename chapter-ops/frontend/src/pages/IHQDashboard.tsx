@@ -1,7 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { fetchIHQDashboard, broadcastAnnouncement, suspendChapter, unsuspendChapter } from "@/services/ihqService";
-import type { IHQDashboardData, IHQChapterStat } from "@/types";
+import { fetchIncidentStats } from "@/services/incidentService";
+import type { IHQDashboardData, IHQChapterStat, IncidentStats } from "@/types";
 import {
   Building2,
   Users,
@@ -62,6 +64,7 @@ type SortDir = "asc" | "desc";
 
 export default function IHQDashboard() {
   const [data, setData] = useState<IHQDashboardData | null>(null);
+  const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,6 +93,12 @@ export default function IHQDashboard() {
       .then(setData)
       .catch(() => setError("Failed to load IHQ dashboard. Verify you have organization admin access."))
       .finally(() => setLoading(false));
+
+    fetchIncidentStats()
+      .then(setIncidentStats)
+      .catch(() => {
+        // Non-fatal — tile is optional.
+      });
   }, []);
 
   // Filtered + sorted chapters
@@ -236,7 +245,7 @@ export default function IHQDashboard() {
         {!loading && !error && data && s && (
           <>
             {/* ── KPI Cards ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className={`grid grid-cols-2 gap-4 ${incidentStats ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}>
               <KpiCard
                 icon={<Building2 className="w-5 h-5" />}
                 label="Active Chapters"
@@ -268,6 +277,17 @@ export default function IHQDashboard() {
                 value={s.total_regions}
                 color="indigo"
               />
+              {incidentStats && (
+                <Link to="/incidents" className="block">
+                  <KpiCard
+                    icon={<AlertTriangle className="w-5 h-5" />}
+                    label="Open Incidents"
+                    value={incidentStats.open}
+                    sub={incidentStats.critical_open > 0 ? `${incidentStats.critical_open} critical` : undefined}
+                    color={incidentStats.critical_open > 0 ? "red" : incidentStats.open > 0 ? "yellow" : "emerald"}
+                  />
+                </Link>
+              )}
             </div>
 
             {/* ── Region Rollup ── */}

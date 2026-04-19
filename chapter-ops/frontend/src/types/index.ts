@@ -1619,3 +1619,114 @@ export interface IHQDashboardData {
   regions: IHQRegionStat[];
   chapters: IHQChapterStat[];
 }
+
+// ============================================================================
+// Incident Reporting types
+// ============================================================================
+
+export type IncidentType =
+  | "hazing"
+  | "sexual_misconduct"
+  | "alcohol_drugs"
+  | "physical_altercation"
+  | "property_damage"
+  | "member_injury"
+  | "financial_misconduct"
+  | "discrimination"
+  | "other";
+
+export type IncidentSeverity = "low" | "medium" | "high" | "critical";
+
+export type IncidentStatus =
+  | "reported"
+  | "acknowledged"
+  | "under_review"
+  | "resolved"
+  | "closed";
+
+export interface IncidentAttachment {
+  id: string;
+  incident_id: string;
+  uploaded_by_user_id: string;
+  uploaded_by_name: string | null;
+  file_url: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  created_at: string;
+}
+
+export interface IncidentStatusEvent {
+  id: string;
+  incident_id: string;
+  changed_by_user_id: string;
+  changed_by_name: string | null;
+  from_status: IncidentStatus | null;
+  to_status: IncidentStatus;
+  note: string | null;
+  created_at: string;
+}
+
+export interface Incident {
+  id: string;
+  chapter_id: string;
+  chapter_name: string | null;
+  region_id: string | null;
+  region_name: string | null;
+  organization_id: string;
+  reported_by_user_id: string;
+  reported_by_name: string | null;
+  reference_number: string;
+  incident_type: IncidentType;
+  severity: IncidentSeverity;
+  occurred_at: string;
+  location: string | null;
+  description: string;
+  individuals_involved: string | null;
+  law_enforcement_notified: boolean;
+  medical_attention_required: boolean;
+  status: IncidentStatus;
+  acknowledged_by_user_id: string | null;
+  acknowledged_by_name: string | null;
+  acknowledged_at: string | null;
+  resolution_notes: string | null;
+  resolved_at: string | null;
+  attachment_count: number;
+  created_at: string;
+  updated_at: string;
+  attachments?: IncidentAttachment[];
+  status_events?: IncidentStatusEvent[];
+}
+
+export interface IncidentListResponse {
+  incidents: Incident[];
+  view_mode: "chapter" | "region" | "org";
+  is_org_admin: boolean;
+  is_regional_officer: boolean;
+}
+
+export interface IncidentStats {
+  total: number;
+  open: number;
+  critical_open: number;
+  by_status: Record<IncidentStatus, number>;
+  by_severity: Record<IncidentSeverity, number>;
+  by_type: Record<IncidentType, number>;
+}
+
+export interface CreateIncidentRequest {
+  incident_type: IncidentType;
+  severity: IncidentSeverity;
+  occurred_at: string;
+  description: string;
+  location?: string;
+  individuals_involved?: string;
+  law_enforcement_notified?: boolean;
+  medical_attention_required?: boolean;
+}
+
+export interface UpdateIncidentStatusRequest {
+  status: IncidentStatus;
+  note?: string;
+  resolution_notes?: string;
+}

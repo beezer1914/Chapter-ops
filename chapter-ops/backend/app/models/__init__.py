@@ -38,6 +38,7 @@ from app.models.agent_approval import AgentApproval
 from app.models.chapter_period import ChapterPeriod
 from app.models.chapter_period_dues import ChapterPeriodDues
 from app.models.committee import Committee
+from app.models.incident import Incident, IncidentAttachment, IncidentStatusEvent
 
 __all__ = [
     "BaseModel",
@@ -74,4 +75,7 @@ __all__ = [
     "ChapterPeriod",
     "ChapterPeriodDues",
     "Committee",
+    "Incident",
+    "IncidentAttachment",
+    "IncidentStatusEvent",
 ]

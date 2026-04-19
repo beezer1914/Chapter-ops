@@ -118,6 +118,7 @@ def create_app(config_class=None):
     from app.routes.periods import periods_bp
     from app.routes.analytics import analytics_bp
     from app.routes.committees import committees_bp
+    from app.routes.incidents import incidents_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(onboarding_bp)
@@ -148,6 +149,7 @@ def create_app(config_class=None):
     app.register_blueprint(periods_bp)
     app.register_blueprint(analytics_bp)
     app.register_blueprint(committees_bp)
+    app.register_blueprint(incidents_bp)
 
     # Stripe webhooks come from Stripe's servers — exempt the entire blueprint.
     csrf.exempt(webhooks_bp)
