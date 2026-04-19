@@ -53,12 +53,13 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const dismissWelcome = useCallback(() => {
     if (!role) return;
     setShowWelcome(false);
+    lastEvaluatedRoute.current = null;
     void markSeen("welcome", role);
   }, [markSeen, role]);
 
   useEffect(() => {
     if (!isAuthed || !loaded || !role) return;
-    if (showWelcome) return;
+    if (showWelcome || !seen["welcome"]) return;
     if (lastEvaluatedRoute.current === location.pathname) return;
     lastEvaluatedRoute.current = location.pathname;
 

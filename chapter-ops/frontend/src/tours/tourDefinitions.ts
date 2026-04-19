@@ -4,7 +4,7 @@ import { TOUR_TARGETS } from "./tourTargets";
 export const TOUR_DEFINITIONS: TourDefinition[] = [
   {
     id: "dashboard_member",
-    route: "^/$",
+    route: "^/dashboard$",
     roles: ["member"],
     steps: [
       {
@@ -25,7 +25,7 @@ export const TOUR_DEFINITIONS: TourDefinition[] = [
   },
   {
     id: "dashboard_officer",
-    route: "^/$",
+    route: "^/dashboard$",
     roles: ["secretary", "treasurer", "vice_president", "president", "admin"],
     steps: [
       {
@@ -118,11 +118,7 @@ export const TOUR_DEFINITIONS: TourDefinition[] = [
     id: "committees",
     route: "^/settings$",
     roles: ["treasurer", "vice_president", "president", "admin"],
-    matcher: () => {
-      const hash = window.location.hash.replace("#", "");
-      const search = new URLSearchParams(window.location.search).get("tab");
-      return hash === "committees" || search === "committees";
-    },
+    matcher: () => !!document.querySelector(`[data-tour-target="${TOUR_TARGETS.COMMITTEES_CREATE}"]`),
     steps: [
       {
         target: TOUR_TARGETS.COMMITTEES_CREATE,

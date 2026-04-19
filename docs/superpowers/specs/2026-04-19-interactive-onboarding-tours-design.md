@@ -135,18 +135,24 @@ function shouldShowTour(tour, currentRole, seen): boolean {
   if (!tour.roles.includes(currentRole)) return false;
   const prior = seen[tour.id];
   if (!prior) return true;
-  if (ROLE_RANK[currentRole] > ROLE_RANK[prior.role]) return true;
+  // Re-fire only when the user was promoted INTO the eligibility tier —
+  // i.e., the prior role was not eligible for this tour. Intra-tier
+  // promotions (e.g. treasurer → president for chapter_dues) do NOT re-fire,
+  // because the page content is the same across eligible roles.
+  if (!tour.roles.includes(prior.role) && ROLE_RANK[currentRole] > ROLE_RANK[prior.role]) {
+    return true;
+  }
   return false;
 }
 ```
 
 **Semantics:**
-- Promotion past the role at which a tour was seen → re-fire.
-- Seen at the same or a higher role → do not re-fire.
+- Promotion INTO the eligibility tier (e.g. member → treasurer for `chapter_dues`) → re-fire.
+- Promotion WITHIN the eligibility tier (e.g. treasurer → president for `chapter_dues`) → do NOT re-fire. The page content is the same across eligible roles, so repeating the tour adds no value.
+- Seen at the same or a higher role already in the eligibility tier → do not re-fire.
 - Demotion → no re-fire; seen state is preserved.
-- Admin is rank 5 and receives officer-level tours (for platform admins walking through a chapter demo).
-- **Promotion to admin does NOT re-fire officer tours** — admins are typically technical; officer tours add no new context.
-- **Skip mid-tour** marks the entire `seen[tour.id]` as complete at the current role. No re-prompt unless promoted or user clicks Replay.
+- Admin is rank 5 and is already in the eligibility tier for officer tours (for platform admins walking through a chapter demo) — so promotion to admin from treasurer/president does not re-fire officer tours.
+- **Skip mid-tour** marks the entire `seen[tour.id]` as complete at the current role. No re-prompt unless promoted INTO eligibility or the user clicks Replay.
 - **Multi-chapter users** — tour state is per-user, not per chapter-role. Switching active chapter does not re-fire. (Simplification; revisit if it becomes a user complaint.)
 
 ### Tour Content Authoring
