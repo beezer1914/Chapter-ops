@@ -1,6 +1,7 @@
 """User onboarding tour state endpoints."""
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime, timezone
 
@@ -11,6 +12,8 @@ from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db, limiter
 from app.models import UserTourState
+
+logger = logging.getLogger(__name__)
 
 tours_bp = Blueprint("tours", __name__, url_prefix="/api/tours")
 
@@ -32,9 +35,13 @@ def _get_or_create_state(user_id) -> UserTourState:
         db.session.add(state)
         try:
             db.session.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
+            logger.warning("UserTourState insert hit IntegrityError for user_id=%s: %s", user_id, exc)
             db.session.rollback()
             state = UserTourState.query.filter_by(user_id=user_id).first()
+            if state is None:
+                logger.error("UserTourState insert failed and re-query returned None for user_id=%s", user_id)
+                raise
     return state
 
 
