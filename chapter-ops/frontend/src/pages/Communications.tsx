@@ -59,11 +59,11 @@ export default function Communications() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-5 md:space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-content-primary font-heading">Communications</h1>
-          <p className="text-content-secondary mt-1">Announcements and chapter-wide messaging.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-content-primary font-heading">Communications</h1>
+          <p className="text-sm md:text-base text-content-secondary mt-1">Announcements and chapter-wide messaging.</p>
         </div>
 
         {/* Tabs */}
@@ -173,10 +173,10 @@ function AnnouncementsTab({
   return (
     <div className="space-y-4">
       {isOfficer && (
-        <div className="flex justify-end">
+        <div className="flex sm:justify-end">
           <button
             onClick={openCreate}
-            className="flex items-center gap-2 px-5 py-2.5 bg-brand-primary-main text-white font-semibold rounded-xl shadow-glass ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark transition-colors"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-brand-primary-main text-white font-semibold rounded-xl shadow-glass ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark transition-colors"
           >
             <Plus className="w-4 h-4" />
             New Announcement
@@ -241,10 +241,10 @@ function AnnouncementCard({
   const displayBody = isLong && !expanded ? a.body.slice(0, 300) + "…" : a.body;
 
   return (
-    <div className={`bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border p-6 ${
+    <div className={`bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border p-4 md:p-6 ${
       a.is_pinned ? "border-brand-primary-main/30 ring-1 ring-brand-primary-main/20" : "border-[var(--color-border)]"
     }`}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3 md:gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             {a.is_pinned && (
@@ -257,29 +257,29 @@ function AnnouncementCard({
             )}
           </div>
           <h3 className="text-base font-semibold text-content-primary">{a.title}</h3>
-          <p className="text-sm text-content-secondary mt-0.5">
+          <p className="text-xs md:text-sm text-content-secondary mt-0.5">
             {a.author ? `${a.author.first_name} ${a.author.last_name}` : "Unknown"} · {formatDate(a.created_at)}
           </p>
         </div>
 
         {isOfficer && (
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 md:gap-1 shrink-0">
             <button
               onClick={onTogglePin}
               title={a.is_pinned ? "Unpin" : "Pin"}
-              className="p-2 text-content-muted hover:text-brand-primary-dark hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2.5 md:p-2 text-content-muted hover:text-brand-primary-dark hover:bg-white/10 rounded-lg transition-colors"
             >
               {a.is_pinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
             </button>
             <button
               onClick={onEdit}
-              className="p-2 text-content-muted hover:text-content-secondary hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2.5 md:p-2 text-content-muted hover:text-content-secondary hover:bg-white/10 rounded-lg transition-colors"
             >
               <Pencil className="w-4 h-4" />
             </button>
             <button
               onClick={onDelete}
-              className="p-2 text-content-muted hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
+              className="p-2.5 md:p-2 text-content-muted hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -287,7 +287,7 @@ function AnnouncementCard({
         )}
       </div>
 
-      <div className="mt-4 text-sm text-content-secondary leading-relaxed whitespace-pre-wrap">
+      <div className="mt-3 md:mt-4 text-sm text-content-secondary leading-relaxed whitespace-pre-wrap">
         {displayBody}
       </div>
       {isLong && (
@@ -350,18 +350,18 @@ function AnnouncementFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-surface-card-solid rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg sm:mx-4 overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col">
+        <div className="px-4 md:px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between shrink-0">
           <h2 className="text-lg font-semibold text-content-primary">
             {editing ? "Edit Announcement" : "New Announcement"}
           </h2>
-          <button onClick={onClose} className="p-1.5 text-content-muted hover:text-content-secondary hover:bg-white/10 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 text-content-muted hover:text-content-secondary hover:bg-white/10 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={(e) => void handleSubmit(e)} className="p-6 space-y-4">
+        <form onSubmit={(e) => void handleSubmit(e)} className="p-4 md:p-6 space-y-4 overflow-y-auto">
           {error && (
             <div className="p-3 bg-red-900/20 border border-red-900/30 rounded-lg text-sm text-red-400">{error}</div>
           )}
@@ -491,8 +491,8 @@ function EmailBlastTab() {
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/40 p-6">
-      <h2 className="text-lg font-semibold text-content-primary mb-5">Send Email Blast</h2>
+    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-glass border border-white/40 p-4 md:p-6">
+      <h2 className="text-lg font-semibold text-content-primary mb-4 md:mb-5">Send Email Blast</h2>
 
       {result && (
         <div className="mb-5 p-4 bg-green-900/20 border border-green-900/30 rounded-xl flex items-start gap-3">
@@ -564,11 +564,11 @@ function EmailBlastTab() {
           />
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex sm:justify-end">
           <button
             type="submit"
             disabled={sending || (preview?.count === 0)}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-brand-primary-main rounded-xl shadow-glass ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 sm:py-2.5 text-sm font-semibold text-white bg-brand-primary-main rounded-xl shadow-glass ring-1 ring-brand-primary-dark/20 hover:bg-brand-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Mail className="w-4 h-4" />
             {sending ? "Sending…" : `Send to ${preview?.count ?? "?"} Recipients`}

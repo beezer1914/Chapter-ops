@@ -349,20 +349,20 @@ export default function Events() {
   if (selectedEvent) {
     return (
       <Layout>
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-5 md:space-y-6">
           {/* Back */}
           <button
             onClick={() => setSelectedEvent(null)}
-            className="flex items-center gap-2 text-sm text-content-secondary hover:text-content-secondary transition-colors"
+            className="flex items-center gap-2 text-sm text-content-secondary hover:text-content-secondary transition-colors py-1"
           >
             <ChevronLeft className="w-4 h-4" /> Back to Events
           </button>
 
           {/* Event header card */}
-          <div className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] p-6">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] p-4 md:p-6">
+            <div className="flex items-start justify-between gap-3 md:gap-4 flex-wrap">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${EVENT_TYPE_COLORS[selectedEvent.event_type]}`}>
                     {EVENT_TYPE_LABELS[selectedEvent.event_type]}
                   </span>
@@ -377,7 +377,7 @@ export default function Events() {
                     </span>
                   )}
                 </div>
-                <h1 className="text-2xl font-bold text-content-primary">{selectedEvent.title}</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-content-primary">{selectedEvent.title}</h1>
                 {selectedEvent.description && (
                   <p className="mt-2 text-content-secondary">{selectedEvent.description}</p>
                 )}
@@ -402,11 +402,11 @@ export default function Events() {
               </div>
 
               {isOfficer && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   {selectedEvent.is_public && selectedEvent.public_slug && (
                     <button
                       onClick={() => copyPublicLink(selectedEvent)}
-                      className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5 transition-colors"
+                      className="flex items-center justify-center gap-1.5 flex-1 sm:flex-none px-3 py-2.5 sm:py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5 transition-colors"
                     >
                       {copiedSlug ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                       {copiedSlug ? "Copied!" : "Copy Link"}
@@ -414,13 +414,13 @@ export default function Events() {
                   )}
                   <button
                     onClick={() => openEditForm(selectedEvent)}
-                    className="px-3 py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5 transition-colors"
+                    className="flex-1 sm:flex-none px-3 py-2.5 sm:py-2 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-lg hover:bg-white/5 transition-colors"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => void handleCancelEvent(selectedEvent)}
-                    className="px-3 py-2 text-sm font-medium text-red-400 bg-red-900/20 border border-red-900/30 rounded-lg hover:bg-red-900/30 transition-colors"
+                    className="flex-1 sm:flex-none px-3 py-2.5 sm:py-2 text-sm font-medium text-red-400 bg-red-900/20 border border-red-900/30 rounded-lg hover:bg-red-900/30 transition-colors"
                   >
                     Cancel Event
                   </button>
@@ -431,7 +431,7 @@ export default function Events() {
 
           {/* Officer's own RSVP */}
           {selectedEvent.status !== "cancelled" && (
-            <div className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] px-6 py-4 flex items-center justify-between gap-4">
+            <div className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] px-4 md:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
               <div>
                 <p className="text-sm font-semibold text-content-primary">Your RSVP</p>
                 {selectedEvent.my_attendance ? (
@@ -445,18 +445,18 @@ export default function Events() {
                   <p className="text-xs text-content-muted mt-0.5">You haven't RSVPed yet</p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 {selectedEvent.my_attendance ? (
                   <button
                     onClick={() => void handleCancelRsvp(selectedEvent)}
-                    className="px-3 py-1.5 text-xs font-medium text-red-400 bg-red-900/20 border border-red-900/30 rounded-lg hover:bg-red-900/30 transition-colors"
+                    className="flex-1 sm:flex-none px-4 py-2.5 sm:py-1.5 text-sm sm:text-xs font-medium text-red-400 bg-red-900/20 border border-red-900/30 rounded-lg hover:bg-red-900/30 transition-colors"
                   >
                     Cancel RSVP
                   </button>
                 ) : selectedEvent.is_paid ? (
                   <button
                     onClick={() => void handleRsvp(selectedEvent, "going")}
-                    className="px-3 py-1.5 text-xs font-medium text-white bg-brand-primary-main rounded-lg hover:bg-brand-primary-dark transition-colors"
+                    className="flex-1 sm:flex-none px-4 py-2.5 sm:py-1.5 text-sm sm:text-xs font-medium text-white bg-brand-primary-main rounded-lg hover:bg-brand-primary-dark transition-colors"
                   >
                     Buy Ticket — ${parseFloat(selectedEvent.ticket_price ?? "0").toFixed(2)}
                   </button>
@@ -464,13 +464,13 @@ export default function Events() {
                   <>
                     <button
                       onClick={() => void handleRsvp(selectedEvent, "going")}
-                      className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                      className="flex-1 sm:flex-none px-4 py-2.5 sm:py-1.5 text-sm sm:text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
                     >
                       Going
                     </button>
                     <button
                       onClick={() => void handleRsvp(selectedEvent, "maybe")}
-                      className="px-3 py-1.5 text-xs font-medium text-content-secondary bg-white/10 border border-[var(--color-border)] rounded-lg hover:bg-white/10 transition-colors"
+                      className="flex-1 sm:flex-none px-4 py-2.5 sm:py-1.5 text-sm sm:text-xs font-medium text-content-secondary bg-white/10 border border-[var(--color-border)] rounded-lg hover:bg-white/10 transition-colors"
                     >
                       Maybe
                     </button>
@@ -483,7 +483,7 @@ export default function Events() {
           {/* Attendees table (officers only) */}
           {isOfficer && (
             <div className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] overflow-hidden">
-              <div className="px-6 py-4 border-b border-[var(--color-border)]">
+              <div className="px-4 md:px-6 py-4 border-b border-[var(--color-border)]">
                 <h2 className="text-base font-semibold text-content-primary">
                   Attendees ({attendees.length})
                 </h2>
@@ -645,12 +645,12 @@ export default function Events() {
   // ── Render: Events list ──────────────────────────────────────────────────────
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-5 md:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-content-primary font-heading">Events</h1>
-            <p className="text-content-secondary mt-1">Manage chapter events and attendance.</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-content-primary font-heading">Events</h1>
+            <p className="text-sm md:text-base text-content-secondary mt-1">Manage chapter events and attendance.</p>
           </div>
           {isOfficer && (
             <button
@@ -830,9 +830,9 @@ function ServiceHoursView({
           { label: "Members Participated", value: participantCount.toString(), sub: "unique members" },
           { label: "Avg Hours / Member", value: avgHours.toFixed(1), sub: "per participant" },
         ].map(({ label, value, sub }) => (
-          <div key={label} className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] p-5 flex flex-col gap-1">
-            <p className="text-xs text-content-muted uppercase tracking-wider font-semibold">{label}</p>
-            <p className="text-3xl font-bold text-content-primary">{value}</p>
+          <div key={label} className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] p-4 md:p-5 flex flex-col gap-1">
+            <p className="text-[10px] md:text-xs text-content-muted uppercase tracking-wider font-semibold">{label}</p>
+            <p className="text-2xl md:text-3xl font-bold text-content-primary">{value}</p>
             <p className="text-xs text-content-secondary">{sub}</p>
           </div>
         ))}
@@ -840,7 +840,7 @@ function ServiceHoursView({
 
       {/* Per-member leaderboard */}
       <div className="bg-surface-card-solid backdrop-blur-xl rounded-2xl shadow-glass border border-[var(--color-border)] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center gap-2">
+        <div className="px-4 md:px-6 py-4 border-b border-[var(--color-border)] flex items-center gap-2">
           <Heart className="w-4 h-4 text-blue-400" />
           <h2 className="text-base font-semibold text-content-primary">Member Breakdown</h2>
         </div>
@@ -891,10 +891,10 @@ function MemberHoursRow({
     <div>
       <button
         onClick={onToggle}
-        className="w-full px-6 py-4 flex items-center gap-4 hover:bg-white/5 transition-colors text-left"
+        className="w-full px-4 md:px-6 py-3.5 md:py-4 flex items-center gap-3 md:gap-4 hover:bg-white/5 transition-colors text-left"
       >
         {/* Rank */}
-        <span className={`w-6 text-sm font-bold ${rankColor} shrink-0`}>
+        <span className={`w-5 md:w-6 text-xs md:text-sm font-bold ${rankColor} shrink-0`}>
           #{rank}
         </span>
 
@@ -940,8 +940,8 @@ function MemberHoursRow({
 
       {/* Expanded event breakdown */}
       {isExpanded && (
-        <div className="px-6 pb-4 bg-white/[0.02]">
-          <div className="ml-[3.75rem] space-y-1.5">
+        <div className="px-4 md:px-6 pb-4 bg-white/[0.02]">
+          <div className="ml-8 md:ml-[3.75rem] space-y-1.5">
             {member.events.map((ev) => (
               <div key={ev.id} className="flex items-center justify-between text-xs py-1.5 border-b border-white/5 last:border-0">
                 <div className="flex items-center gap-2 min-w-0">
@@ -1133,18 +1133,18 @@ function EventFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm overflow-y-auto p-4">
-      <div className="bg-surface-card-solid rounded-2xl shadow-2xl w-full max-w-lg my-8">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-start justify-center bg-black/40 backdrop-blur-sm sm:overflow-y-auto sm:p-4">
+      <div className="bg-surface-card-solid rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg sm:my-8 max-h-[95vh] sm:max-h-none flex flex-col sm:block">
+        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-[var(--color-border)] shrink-0">
           <h2 className="text-lg font-semibold text-content-primary">
             {editingEvent ? "Edit Event" : "Create Event"}
           </h2>
-          <button onClick={onClose} className="text-content-muted hover:text-content-secondary">
+          <button onClick={onClose} className="p-2 -m-2 text-content-muted hover:text-content-secondary">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-4 md:p-6 space-y-4 overflow-y-auto sm:overflow-visible">
           {formError && (
             <div className="bg-red-900/20 border border-red-900/30 rounded-lg p-3 text-sm text-red-400">
               {formError}
@@ -1292,7 +1292,7 @@ function EventFormModal({
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex flex-col-reverse sm:flex-row justify-end gap-2">
+        <div className="px-4 md:px-6 py-4 bg-white/5 border-t border-[var(--color-border)] flex flex-col-reverse sm:flex-row justify-end gap-2 shrink-0">
           <button
             onClick={onClose}
             className="w-full sm:w-auto px-5 py-2.5 text-sm font-medium text-content-secondary bg-surface-card-solid border border-[var(--color-border-brand)] rounded-xl hover:bg-white/5 transition-colors"
