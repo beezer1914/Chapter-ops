@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
+from flask_limiter.util import get_remote_address
+from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db, limiter
 from app.models import UserTourState
@@ -16,11 +18,23 @@ TOUR_ID_RE = re.compile(r"^[a-z_]{1,50}$")
 VALID_ROLES = {"member", "secretary", "treasurer", "vice_president", "president", "admin"}
 
 
+def _rate_limit_key() -> str:
+    if current_user.is_authenticated:
+        return str(current_user.get_id())
+    return get_remote_address()
+
+
 def _get_or_create_state(user_id) -> UserTourState:
+    """Return (or stage for insert) the UserTourState for user_id. Does NOT commit."""
     state = UserTourState.query.filter_by(user_id=user_id).first()
     if state is None:
         state = UserTourState(user_id=user_id, seen={})
         db.session.add(state)
+        try:
+            db.session.flush()
+        except IntegrityError:
+            db.session.rollback()
+            state = UserTourState.query.filter_by(user_id=user_id).first()
     return state
 
 
@@ -33,7 +47,7 @@ def get_state():
 
 @tours_bp.route("/state", methods=["PATCH"])
 @login_required
-@limiter.limit("60 per minute")
+@limiter.limit("60 per minute", key_func=_rate_limit_key)
 def patch_state():
     payload = request.get_json(silent=True) or {}
     tour_id = payload.get("tour_id")
@@ -58,7 +72,7 @@ def patch_state():
 
 @tours_bp.route("/reset", methods=["POST"])
 @login_required
-@limiter.limit("5 per hour")
+@limiter.limit("5 per hour", key_func=_rate_limit_key)
 def reset_state():
     state = _get_or_create_state(current_user.id)
     state.seen = {}
