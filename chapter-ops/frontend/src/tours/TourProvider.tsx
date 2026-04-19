@@ -13,6 +13,7 @@ import { TourContext, type TourContextValue } from "./useTour";
 
 const ROUTE_DELAY_MS = 500;
 const TARGET_ABORT_MS = 2000;
+const TARGET_POLL_MS = 100;
 
 function useCurrentRole(): Role | null {
   const memberships = useAuthStore((s) => s.memberships);
@@ -74,19 +75,31 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const timer = setTimeout(() => {
-      const firstStep = tour.steps[0];
-      if (!firstStep) return;
-      const firstTargetEl = document.querySelector(`[data-tour-target="${firstStep.target}"]`);
-      if (!firstTargetEl) {
-        void markSeen(tour.id, role);
-        return;
-      }
-      setActiveTour(tour);
-      setActiveStepIndex(0);
+    const firstStep = tour.steps[0];
+    if (!firstStep) return;
+
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    const startTimer = setTimeout(() => {
+      const deadline = Date.now() + TARGET_ABORT_MS;
+      const selector = `[data-tour-target="${firstStep.target}"]`;
+      const tryStart = () => {
+        if (document.querySelector(selector)) {
+          if (intervalId) clearInterval(intervalId);
+          setActiveTour(tour);
+          setActiveStepIndex(0);
+        } else if (Date.now() >= deadline) {
+          if (intervalId) clearInterval(intervalId);
+          void markSeen(tour.id, role);
+        }
+      };
+      tryStart();
+      intervalId = setInterval(tryStart, TARGET_POLL_MS);
     }, ROUTE_DELAY_MS);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(startTimer);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isAuthed, loaded, role, location.pathname, seen, showWelcome, markSeen]);
 
   useEffect(() => {
