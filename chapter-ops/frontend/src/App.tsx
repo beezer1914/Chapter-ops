@@ -34,6 +34,7 @@ import MyDues from "@/pages/MyDues";
 import TreasurerDues from "@/pages/TreasurerDues";
 import Analytics from "@/pages/Analytics";
 import Incidents from "@/pages/Incidents";
+import { TourProvider } from "@/tours/TourProvider";
 
 export default function App() {
   const { initializeAuth, isLoading } = useAuthStore();
@@ -58,7 +59,8 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
+      <TourProvider>
+        <Routes>
         {/* Public routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -273,7 +275,8 @@ export default function App() {
 
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+        </Routes>
+      </TourProvider>
     </BrowserRouter>
   );
 }
