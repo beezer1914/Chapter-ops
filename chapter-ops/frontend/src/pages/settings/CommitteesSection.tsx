@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchCommittees, createCommittee, updateCommittee, deleteCommittee } from "@/services/committeeService";
 import api from "@/lib/api";
+import { TOUR_TARGETS } from "@/tours/tourTargets";
 import type { Committee } from "@/types";
 
 export default function CommitteesSection({
@@ -110,7 +111,7 @@ export default function CommitteesSection({
           </p>
         </div>
         {!showForm && (
-          <button onClick={openCreate}
+          <button data-tour-target={TOUR_TARGETS.COMMITTEES_CREATE} onClick={openCreate}
             className="shrink-0 ml-4 px-3 py-1.5 text-sm font-medium bg-[var(--color-text-heading)] text-[var(--color-bg-deep)] hover:opacity-90">
             + New Committee
           </button>
@@ -129,12 +130,12 @@ export default function CommitteesSection({
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="col-span-full" />
             <div>
               <label className="block text-xs text-content-muted mb-1">Budget ($)</label>
-              <input type="number" min="0" step="0.01" placeholder="0.00" value={form.budget_amount}
+              <input data-tour-target={TOUR_TARGETS.COMMITTEES_BUDGET} type="number" min="0" step="0.01" placeholder="0.00" value={form.budget_amount}
                 onChange={(e) => setForm((f) => ({ ...f, budget_amount: e.target.value }))} />
             </div>
             <div>
               <label className="block text-xs text-content-muted mb-1">Chair (optional)</label>
-              <select value={form.chair_user_id} onChange={(e) => setForm((f) => ({ ...f, chair_user_id: e.target.value }))}>
+              <select data-tour-target={TOUR_TARGETS.COMMITTEES_ASSIGN_CHAIR} value={form.chair_user_id} onChange={(e) => setForm((f) => ({ ...f, chair_user_id: e.target.value }))}>
                 <option value="">— No chair assigned —</option>
                 {members.map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
               </select>
