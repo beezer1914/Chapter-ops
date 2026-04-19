@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.extensions import db
@@ -28,7 +29,7 @@ class UserTourState(BaseModel):
         index=True,
     )
     seen: Mapped[dict[str, Any]] = mapped_column(
-        db.JSON,
+        JSON().with_variant(JSONB(), "postgresql"),
         nullable=False,
         default=dict,
     )
