@@ -35,12 +35,10 @@ def _get_or_create_state(user_id) -> UserTourState:
         db.session.add(state)
         try:
             db.session.flush()
-        except IntegrityError as exc:
-            logger.warning("UserTourState insert hit IntegrityError for user_id=%s: %s", user_id, exc)
+        except IntegrityError:
             db.session.rollback()
             state = UserTourState.query.filter_by(user_id=user_id).first()
             if state is None:
-                logger.error("UserTourState insert failed and re-query returned None for user_id=%s", user_id)
                 raise
     return state
 
