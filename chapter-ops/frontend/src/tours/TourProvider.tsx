@@ -39,8 +39,9 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const [activeTour, setActiveTour] = useState<TourDefinition | null>(null);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [domTick, setDomTick] = useState(0);
 
-  const lastEvaluatedRoute = useRef<string | null>(null);
+  const lastEvaluatedKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (isAuthed && !loaded) void loadSeen();
@@ -54,15 +55,34 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const dismissWelcome = useCallback(() => {
     if (!role) return;
     setShowWelcome(false);
-    lastEvaluatedRoute.current = null;
+    lastEvaluatedKey.current = null;
     void markSeen("welcome", role);
   }, [markSeen, role]);
 
   useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          const el = node as Element;
+          if (el.matches?.("[data-tour-target]") || el.querySelector?.("[data-tour-target]")) {
+            setDomTick((t) => t + 1);
+            return;
+          }
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (!isAuthed || !loaded || !role) return;
     if (showWelcome || !seen["welcome"]) return;
-    if (lastEvaluatedRoute.current === location.pathname) return;
-    lastEvaluatedRoute.current = location.pathname;
+    if (activeTour) return;
+    const key = `${location.pathname}:${domTick}`;
+    if (lastEvaluatedKey.current === key) return;
+    lastEvaluatedKey.current = key;
 
     const tour = TOUR_DEFINITIONS.find((t) => {
       if (!new RegExp(t.route).test(location.pathname)) return false;
@@ -100,7 +120,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(startTimer);
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isAuthed, loaded, role, location.pathname, seen, showWelcome, markSeen]);
+  }, [isAuthed, loaded, role, location.pathname, seen, showWelcome, markSeen, domTick, activeTour]);
 
   useEffect(() => {
     if (!activeTour) return;
