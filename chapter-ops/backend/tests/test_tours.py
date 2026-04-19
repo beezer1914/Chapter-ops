@@ -71,3 +71,30 @@ def test_patch_state_rejects_invalid_role(client, db_session):
 def test_patch_state_requires_auth(client):
     res = client.patch("/api/tours/state", json={"tour_id": "welcome", "role": "member"})
     assert res.status_code == 401
+
+
+def test_reset_clears_seen(client, db_session):
+    user = make_user(password=VALID_PASSWORD)
+    db_session.commit()
+    _login(client, user.email)
+
+    client.patch("/api/tours/state", json={"tour_id": "welcome", "role": "member"})
+    res = client.post("/api/tours/reset")
+
+    assert res.status_code == 200
+    assert res.json == {"seen": {}}
+
+
+def test_reset_is_idempotent_for_new_user(client, db_session):
+    user = make_user(password=VALID_PASSWORD)
+    db_session.commit()
+    _login(client, user.email)
+
+    res = client.post("/api/tours/reset")
+    assert res.status_code == 200
+    assert res.json == {"seen": {}}
+
+
+def test_reset_requires_auth(client):
+    res = client.post("/api/tours/reset")
+    assert res.status_code == 401

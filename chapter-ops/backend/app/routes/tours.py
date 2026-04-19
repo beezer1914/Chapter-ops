@@ -54,3 +54,13 @@ def patch_state():
     db.session.commit()
 
     return jsonify({"seen": state.seen}), 200
+
+
+@tours_bp.route("/reset", methods=["POST"])
+@login_required
+@limiter.limit("5 per hour")
+def reset_state():
+    state = _get_or_create_state(current_user.id)
+    state.seen = {}
+    db.session.commit()
+    return jsonify({"seen": {}}), 200
