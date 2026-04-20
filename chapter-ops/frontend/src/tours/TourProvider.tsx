@@ -60,6 +60,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   }, [markSeen, role]);
 
   useEffect(() => {
+    if (!isAuthed || !loaded) return;
     const observer = new MutationObserver((mutations) => {
       for (const m of mutations) {
         for (const node of m.addedNodes) {
@@ -74,7 +75,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     });
     observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, []);
+  }, [isAuthed, loaded]);
 
   useEffect(() => {
     if (!isAuthed || !loaded || !role) return;
@@ -160,7 +161,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
 
   const replay = useCallback(async () => {
     await reset();
-    lastEvaluatedRoute.current = null;
+    lastEvaluatedKey.current = null;
     setShowWelcome(true);
   }, [reset]);
 

@@ -1,7 +1,6 @@
 """User onboarding tour state endpoints."""
 from __future__ import annotations
 
-import logging
 import re
 from datetime import datetime, timezone
 
@@ -12,8 +11,6 @@ from sqlalchemy.exc import IntegrityError
 
 from app.extensions import db, limiter
 from app.models import UserTourState
-
-logger = logging.getLogger(__name__)
 
 tours_bp = Blueprint("tours", __name__, url_prefix="/api/tours")
 

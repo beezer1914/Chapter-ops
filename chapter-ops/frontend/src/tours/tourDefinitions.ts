@@ -122,24 +122,10 @@ export const TOUR_DEFINITIONS: TourDefinition[] = [
     steps: [
       {
         target: TOUR_TARGETS.COMMITTEES_CREATE,
-        label: "STEP 01 / 03 · PRESIDENT",
-        heading: "Spin up a committee",
-        body: "Committees organize chapter initiatives — fundraising, programming, service. Create one, then assign a chair.",
+        label: "PRESIDENT",
+        heading: "Organize with committees",
+        body: "Click here to create a committee, assign a chair, and set a budget. Tag expenses to it for real-time spending oversight.",
         placement: "bottom",
-      },
-      {
-        target: TOUR_TARGETS.COMMITTEES_ASSIGN_CHAIR,
-        label: "STEP 02 / 03 · PRESIDENT",
-        heading: "Name a chair",
-        body: "The chair oversees the committee's budget and activities. No new role tier — they stay in their existing membership.",
-        placement: "bottom",
-      },
-      {
-        target: TOUR_TARGETS.COMMITTEES_BUDGET,
-        label: "STEP 03 / 03 · PRESIDENT",
-        heading: "Budget tracking",
-        body: "Set a budget, tag expenses to the committee, and watch spent / pending / remaining update in real time.",
-        placement: "top",
       },
     ],
   },
