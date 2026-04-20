@@ -43,13 +43,18 @@ def send_email(
     sender = from_email or current_app.config["RESEND_FROM_EMAIL"]
     recipients = [to] if isinstance(to, str) else to
 
+    payload: dict = {
+        "from": sender,
+        "to": recipients,
+        "subject": subject,
+        "html": html,
+    }
+    reply_to = current_app.config.get("RESEND_REPLY_TO")
+    if reply_to:
+        payload["reply_to"] = reply_to
+
     try:
-        resend.Emails.send({
-            "from": sender,
-            "to": recipients,
-            "subject": subject,
-            "html": html,
-        })
+        resend.Emails.send(payload)
         logger.info(f"Email sent: '{subject}' → {recipients}")
         return True
     except Exception as exc:
@@ -175,18 +180,23 @@ def send_chapter_data_export_email(
     </div>
     """
 
+    payload: dict = {
+        "from": sender,
+        "to": [to],
+        "subject": f"Chapter Data Export — {chapter_name} (deletion scheduled {deletion_date})",
+        "html": html,
+        "attachments": [
+            {"filename": "members.csv", "content": list(members_csv.encode("utf-8"))},
+            {"filename": "payments.csv", "content": list(payments_csv.encode("utf-8"))},
+            {"filename": "donations.csv", "content": list(donations_csv.encode("utf-8"))},
+        ],
+    }
+    reply_to = current_app.config.get("RESEND_REPLY_TO")
+    if reply_to:
+        payload["reply_to"] = reply_to
+
     try:
-        resend.Emails.send({
-            "from": sender,
-            "to": [to],
-            "subject": f"Chapter Data Export — {chapter_name} (deletion scheduled {deletion_date})",
-            "html": html,
-            "attachments": [
-                {"filename": "members.csv", "content": list(members_csv.encode("utf-8"))},
-                {"filename": "payments.csv", "content": list(payments_csv.encode("utf-8"))},
-                {"filename": "donations.csv", "content": list(donations_csv.encode("utf-8"))},
-            ],
-        })
+        resend.Emails.send(payload)
         logger.info(f"Chapter data export email sent to {to} for '{chapter_name}'")
         return True
     except Exception as exc:

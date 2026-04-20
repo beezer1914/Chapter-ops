@@ -54,6 +54,7 @@ class BaseConfig:
     # Resend (Email)
     RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
     RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "noreply@chapterops.com")
+    RESEND_REPLY_TO = os.environ.get("RESEND_REPLY_TO", "")
 
     # S3-Compatible Storage
     S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", "chapterops-files")
