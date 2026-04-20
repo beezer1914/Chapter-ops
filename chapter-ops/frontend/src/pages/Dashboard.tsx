@@ -7,6 +7,7 @@ import { fetchDashboardInbox } from "@/services/dashboardService";
 import { fetchPaymentSummary } from "@/services/paymentService";
 import { fetchMembers } from "@/services/chapterService";
 import { fetchPeriods } from "@/services/periodService";
+import { TOUR_TARGETS } from "@/tours/tourTargets";
 import type { ActionItem, ActionItemPriority, ChapterPeriod, MemberRole, MemberWithUser, PaymentSummary } from "@/types";
 import {
   AlertTriangle,
@@ -190,7 +191,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── Mobile quick-action strip — member-facing, phone only ── */}
-        <div className="sm:hidden grid grid-cols-2 gap-3 mb-6">
+        <div data-tour-target={TOUR_TARGETS.DASHBOARD_QUICK_ACTIONS} className="sm:hidden grid grid-cols-2 gap-3 mb-6">
           <button
             onClick={() => navigate("/dues")}
             className={`flex flex-col items-start px-4 py-4 border ${
@@ -233,7 +234,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* ── Left: Inbox ───────────────────────────────────────── */}
-          <div className="lg:col-span-2">
+          <div data-tour-target={TOUR_TARGETS.DASHBOARD_INBOX} className="lg:col-span-2">
 
             {loading ? (
               <div className="bg-[var(--color-bg-card-solid)] border border-[var(--color-border)]">
@@ -384,7 +385,7 @@ export default function Dashboard() {
 
             {/* Chapter overview — officer only */}
             {!loading && isOfficer && summary && (
-              <div className="bg-[var(--color-bg-card-solid)] border border-[var(--color-border)]">
+              <div data-tour-target={TOUR_TARGETS.DASHBOARD_ANALYTICS_LINK} className="bg-[var(--color-bg-card-solid)] border border-[var(--color-border)]">
                 <div className="px-6 py-4 border-b border-[var(--color-border)]">
                   <h2 className="text-[11px] font-body font-semibold uppercase tracking-[0.15em] text-content-muted">
                     Chapter Overview

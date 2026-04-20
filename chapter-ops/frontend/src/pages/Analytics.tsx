@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import { useAuthStore } from "@/stores/authStore";
 import { useConfigStore } from "@/stores/configStore";
 import { fetchChapterAnalytics } from "@/services/analyticsService";
+import { TOUR_TARGETS } from "@/tours/tourTargets";
 import type { ChapterAnalytics, MemberRole } from "@/types";
 import { TrendingUp, TrendingDown, Minus, ChevronDown, Users, DollarSign, Calendar, BarChart3 } from "lucide-react";
 
@@ -356,7 +357,7 @@ export default function Analytics() {
             </section>
 
             {/* ── Row 2: Period comparison ──────────────────────────── */}
-            <section>
+            <section data-tour-target={TOUR_TARGETS.ANALYTICS_PERIOD_COMPARISON}>
               <h2 className="text-[10px] font-semibold uppercase tracking-widest text-content-muted mb-3">
                 Period Comparison
               </h2>
@@ -409,7 +410,7 @@ export default function Analytics() {
 
             {/* ── Row 4: Member status distribution ────────────────── */}
             {status && status.total > 0 && (
-              <section>
+              <section data-tour-target={TOUR_TARGETS.ANALYTICS_MEMBER_STATUS}>
                 <h2 className="text-[10px] font-semibold uppercase tracking-widest text-content-muted mb-3">
                   Member Status · {status.total} Active
                 </h2>
@@ -429,7 +430,7 @@ export default function Analytics() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               {/* Payment timeline */}
-              <section>
+              <section data-tour-target={TOUR_TARGETS.ANALYTICS_MONTHLY_TREND}>
                 <h2 className="text-[10px] font-semibold uppercase tracking-widest text-content-muted mb-3">
                   Payment Activity · Last 12 Months
                 </h2>

@@ -39,6 +39,7 @@ from app.models.chapter_period import ChapterPeriod
 from app.models.chapter_period_dues import ChapterPeriodDues
 from app.models.committee import Committee
 from app.models.incident import Incident, IncidentAttachment, IncidentStatusEvent
+from app.models.user_tour_state import UserTourState  # noqa: F401
 
 __all__ = [
     "BaseModel",
@@ -78,4 +79,5 @@ __all__ = [
     "Incident",
     "IncidentAttachment",
     "IncidentStatusEvent",
+    "UserTourState",
 ]

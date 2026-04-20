@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import { useAuthStore } from "@/stores/authStore";
 import { useConfigStore } from "@/stores/configStore";
 import { fetchPeriods, fetchPeriodDues, updateDuesRecord } from "@/services/periodService";
+import { TOUR_TARGETS } from "@/tours/tourTargets";
 import type { ChapterPeriod, ChapterPeriodDues, DuesStatus, MemberRole } from "@/types";
 import {
   CheckCircle, AlertCircle, Clock, Shield, X, ChevronDown, Search, ArrowUpRight,
@@ -372,6 +373,7 @@ export default function TreasurerDues() {
               {periods.length > 0 && (
                 <div className="relative mt-1">
                   <select
+                    data-tour-target={TOUR_TARGETS.CHAPTER_DUES_PERIOD_PICKER}
                     value={selectedPeriodId}
                     onChange={(e) => setSelectedPeriodId(e.target.value)}
                     className="appearance-none text-sm font-semibold bg-[var(--color-bg-card)] border border-[var(--color-border)] text-content-primary px-4 py-2 pr-8 focus:outline-none focus:border-brand-primary-main cursor-pointer"
@@ -409,7 +411,7 @@ export default function TreasurerDues() {
         ) : (
           <>
             {/* ── Summary stats ─────────────────────────────────────── */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--color-border)] border border-[var(--color-border)] mb-8">
+            <div data-tour-target={TOUR_TARGETS.CHAPTER_DUES_COLLECTION_STATS} className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[var(--color-border)] border border-[var(--color-border)] mb-8">
               {[
                 { label: "Total Owed", value: `$${grandTotals.owed.toFixed(2)}`, sub: `${memberRows.length} member${memberRows.length !== 1 ? "s" : ""}` },
                 { label: "Collected", value: `$${grandTotals.paid.toFixed(2)}`, sub: "payments recorded" },
@@ -470,7 +472,7 @@ export default function TreasurerDues() {
             ) : (
               <>
                 {/* ── Desktop matrix ─────────────────────────────── */}
-                <div className="hidden md:block overflow-x-auto border border-[var(--color-border)]">
+                <div data-tour-target={TOUR_TARGETS.CHAPTER_DUES_MATRIX} className="hidden md:block overflow-x-auto border border-[var(--color-border)]">
                   <table className="w-full text-sm border-collapse min-w-[600px]">
                     <thead>
                       <tr className="bg-[var(--color-bg-deep)] border-b border-[var(--color-border)]">
@@ -509,6 +511,7 @@ export default function TreasurerDues() {
                               return (
                                 <td key={col.id} className="px-4 py-3">
                                   <button
+                                    data-tour-target={TOUR_TARGETS.CHAPTER_DUES_INLINE_EDIT}
                                     onClick={() => setEditingDues(d)}
                                     className="text-left group/cell hover:opacity-80 transition-opacity"
                                     title="Click to adjust"

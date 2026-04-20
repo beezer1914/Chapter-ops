@@ -1730,3 +1730,5 @@ export interface UpdateIncidentStatusRequest {
   note?: string;
   resolution_notes?: string;
 }
+
+export * from "./tour";

@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useConfigStore } from "@/stores/configStore";
 import { fetchPeriods, fetchMyDues } from "@/services/periodService";
 import { createDuesCheckout, getStripeAccountStatus } from "@/services/stripeService";
+import { TOUR_TARGETS } from "@/tours/tourTargets";
 import type { ChapterPeriod, ChapterPeriodDues, DuesStatus } from "@/types";
 import { CheckCircle, AlertCircle, Clock, Shield, ArrowRight, CreditCard } from "lucide-react";
 
@@ -126,6 +127,7 @@ function DuesRow({
         {canPay && (
           stripeConnected ? (
             <button
+              data-tour-target={TOUR_TARGETS.MY_DUES_PAY_CTA}
               onClick={() => onPay(dues)}
               disabled={paying === dues.id}
               className="flex items-center gap-2 text-sm font-semibold text-brand-primary-dark hover:text-brand-primary-main transition-colors group disabled:opacity-50"
@@ -302,7 +304,7 @@ export default function MyDues() {
         ) : (
           <>
             {/* ── Financial status banner ───────────────────────────── */}
-            <div className={`mb-6 px-5 py-3 border ${banner.bg} ${banner.border} ${banner.text} text-sm font-medium flex items-center gap-2.5`}>
+            <div data-tour-target={TOUR_TARGETS.MY_DUES_STATUS_BANNER} className={`mb-6 px-5 py-3 border ${banner.bg} ${banner.border} ${banner.text} text-sm font-medium flex items-center gap-2.5`}>
               {financialStatus === "financial" || financialStatus === "exempt"
                 ? <CheckCircle className="w-4 h-4 shrink-0" />
                 : <AlertCircle className="w-4 h-4 shrink-0" />
@@ -346,7 +348,7 @@ export default function MyDues() {
             )}
 
             {/* ── Per-fee-type dues rows ────────────────────────────── */}
-            <div className="divide-y divide-[var(--color-border)] border border-[var(--color-border)]">
+            <div data-tour-target={TOUR_TARGETS.MY_DUES_BREAKDOWN} className="divide-y divide-[var(--color-border)] border border-[var(--color-border)]">
               {dues.map((d) => (
                 <DuesRow
                   key={d.id}

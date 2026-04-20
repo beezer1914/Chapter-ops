@@ -14,6 +14,7 @@ import {
   type AvailableChapter,
 } from "@/services/transferService";
 import api from "@/lib/api";
+import { useTour } from "@/tours/useTour";
 import type { MemberRole, CustomFieldDefinition, ChapterTransferRequest } from "@/types";
 import { ROLE_HIERARCHY } from "./shared";
 import DeleteAccountSection from "./DeleteAccountSection";
@@ -43,6 +44,7 @@ export default function ProfileTab({
   const { user: authUser, memberships } = useAuthStore();
   const { getCustomFields } = useConfigStore();
   const customFieldDefs: CustomFieldDefinition[] = getCustomFields();
+  const { replay } = useTour();
 
   async function handleAvatarUpload(file: File) {
     const res = await uploadProfilePicture(file);
@@ -348,6 +350,16 @@ export default function ProfileTab({
           )}
         </div>
       )}
+
+      <div>
+        <button
+          type="button"
+          onClick={replay}
+          className="text-[11px] font-semibold uppercase tracking-[0.1em] text-content-muted hover:text-content-primary underline"
+        >
+          Replay onboarding tours
+        </button>
+      </div>
 
       <DeleteAccountSection setError={setError} />
     </div>

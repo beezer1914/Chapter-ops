@@ -519,3 +519,11 @@ option {
 /* Dark overlay behind modals — needs to stay dark in both modes */
 [data-color-scheme="light"] .bg-brand-primary-950\/40 { background-color: rgba(0, 0, 0, 0.35); }
 [data-color-scheme="light"] .bg-black\/60             { background-color: rgba(0, 0, 0, 0.50); }
+
+/* Tour spotlight target */
+[data-tour-active] {
+  outline: 3px solid var(--color-text-heading);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 95;
+}
