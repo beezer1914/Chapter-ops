@@ -179,7 +179,6 @@ def register():
         # Seed dues for the new member if the chapter has an active period + fee types
         if membership:
             try:
-                from app.models import Chapter
                 from app.services.dues_service import seed_member_dues
                 joined_chapter = db.session.get(Chapter, invite.chapter_id)
                 if joined_chapter:
