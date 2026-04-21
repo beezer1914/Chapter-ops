@@ -106,6 +106,11 @@ def seed_period_dues(chapter, period) -> int:
             ))
             created += 1
 
+    # Derive financial_status from the newly-seeded rows so memberships stay in
+    # sync (autoflush makes pending rows visible to the recompute query).
+    for m in memberships:
+        recompute_financial_status(chapter, m.user_id)
+
     logger.info(f"Seeded {created} dues records for period {period.id} in chapter {chapter.id}")
     return created
 
@@ -162,6 +167,10 @@ def seed_member_dues(chapter, user_id: str) -> int:
             status=status,
         ))
         created += 1
+
+    # Derive financial_status from the newly-seeded rows.
+    if created:
+        recompute_financial_status(chapter, user_id)
 
     return created
 

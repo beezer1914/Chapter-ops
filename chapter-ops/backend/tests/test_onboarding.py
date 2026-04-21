@@ -223,7 +223,7 @@ class TestCreateChapter:
         assert data["chapter"]["name"] == "Alpha Gamma Chapter"
         assert data["chapter"]["region_id"] == region.id
         assert data["membership"]["role"] == "president"
-        assert data["membership"]["financial_status"] == "financial"
+        assert data["membership"]["financial_status"] == "not_financial"
 
         # User's active_chapter_id should be set
         db_session.expire_all()

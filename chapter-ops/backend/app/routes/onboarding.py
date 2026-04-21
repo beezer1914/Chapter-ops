@@ -249,11 +249,12 @@ def create_chapter():
         db.session.add(first_period)
 
         # Create the creator's chapter membership with their declared role.
+        # financial_status falls back to the DB default ("not_financial") and is
+        # derived from dues rows by recompute_financial_status after seeding.
         membership = ChapterMembership(
             user_id=current_user.id,
             chapter_id=chapter.id,
             role=founder_role,
-            financial_status="financial",
         )
         db.session.add(membership)
 
