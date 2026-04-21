@@ -123,6 +123,8 @@ def register():
         db.session.add(user)
         db.session.flush()  # Get user.id before creating membership
 
+        membership = None
+
         if invite:
             # Invited path: create membership and set active chapter.
             # If an active member_application workflow template exists, membership
