@@ -74,6 +74,10 @@ class BaseConfig:
     # CSRF — SPA double-submit pattern via X-CSRFToken header
     WTF_CSRF_HEADERS = ["X-CSRFToken"]
     WTF_CSRF_TIME_LIMIT = None  # Token lives as long as the session
+    # Disable the Referer/Host match check. The token itself (X-CSRFToken)
+    # is the real protection; the referer check breaks behind reverse proxies
+    # (e.g. Netlify → Render) where request.host and Referer differ.
+    WTF_CSRF_SSL_STRICT = False
 
     # Frontend
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
