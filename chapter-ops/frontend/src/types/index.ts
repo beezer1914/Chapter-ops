@@ -68,6 +68,7 @@ export interface CreateChapterRequest {
   state?: string;
   country?: string;
   timezone?: string;
+  founder_role?: "member" | "secretary" | "treasurer" | "vice_president" | "president";
 }
 
 // ============================================================================

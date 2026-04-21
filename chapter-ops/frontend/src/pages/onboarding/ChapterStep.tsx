@@ -13,7 +13,18 @@ const chapterSchema = z.object({
   state: z.string().optional(),
   country: z.string().default("United States"),
   timezone: z.string().default("America/New_York"),
+  founder_role: z.enum(["member", "secretary", "treasurer", "vice_president", "president"], {
+    required_error: "Please select your role in this chapter",
+  }),
 });
+
+const founderRoleOptions: { value: "member" | "secretary" | "treasurer" | "vice_president" | "president"; label: string }[] = [
+  { value: "member", label: "Member" },
+  { value: "secretary", label: "Secretary" },
+  { value: "treasurer", label: "Treasurer" },
+  { value: "vice_president", label: "Vice President" },
+  { value: "president", label: "President" },
+];
 
 type ChapterFormData = z.infer<typeof chapterSchema>;
 
@@ -64,6 +75,7 @@ export default function ChapterStep() {
       state: "",
       country: "United States",
       timezone: "America/New_York",
+      founder_role: undefined,
     },
   });
 
@@ -81,6 +93,7 @@ export default function ChapterStep() {
         state: data.state || undefined,
         country: data.country,
         timezone: data.timezone,
+        founder_role: data.founder_role,
       });
     } catch {
       // Error handled by store
@@ -172,6 +185,31 @@ export default function ChapterStep() {
           </div>
           {errors.chapter_type && (
             <p className="mt-1 text-xs text-red-600">{errors.chapter_type.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="founder_role" className="block text-sm font-medium text-content-secondary">
+            Your role in this chapter
+          </label>
+          <select
+            id="founder_role"
+            {...register("founder_role")}
+            className="mt-1 block w-full rounded-md border border-[var(--color-border)] bg-surface-input px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          >
+            <option value="">Select your role</option>
+            {founderRoleOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-content-muted">
+            You're already set as an organization admin, so you can administer settings
+            regardless of the chapter role you pick here.
+          </p>
+          {errors.founder_role && (
+            <p className="mt-1 text-xs text-red-600">{errors.founder_role.message}</p>
           )}
         </div>
 

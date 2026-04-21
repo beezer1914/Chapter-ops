@@ -156,10 +156,11 @@ def create_region():
 @login_required
 def create_chapter():
     """
-    Create a new chapter and make the current user its president/admin.
+    Create a new chapter and grant the current user a membership.
 
-    This is the core onboarding action — after this, the user can
-    invite other members to the chapter.
+    The founder declares their actual chapter role via `founder_role`
+    (default "president" for backward compat). Org-level admin access is
+    already granted separately when the organization is created.
     """
     data = request.get_json()
 
@@ -170,6 +171,14 @@ def create_chapter():
 
     if data["chapter_type"] not in ("undergraduate", "graduate"):
         return jsonify({"error": "chapter_type must be 'undergraduate' or 'graduate'."}), 400
+
+    # The founder can declare their actual chapter role. They're already the
+    # org admin (granted when the organization was created), so org-level
+    # settings stay accessible even if they choose "member" here.
+    valid_founder_roles = {"member", "secretary", "treasurer", "vice_president", "president"}
+    founder_role = (data.get("founder_role") or "president").strip()
+    if founder_role not in valid_founder_roles:
+        return jsonify({"error": f"founder_role must be one of: {', '.join(sorted(valid_founder_roles))}."}), 400
 
     # Verify organization exists
     org = db.session.get(Organization, data["organization_id"])
@@ -239,11 +248,11 @@ def create_chapter():
         )
         db.session.add(first_period)
 
-        # Make the creator the president of this chapter
+        # Create the creator's chapter membership with their declared role.
         membership = ChapterMembership(
             user_id=current_user.id,
             chapter_id=chapter.id,
-            role="president",
+            role=founder_role,
             financial_status="financial",
         )
         db.session.add(membership)
