@@ -207,7 +207,6 @@ class TestUpdateChapterConfig:
         _login(client)
         resp = client.put("/api/config/chapter", json={
             "settings": {
-                "default_dues_amount": 250.00,
                 "fiscal_year_start_month": 9,
                 "payment_deadline_day": 15,
                 "allow_payment_plans": False,
@@ -215,8 +214,8 @@ class TestUpdateChapterConfig:
         })
         assert resp.status_code == 200
         settings = resp.get_json()["chapter_config"]["settings"]
-        assert settings["default_dues_amount"] == 250.00
         assert settings["fiscal_year_start_month"] == 9
+        assert settings["payment_deadline_day"] == 15
         assert settings["allow_payment_plans"] is False
 
     def test_president_cannot_update_chapter_config(self, client, app):

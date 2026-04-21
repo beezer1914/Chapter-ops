@@ -308,12 +308,6 @@ def update_chapter_config():
 
         current_settings = current_config.get("settings", {})
 
-        if "default_dues_amount" in settings:
-            val = settings["default_dues_amount"]
-            if not isinstance(val, (int, float)) or val < 0:
-                return jsonify({"error": "default_dues_amount must be a non-negative number."}), 400
-            current_settings["default_dues_amount"] = round(float(val), 2)
-
         if "fiscal_year_start_month" in settings:
             val = settings["fiscal_year_start_month"]
             if not isinstance(val, int) or val < 1 or val > 12:

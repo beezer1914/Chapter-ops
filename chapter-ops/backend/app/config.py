@@ -110,12 +110,13 @@ class ProductionConfig(BaseConfig):
     - DATABASE_URL must be set (no fallback)
     - Stripe keys required for payment processing
     - FRONTEND_URL must not be localhost
-    - Session cookies are Secure + Strict SameSite
+    - Session cookies are Secure + Lax SameSite (Lax is required for OAuth
+      callback flows; CSRF is enforced via the X-CSRFToken header).
     """
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = _normalize_db_url(os.environ.get("DATABASE_URL", ""))
     SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_SAMESITE = "Strict"
+    SESSION_COOKIE_SAMESITE = "Lax"
 
     @classmethod
     def validate(cls):

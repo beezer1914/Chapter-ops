@@ -160,25 +160,6 @@ export default function ChapterConfigTab({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-content-secondary mb-1">
-              Default Dues Amount ($)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={settings.default_dues_amount ?? ""}
-              onChange={(e) =>
-                setSettings((prev) => ({
-                  ...prev,
-                  default_dues_amount: parseFloat(e.target.value) || 0,
-                }))
-              }
-              disabled={!isAdmin}
-              className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:bg-[var(--color-bg-input)]"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-content-secondary mb-1">
               Fiscal Year Start Month
             </label>
             <select

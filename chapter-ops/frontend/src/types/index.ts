@@ -134,7 +134,6 @@ export interface FeeType {
 }
 
 export interface ChapterSettings {
-  default_dues_amount?: number;
   fiscal_year_start_month?: number;
   payment_deadline_day?: number;
   allow_payment_plans?: boolean;
