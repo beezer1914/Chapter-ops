@@ -146,7 +146,6 @@ def get_config():
 @config_bp.route("/organization", methods=["PUT"])
 @login_required
 @chapter_required
-@role_required("president")
 def update_org_config():
     """Update organization-level configuration (president+ or org admin)."""
     from flask_login import current_user
@@ -157,7 +156,9 @@ def update_org_config():
     chapter = g.current_chapter
     org = chapter.organization
 
-    # Org admins can always update; presidents are restricted to their own org
+    # Org admins can always update; otherwise require chapter president.
+    # (No outer @role_required so an org admin with a non-president chapter
+    # role — e.g. founder who picked "treasurer" — still gets through.)
     if not _is_org_admin(current_user, org.id):
         membership = current_user.get_membership(chapter.id)
         if not membership or not membership.has_role("president"):
