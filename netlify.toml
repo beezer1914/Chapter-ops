@@ -1,3 +1,8 @@
+[build]
+  base = "chapter-ops/frontend"
+  publish = "dist"
+  command = "npm run build"
+
 # Proxy /api/* to the Render backend so the browser sees everything as same-origin.
 # Keeps session cookies (SameSite=Strict) + CSRF working without any CORS config.
 [[redirects]]
