@@ -14,6 +14,7 @@ import type {
   ChapterMilestone,
   MilestoneType,
   UpdateLineageRequest,
+  MemberRole,
 } from "@/types";
 import {
   GitBranch,
@@ -25,7 +26,6 @@ import {
   ChevronDown,
   ChevronRight,
   X,
-  Check,
   Award,
   Star,
   Zap,
@@ -56,8 +56,9 @@ const MILESTONE_TYPES: MilestoneType[] = [
   "reactivated", "award", "achievement", "other",
 ];
 
-const ROLE_HIERARCHY: Record<string, number> = {
+const ROLE_HIERARCHY: Record<MemberRole, number> = {
   member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
+  regional_director: 5, regional_1st_vice: 4,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -523,7 +524,7 @@ export default function Lineage() {
                     {/* Timeline line */}
                     <div className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-white/10" />
                     <div className="space-y-0">
-                      {milestones.map((m, idx) => {
+                      {milestones.map((m) => {
                         const config = MILESTONE_TYPE_CONFIG[m.milestone_type];
                         const Icon = config.icon;
                         return (

@@ -26,8 +26,6 @@ import {
   FileText,
   Send,
   Plus,
-  ChevronDown,
-  ChevronUp,
   Users,
   DollarSign,
   Clock,
@@ -64,7 +62,7 @@ export default function Invoices() {
   const { memberships, user } = useAuthStore();
   const currentMembership = memberships.find((m) => m.chapter_id === user?.active_chapter_id);
   const userRole = (currentMembership?.role ?? "member") as MemberRole;
-  const canManage = ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY["treasurer"];
+  const canManage = (ROLE_HIERARCHY[userRole] ?? 0) >= (ROLE_HIERARCHY["treasurer"] ?? 2);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -513,8 +511,8 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
                 <select value={formFeeType} onChange={(e) => setFormFeeType(e.target.value)}
                   className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary">
                   <option value="">None</option>
-                  {feeTypes.map((ft: { id: string; name: string }) => (
-                    <option key={ft.id} value={ft.id}>{ft.name}</option>
+                  {feeTypes.map((ft) => (
+                    <option key={ft.id} value={ft.id}>{ft.label}</option>
                   ))}
                 </select>
               </div>
@@ -566,8 +564,8 @@ function TreasurerView({ setError }: { setError: (e: string | null) => void }) {
                 <select value={bulkFeeType} onChange={(e) => setBulkFeeType(e.target.value)}
                   className="w-full px-3 py-2 border border-[var(--color-border-brand)] rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary">
                   <option value="">None</option>
-                  {feeTypes.map((ft: { id: string; name: string }) => (
-                    <option key={ft.id} value={ft.id}>{ft.name}</option>
+                  {feeTypes.map((ft) => (
+                    <option key={ft.id} value={ft.id}>{ft.label}</option>
                   ))}
                 </select>
               </div>

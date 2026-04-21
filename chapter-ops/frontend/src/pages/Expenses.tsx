@@ -85,9 +85,11 @@ export default function Expenses() {
   );
   const roleHierarchy: Record<string, number> = {
     member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
+    regional_director: 5, regional_1st_vice: 4,
   };
   const role = currentMembership?.role ?? "member";
-  const isOfficer = roleHierarchy[role] >= roleHierarchy["treasurer"] && roleHierarchy[role] <= roleHierarchy["president"];
+  const roleRank = roleHierarchy[role] ?? 0;
+  const isOfficer = roleRank >= (roleHierarchy["treasurer"] ?? 2) && roleRank <= (roleHierarchy["president"] ?? 4);
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [summary, setSummary] = useState<ExpenseSummary | null>(null);
@@ -383,7 +385,7 @@ function SubmitExpenseModal({
 }: { onClose: () => void; onSubmitted: (e: Expense) => void }) {
   const [form, setForm] = useState<CreateExpenseRequest>({
     title: "", amount: 0, category: "other",
-    expense_date: new Date().toISOString().split("T")[0],
+    expense_date: new Date().toISOString().split("T")[0] ?? "",
     notes: "", committee_id: null,
   });
   const [committees, setCommittees] = useState<Committee[]>([]);

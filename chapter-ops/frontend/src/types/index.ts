@@ -452,6 +452,7 @@ export interface MemberUser {
   last_name: string;
   full_name: string;
   phone: string | null;
+  profile_picture_url: string | null;
 }
 
 export interface MemberWithUser extends ChapterMembership {

@@ -5,10 +5,11 @@ import { useConfigStore } from "@/stores/configStore";
 import { fetchChapterAnalytics } from "@/services/analyticsService";
 import { TOUR_TARGETS } from "@/tours/tourTargets";
 import type { ChapterAnalytics, MemberRole } from "@/types";
-import { TrendingUp, TrendingDown, Minus, ChevronDown, Users, DollarSign, Calendar, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronDown, Users, DollarSign, BarChart3 } from "lucide-react";
 
 const ROLE_HIERARCHY: Record<MemberRole, number> = {
   member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
+  regional_director: 5, regional_1st_vice: 4,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -20,7 +21,7 @@ function fmt(val: string | number): string {
 
 function fmtMonth(ym: string): string {
   const [y, m] = ym.split("-");
-  return new Date(parseInt(y), parseInt(m) - 1, 1)
+  return new Date(parseInt(y ?? "1970"), parseInt(m ?? "1") - 1, 1)
     .toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 }
 

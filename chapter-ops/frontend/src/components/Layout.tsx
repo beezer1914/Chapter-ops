@@ -5,7 +5,7 @@ import { useConfigStore } from "@/stores/configStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useRegionStore } from "@/stores/regionStore";
 import NotificationBell from "@/components/NotificationBell";
-import type { ModuleKey } from "@/types";
+import type { ModuleKey, Organization, User } from "@/types";
 import { useModuleAccess } from "@/lib/permissions";
 import {
   LayoutDashboard,
@@ -87,11 +87,11 @@ function SidebarContent({
   onLogout,
 }: {
   navSections: NavSection[];
-  organization: ReturnType<typeof useConfigStore>["organization"];
+  organization: Organization | null;
   orgLetters: string;
   orgName: string;
   chapterName: string;
-  user: ReturnType<typeof useAuthStore>["user"];
+  user: User | null;
   onNavigate?: () => void;
   onLogout: () => void;
 }) {

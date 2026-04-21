@@ -25,6 +25,8 @@ const ROLE_COLORS: Record<MemberRole, string> = {
   treasurer: "bg-blue-900/30 text-blue-400",
   secretary: "bg-teal-900/30 text-teal-400",
   member: "bg-gray-800/50 text-content-muted",
+  regional_director: "bg-indigo-900/30 text-indigo-400",
+  regional_1st_vice: "bg-cyan-900/30 text-cyan-400",
 };
 
 const FINANCIAL_LABELS: Record<FinancialStatus, string> = {
@@ -48,6 +50,8 @@ const ROLE_HIERARCHY: Record<MemberRole, number> = {
   vice_president: 3,
   president: 4,
   admin: 5,
+  regional_director: 5,
+  regional_1st_vice: 4,
 };
 
 const MEMBER_TYPE_LABELS: Record<MemberType, string> = {

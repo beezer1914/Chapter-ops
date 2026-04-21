@@ -229,13 +229,14 @@ export default function MyDues() {
   const allPaid = nonExempt.length > 0 && nonExempt.every((d) => d.status === "paid");
 
   // ── Financial status banner config ────────────────────────────────────────
+  const NOT_FINANCIAL_BANNER = { bg: "bg-red-50", border: "border-red-200", text: "text-red-800", label: "You are not yet financial for this period." };
   const STATUS_BANNER: Record<string, { bg: string; border: string; text: string; label: string }> = {
     financial: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800", label: "You are financial for this period." },
-    not_financial: { bg: "bg-red-50", border: "border-red-200", text: "text-red-800", label: "You are not yet financial for this period." },
+    not_financial: NOT_FINANCIAL_BANNER,
     neophyte: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-800", label: "Neophyte — financial standing is waived for your first year." },
     exempt: { bg: "bg-[var(--color-bg-card)]", border: "border-[var(--color-border)]", text: "text-content-muted", label: "Your dues are waived." },
   };
-  const banner = STATUS_BANNER[financialStatus] ?? STATUS_BANNER.not_financial;
+  const banner = STATUS_BANNER[financialStatus] ?? NOT_FINANCIAL_BANNER;
 
   return (
     <Layout>

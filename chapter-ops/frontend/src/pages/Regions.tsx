@@ -28,7 +28,6 @@ import type {
   OrgDirectoryChapter,
   OrgDirectoryMemberDetail,
   InvoiceWithChapter,
-  InvoiceStatus,
 } from "@/types";
 
 const REGION_ROLE_LABELS: Record<RegionRole, string> = {
@@ -518,8 +517,9 @@ function RegionDetailView({
 
 // ── Regional Invoices Section ───────────────────────────────────────────
 
+const INV_DRAFT = { label: "Draft", cls: "bg-gray-800/50 text-gray-400" };
 const INV_STATUS: Record<string, { label: string; cls: string }> = {
-  draft: { label: "Draft", cls: "bg-gray-800/50 text-gray-400" },
+  draft: INV_DRAFT,
   sent: { label: "Sent", cls: "bg-blue-900/30 text-blue-400" },
   paid: { label: "Paid", cls: "bg-emerald-900/30 text-emerald-400" },
   overdue: { label: "Overdue", cls: "bg-red-900/30 text-red-400" },
@@ -783,7 +783,7 @@ function RegionalInvoicesSection({
             </thead>
             <tbody className="divide-y divide-white/5">
               {invoices.map((inv) => {
-                const s = INV_STATUS[inv.status] ?? INV_STATUS.draft;
+                const s = INV_STATUS[inv.status] ?? INV_DRAFT;
                 return (
                   <tr key={inv.id} className="hover:bg-white/5 transition">
                     <td className="px-4 py-3">

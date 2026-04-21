@@ -7,13 +7,14 @@ import { fetchPeriods, fetchPeriodDues, updateDuesRecord } from "@/services/peri
 import { TOUR_TARGETS } from "@/tours/tourTargets";
 import type { ChapterPeriod, ChapterPeriodDues, DuesStatus, MemberRole } from "@/types";
 import {
-  CheckCircle, AlertCircle, Clock, Shield, X, ChevronDown, Search, ArrowUpRight,
+  X, ChevronDown, Search, ArrowUpRight,
 } from "lucide-react";
 
 // ── Role gate ─────────────────────────────────────────────────────────────────
 
 const ROLE_HIERARCHY: Record<MemberRole, number> = {
   member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
+  regional_director: 5, regional_1st_vice: 4,
 };
 
 // ── Status helpers ─────────────────────────────────────────────────────────────
@@ -237,7 +238,7 @@ export default function TreasurerDues() {
         setPeriods(ps);
         const active = ps.find((p) => p.is_active);
         if (active) setSelectedPeriodId(active.id);
-        else if (ps.length > 0) setSelectedPeriodId(ps[0].id);
+        else if (ps[0]) setSelectedPeriodId(ps[0].id);
       } catch {
         setError("Failed to load periods.");
       } finally {

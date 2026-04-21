@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import type { Committee, CommitteeBudgetStat, Expense } from "@/types";
+import type { Committee, Expense } from "@/types";
 
 export async function fetchCommittees(includeInactive = false): Promise<Committee[]> {
   const params = includeInactive ? { include_inactive: "true" } : {};
