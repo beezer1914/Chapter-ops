@@ -20,6 +20,8 @@ import {
   Globe,
   Palette,
   ShieldBan,
+  AlertTriangle,
+  Inbox,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────
@@ -253,69 +255,85 @@ export default function Landing() {
                 </div>
 
                 {/* Main content */}
-                <div className="flex-1 p-4 bg-[#07101e]">
-                  {/* Top bar */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <p className="text-[13px] font-heading font-bold text-white leading-tight">Welcome back, Brandon</p>
-                      <p className="text-[10px] text-content-muted mt-0.5">Phi Beta Sigma · Lambda Chapter</p>
+                <div className="flex-1 p-3 bg-[#07101e]">
+                  {/* Top bar — editorial kicker + greeting */}
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                        <p className="text-[8px] font-semibold uppercase tracking-[0.22em] text-content-muted">
+                          Lambda Chapter · ΦΒΣ
+                        </p>
+                        <span className="text-[7px] font-semibold uppercase tracking-wider px-1 py-0.5 bg-brand-primary-main/15 text-brand-primary-light border border-brand-primary-main/25">
+                          Spring 2026
+                        </span>
+                      </div>
+                      <p className="text-[13px] font-heading font-bold text-white leading-tight">Good morning, Brandon.</p>
                     </div>
-                    <div className="w-7 h-7 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center relative">
+                    <div className="w-7 h-7 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center relative shrink-0">
                       <div className="w-1.5 h-1.5 rounded-full bg-brand-primary-light" />
                       <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 border border-[#07101e]" />
                     </div>
                   </div>
 
-                  {/* Stat cards — 2×2 */}
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-3 relative overflow-hidden">
-                      <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-white/10" />
-                      <p className="text-[9px] text-emerald-100/70 uppercase tracking-wider font-semibold">Status</p>
-                      <p className="text-[17px] font-heading font-bold text-white mt-0.5">Financial</p>
-                      <p className="text-[9px] text-emerald-100/60">President</p>
-                    </div>
-                    <div className="bg-[#0f1a3a] border border-white/[0.05] rounded-xl p-3 relative overflow-hidden">
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-primary-main via-brand-primary-light to-transparent" />
-                      <p className="text-[9px] text-content-muted uppercase tracking-wider font-semibold">Collected</p>
-                      <p className="text-[17px] font-heading font-bold text-white mt-0.5">$4,280</p>
-                      <p className="text-[9px] text-emerald-400/80">+$840 this month</p>
-                    </div>
-                    <div className="bg-[#0f1a3a] border border-white/[0.05] rounded-xl p-3 relative overflow-hidden">
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-400 via-amber-200 to-transparent" />
-                      <p className="text-[9px] text-content-muted uppercase tracking-wider font-semibold">Outstanding</p>
-                      <p className="text-[17px] font-heading font-bold text-white mt-0.5">3</p>
-                      <p className="text-[9px] text-content-muted">not financial</p>
-                    </div>
-                    <div className="bg-[#0f1a3a] border border-white/[0.05] rounded-xl p-3 relative overflow-hidden">
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-400 via-indigo-200 to-transparent" />
-                      <p className="text-[9px] text-content-muted uppercase tracking-wider font-semibold">Members</p>
-                      <p className="text-[17px] font-heading font-bold text-white mt-0.5">24</p>
-                      <p className="text-[9px] text-content-muted">active</p>
-                    </div>
-                  </div>
+                  {/* Double-rule divider */}
+                  <div className="border-t-2 border-white/20 mb-[2px]" />
+                  <div className="border-t border-white/[0.06] mb-2" />
 
-                  {/* Recent transactions card */}
+                  {/* Inbox card */}
                   <div className="rounded-xl border border-white/[0.06] bg-[#0f1a3a] overflow-hidden">
-                    <div className="flex items-center gap-1.5 px-3 py-2.5 border-b border-white/[0.05]">
-                      <CreditCard className="w-3 h-3 text-brand-primary-light" />
-                      <p className="text-[10px] font-heading font-semibold text-white">Recent Transactions</p>
-                    </div>
-                    {[
-                      { name: "Dues Payment", date: "Apr 1", amount: "$125.00", dot: "bg-emerald-500" },
-                      { name: "Event Ticket",  date: "Mar 28", amount: "$25.00",  dot: "bg-violet-500" },
-                      { name: "Donation",      date: "Mar 22", amount: "$50.00",  dot: "bg-sky-500" },
-                    ].map((tx) => (
-                      <div key={tx.name} className="flex items-center justify-between px-3 py-2 border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-colors">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${tx.dot}`} />
-                          <div>
-                            <p className="text-[10px] text-white font-medium leading-tight">{tx.name}</p>
-                            <p className="text-[9px] text-content-muted">{tx.date}</p>
-                          </div>
-                        </div>
-                        <span className="text-[11px] font-bold text-white tabular-nums">{tx.amount}</span>
+                    {/* Inbox header */}
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.05]">
+                      <div className="flex items-center gap-1.5">
+                        <Inbox className="w-3 h-3 text-content-muted" />
+                        <p className="text-[10px] font-heading font-semibold text-white">Your Inbox</p>
                       </div>
-                    ))}
+                      <span className="text-[9px] font-semibold text-content-muted tabular-nums">3 items</span>
+                    </div>
+
+                    {/* ── Critical ── */}
+                    <div className="px-3 py-0.5 bg-white/[0.02] border-b border-white/[0.04]">
+                      <p className="text-[7px] font-bold uppercase tracking-[0.25em] text-red-400">Critical</p>
+                    </div>
+                    <div className="flex items-start gap-2 px-3 py-1.5 border-l-2 border-l-red-600 border-b border-white/[0.03]">
+                      <div className="shrink-0 w-5 h-5 rounded-full bg-red-500/15 flex items-center justify-center mt-0.5">
+                        <AlertTriangle className="w-2.5 h-2.5 text-red-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-medium text-white leading-tight">2 members past due on dues</p>
+                        <p className="text-[9px] text-content-muted mt-0.5 leading-snug">Collection is at risk for this period.</p>
+                      </div>
+                      <ArrowRight className="w-3 h-3 text-red-400 mt-0.5 shrink-0" />
+                    </div>
+
+                    {/* ── Action Needed ── */}
+                    <div className="px-3 py-0.5 bg-white/[0.02] border-b border-white/[0.04]">
+                      <p className="text-[7px] font-bold uppercase tracking-[0.25em] text-amber-400">Action Needed</p>
+                    </div>
+                    <div className="flex items-start gap-2 px-3 py-1.5 border-l-2 border-l-amber-500 border-b border-white/[0.03]">
+                      <div className="shrink-0 w-5 h-5 rounded-full bg-amber-500/15 flex items-center justify-center mt-0.5">
+                        <Receipt className="w-2.5 h-2.5 text-amber-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-medium text-white leading-tight">Expense report awaits approval</p>
+                        <p className="text-[9px] text-content-muted mt-0.5 leading-snug">$125 · Submitted by M. Carter</p>
+                      </div>
+                      <ArrowRight className="w-3 h-3 text-amber-400 mt-0.5 shrink-0" />
+                    </div>
+
+                    {/* ── For Your Attention ── */}
+                    <div className="px-3 py-0.5 bg-white/[0.02] border-b border-white/[0.04]">
+                      <p className="text-[7px] font-bold uppercase tracking-[0.25em] text-brand-primary-light">For Your Attention</p>
+                    </div>
+                    <div className="flex items-start gap-2 px-3 py-1.5 border-l-2 border-l-brand-primary-main">
+                      <div className="shrink-0 w-5 h-5 rounded-full bg-brand-primary-main/15 flex items-center justify-center mt-0.5">
+                        <Calendar className="w-2.5 h-2.5 text-brand-primary-light" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-medium text-white leading-tight">Chapter meeting Friday at 7pm</p>
+                        <p className="text-[9px] text-content-muted mt-0.5 leading-snug">24 invited · 18 responded</p>
+                      </div>
+                      <ArrowRight className="w-3 h-3 text-brand-primary-light mt-0.5 shrink-0" />
+                    </div>
                   </div>
                 </div>
               </div>
