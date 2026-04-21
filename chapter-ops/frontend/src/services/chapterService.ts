@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import type {
   InviteCode,
   CreateInviteRequest,
+  CreateInviteResponse,
   MemberWithUser,
   UpdateMemberRequest,
 } from "@/types";
@@ -44,9 +45,9 @@ export async function fetchInvites(): Promise<InviteCode[]> {
 
 export async function createInvite(
   data: CreateInviteRequest
-): Promise<InviteCode> {
+): Promise<CreateInviteResponse> {
   const response = await api.post("/invites", data);
-  return response.data.invite;
+  return { invite: response.data.invite, email_sent: !!response.data.email_sent };
 }
 
 export async function revokeInvite(inviteId: string): Promise<void> {

@@ -440,6 +440,12 @@ export interface InviteCode {
 export interface CreateInviteRequest {
   role?: MemberRole;
   expires_in_days?: number;
+  email?: string;
+}
+
+export interface CreateInviteResponse {
+  invite: InviteCode;
+  email_sent: boolean;
 }
 
 // ============================================================================

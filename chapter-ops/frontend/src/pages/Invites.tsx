@@ -34,12 +34,14 @@ export default function Invites() {
   const [invites, setInvites] = useState<InviteCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   // Create form state
   const [showForm, setShowForm] = useState(false);
   const [newRole, setNewRole] = useState<MemberRole>("member");
   const [newExpiry, setNewExpiry] = useState(7);
+  const [newEmail, setNewEmail] = useState("");
   const [creating, setCreating] = useState(false);
 
   const currentMembership = memberships.find(
@@ -75,15 +77,28 @@ export default function Invites() {
     e.preventDefault();
     setCreating(true);
     setError(null);
+    setSuccess(null);
     try {
-      const invite = await createInvite({
+      const trimmedEmail = newEmail.trim();
+      const { invite, email_sent } = await createInvite({
         role: newRole,
         expires_in_days: newExpiry,
+        ...(trimmedEmail ? { email: trimmedEmail } : {}),
       });
       setInvites((prev) => [invite, ...prev]);
       setShowForm(false);
       setNewRole("member");
       setNewExpiry(7);
+      setNewEmail("");
+      if (trimmedEmail) {
+        setSuccess(
+          email_sent
+            ? `Invite sent to ${trimmedEmail}.`
+            : `Invite created, but the email to ${trimmedEmail} did not send. Share the code manually.`
+        );
+      } else {
+        setSuccess("Invite created. Copy the code below to share it.");
+      }
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { error?: string } } }).response?.data
@@ -172,6 +187,15 @@ export default function Invites() {
           </div>
         )}
 
+        {success && (
+          <div className="mb-4 p-3 bg-emerald-900/20 text-emerald-400 rounded-lg text-sm">
+            {success}
+            <button onClick={() => setSuccess(null)} className="ml-2 font-medium underline">
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Create Form */}
         {showForm && (
           <form
@@ -209,12 +233,27 @@ export default function Invites() {
                 />
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-content-secondary mb-1">
+                Email <span className="text-content-muted font-normal">(optional — we'll send the invite for you)</span>
+              </label>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="member@example.com"
+                className="w-full rounded-lg border border-[var(--color-border-brand)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              />
+              <p className="mt-1 text-xs text-content-muted">
+                Leave blank to just generate a code you can share manually.
+              </p>
+            </div>
             <button
               type="submit"
               disabled={creating}
               className="px-4 py-2 text-sm font-medium text-white bg-brand-primary rounded-lg hover:bg-brand-primary-dark disabled:opacity-50"
             >
-              {creating ? "Creating..." : "Create Invite Code"}
+              {creating ? "Creating..." : newEmail.trim() ? "Create & Send Invite" : "Create Invite Code"}
             </button>
           </form>
         )}

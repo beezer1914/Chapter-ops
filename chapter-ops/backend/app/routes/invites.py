@@ -17,6 +17,7 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.models import InviteCode, User
 from app.utils.decorators import chapter_required, role_required
+from app.utils.email import send_invite_email
 
 invites_bp = Blueprint("invites", __name__, url_prefix="/api/invites")
 
@@ -85,6 +86,10 @@ def create_invite():
     if not isinstance(expires_in_days, int) or expires_in_days < 1 or expires_in_days > 90:
         return jsonify({"error": "expires_in_days must be an integer between 1 and 90."}), 400
 
+    email = (data.get("email") or "").strip().lower() or None
+    if email and "@" not in email:
+        return jsonify({"error": "Invalid email address."}), 400
+
     # Generate a unique code
     for _ in range(10):
         code = _generate_code()
@@ -103,9 +108,19 @@ def create_invite():
     db.session.add(invite)
     db.session.commit()
 
+    email_sent = False
+    if email:
+        email_sent = send_invite_email(
+            to=email,
+            invite_code=invite.code,
+            chapter_name=chapter.name,
+            inviter_name=current_user.full_name,
+            expires_at=invite.expires_at.strftime("%B %d, %Y"),
+        )
+
     result = invite.to_dict()
     result["created_by_name"] = current_user.full_name
-    return jsonify({"success": True, "invite": result}), 201
+    return jsonify({"success": True, "invite": result, "email_sent": email_sent}), 201
 
 
 @invites_bp.route("/<invite_id>", methods=["DELETE"])
