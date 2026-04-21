@@ -1,0 +1,13 @@
+# Proxy /api/* to the Render backend so the browser sees everything as same-origin.
+# Keeps session cookies (SameSite=Strict) + CSRF working without any CORS config.
+[[redirects]]
+  from = "/api/*"
+  to = "https://chapter-ops.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback — React Router handles client-side routes. Must come AFTER /api.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
