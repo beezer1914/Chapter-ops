@@ -10,6 +10,7 @@ import os
 
 import click
 from flask import Flask, jsonify
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.config import LocalConfig, ProductionConfig, TestingConfig
 from app.extensions import db, bcrypt, login_manager, cache, limiter, cors, csrf, migrate
@@ -45,6 +46,12 @@ def create_app(config_class=None):
 
     app.config.from_object(config_class)
     logger.info(f"Using configuration: {config_class.__name__}")
+
+    # Trust one layer of proxy headers (Netlify → Render). This makes
+    # request.host/scheme reflect the original chapterops.netlify.app
+    # request, which Flask-WTF's CSRF referer check requires.
+    if config_class == ProductionConfig:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Initialize Stripe SDK with platform secret key
     import stripe as _stripe
