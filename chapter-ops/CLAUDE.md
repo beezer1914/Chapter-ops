@@ -488,6 +488,7 @@ All foundational and Phase 2 feature work is done. The platform is fully functio
 - Errors are caught by outer `try/except` and logged via `logger.exception()` — check Flask logs when payments don't appear
 - Idempotency: check `stripe_session_id` before creating Payment/Donation to handle duplicate events
 - Installment checkout success URL includes `?redirect_type=installment` so frontend auto-switches to Plans tab
+- **Webhook registration mode** — In the Stripe Dashboard, the endpoint must be registered with "Connected and v2 accounts" selected, not "Your account." Checkout Sessions are created with `stripe_account=chapter.stripe_account_id`, so `checkout.session.completed` fires on the connected account. `account.updated` is also a Connect event. Same rule applies when setting up the live-mode webhook.
 
 ### Event Management
 - Public events have a `public_slug` (8-char hex) — accessible at `/e/:slug` outside `ProtectedRoute`
