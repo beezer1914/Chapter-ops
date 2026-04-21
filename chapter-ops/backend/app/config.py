@@ -5,6 +5,13 @@ from dotenv import load_dotenv
 _backend_dir = Path(__file__).resolve().parent.parent
 load_dotenv(_backend_dir / ".env", override=True)
 
+
+def _normalize_db_url(url: str) -> str:
+    # Render (and Heroku) hand out postgres:// URLs, but SQLAlchemy 2.x only accepts postgresql://.
+    if url.startswith("postgres://"):
+        return "postgresql://" + url[len("postgres://"):]
+    return url
+
 # Insecure default keys that must NEVER be used in production
 _INSECURE_SECRET_KEYS = {
     "dev-secret-change-me",
@@ -83,10 +90,10 @@ class BaseConfig:
 class LocalConfig(BaseConfig):
     """Local development configuration."""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
+    SQLALCHEMY_DATABASE_URI = _normalize_db_url(os.environ.get(
         "DATABASE_URL",
         "postgresql://chapterops:chapterops_dev@localhost:5432/chapterops"
-    )
+    ))
     SESSION_COOKIE_SECURE = False
 
 
@@ -102,7 +109,7 @@ class ProductionConfig(BaseConfig):
     - Session cookies are Secure + Strict SameSite
     """
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "")
+    SQLALCHEMY_DATABASE_URI = _normalize_db_url(os.environ.get("DATABASE_URL", ""))
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_SAMESITE = "Strict"
 
