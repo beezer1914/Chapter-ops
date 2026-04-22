@@ -287,6 +287,23 @@ def create_app(config_class=None):
         for _, user in admins:
             click.echo(f"  • {user.full_name} — {user.email}")
 
+    @app.cli.command("send-dues-reminders")
+    def send_dues_reminders_cmd():
+        """Send upcoming + delinquent payment-plan installment reminders.
+
+        \b
+        Intended to run once daily via Render Cron Job:
+            flask send-dues-reminders
+        """
+        from app.services.dues_reminders import send_dues_reminders
+
+        summary = send_dues_reminders(db.session)
+        click.echo(
+            f"Reminders sent — upcoming: {summary['upcoming']}, "
+            f"delinquent: {summary['delinquent']}, "
+            f"failed: {summary['failed']}, skipped: {summary['skipped']}"
+        )
+
     # ── Health check ───────────────────────────────────────────────────
     @app.route("/health")
     def health():

@@ -2,7 +2,7 @@
 PaymentPlan model — tenant-scoped recurring payment schedule.
 """
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -31,6 +31,9 @@ class PaymentPlan(BaseModel):
         db.String(20), nullable=False, default="active"
     )  # "active", "completed", "cancelled"
     expected_installments: Mapped[int | None] = mapped_column(db.Integer, nullable=True)
+    last_reminder_sent_at: Mapped[datetime | None] = mapped_column(
+        db.DateTime(timezone=True), nullable=True
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", backref="payment_plans")
@@ -56,5 +59,8 @@ class PaymentPlan(BaseModel):
             "expected_installments": self.expected_installments,
             "total_paid": str(self.total_paid()),
             "is_complete": self.is_complete(),
+            "last_reminder_sent_at": (
+                self.last_reminder_sent_at.isoformat() if self.last_reminder_sent_at else None
+            ),
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

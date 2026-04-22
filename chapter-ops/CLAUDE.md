@@ -482,6 +482,12 @@ All foundational and Phase 2 feature work is done. The platform is fully functio
 - Returns `Decimal` — uses `sum(..., Decimal("0"))` with explicit `Decimal(str(p.amount))` conversion to handle mixed DB/in-memory types safely
 - Webhook stores payment amounts as `Decimal(str(cents)) / Decimal("100")` — never `/ 100.0` (float)
 - Members can self-create plans for themselves; treasurer+ can create for any member
+- **Installment reminders** — `flask send-dues-reminders` (see `app/services/dues_reminders.py`) sends upcoming (3 days before due) and delinquent (weekly cadence) emails. Wired as a **Render Cron Job**, not APScheduler:
+  - Render service type: Cron Job
+  - Schedule: `0 14 * * *` (daily 14:00 UTC ≈ 9am ET)
+  - Command: `flask send-dues-reminders`
+  - Same env vars as the web service (DB, RESEND_API_KEY, etc.)
+  - Idempotent: `PaymentPlan.last_reminder_sent_at` gates repeat sends within 7 days
 
 ### Stripe Webhooks
 - All webhook handlers must return 200 even on error (Stripe retries on 4xx/5xx)

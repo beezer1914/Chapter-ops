@@ -205,6 +205,125 @@ def send_chapter_data_export_email(
 
 
 # ---------------------------------------------------------------------------
+# Payment plan reminder emails
+# ---------------------------------------------------------------------------
+
+def _money(amount) -> str:
+    """Format a Decimal/float as $X.XX."""
+    return f"${amount:,.2f}"
+
+
+def _pay_link() -> str:
+    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
+    return f"{frontend_url}/my-dues"
+
+
+def send_installment_upcoming_email(
+    to: str,
+    user_name: str,
+    chapter_name: str,
+    installment_amount,
+    due_date,
+    remaining_balance,
+) -> bool:
+    """Friendly heads-up a few days before an installment is due."""
+    pay_url = _pay_link()
+    due_str = due_date.strftime("%B %d, %Y") if hasattr(due_date, "strftime") else str(due_date)
+
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;">
+        <h2 style="color:#111827;">Hi {user_name},</h2>
+        <p>A heads-up that your next installment for <strong>{chapter_name}</strong> is coming up.</p>
+        <table style="width:100%; border-collapse:collapse; margin:20px 0; font-size:15px;">
+            <tr>
+                <td style="padding:8px 0; color:#6b7280;">Amount due</td>
+                <td style="padding:8px 0; text-align:right; font-weight:600;">{_money(installment_amount)}</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0; color:#6b7280;">Due date</td>
+                <td style="padding:8px 0; text-align:right; font-weight:600;">{due_str}</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0; color:#6b7280;">Plan balance remaining</td>
+                <td style="padding:8px 0; text-align:right;">{_money(remaining_balance)}</td>
+            </tr>
+        </table>
+        <p>
+            <a href="{pay_url}"
+               style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+                Pay installment
+            </a>
+        </p>
+        <p style="color:#6b7280;font-size:14px;">
+            You can also log in to ChapterOps to view your full payment history.
+        </p>
+    </div>
+    """
+
+    return send_email(
+        to=to,
+        subject=f"[{chapter_name}] Installment due {due_str}",
+        html=html,
+    )
+
+
+def send_installment_delinquent_email(
+    to: str,
+    user_name: str,
+    chapter_name: str,
+    installment_amount,
+    original_due_date,
+    days_past_due: int,
+    remaining_balance,
+) -> bool:
+    """Kind but urgent nudge for an overdue installment, with options."""
+    pay_url = _pay_link()
+    due_str = (
+        original_due_date.strftime("%B %d, %Y")
+        if hasattr(original_due_date, "strftime") else str(original_due_date)
+    )
+
+    html = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;">
+        <h2 style="color:#111827;">Hi {user_name},</h2>
+        <p>Your installment for <strong>{chapter_name}</strong> was due on <strong>{due_str}</strong>
+           ({days_past_due} day{'s' if days_past_due != 1 else ''} ago). We wanted to check in.</p>
+        <table style="width:100%; border-collapse:collapse; margin:20px 0; font-size:15px;">
+            <tr>
+                <td style="padding:8px 0; color:#6b7280;">Amount overdue</td>
+                <td style="padding:8px 0; text-align:right; font-weight:600;">{_money(installment_amount)}</td>
+            </tr>
+            <tr>
+                <td style="padding:8px 0; color:#6b7280;">Plan balance remaining</td>
+                <td style="padding:8px 0; text-align:right;">{_money(remaining_balance)}</td>
+            </tr>
+        </table>
+        <p>We know things come up. A few options:</p>
+        <ul style="line-height:1.8;">
+            <li><a href="{pay_url}" style="color:#1d4ed8;">Pay the installment now</a></li>
+            <li>Reach out to your chapter treasurer if you need to adjust your plan</li>
+            <li>Log in to review your plan or update your payment method</li>
+        </ul>
+        <p style="margin-top:24px;">
+            <a href="{pay_url}"
+               style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+                Pay now
+            </a>
+        </p>
+        <p style="color:#6b7280;font-size:14px;">
+            If you've already paid, please disregard this message — it may take a day to update.
+        </p>
+    </div>
+    """
+
+    return send_email(
+        to=to,
+        subject=f"[{chapter_name}] Installment overdue — let's get this sorted",
+        html=html,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Ops agent digest email
 # ---------------------------------------------------------------------------
 
