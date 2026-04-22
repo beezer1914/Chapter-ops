@@ -13,7 +13,7 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.models import ChapterMembership, User
 from app.services import notification_service
-from app.utils.decorators import chapter_required, role_required
+from app.utils.decorators import chapter_required, role_required, _is_org_admin
 from app.utils.pagination import paginate
 from app.utils.permissions import enforce_module_access
 
@@ -88,6 +88,7 @@ def update_member(membership_id):
     data = request.get_json() or {}
     is_self = membership.user_id == current_user.id
     user_membership = current_user.get_membership(chapter.id)
+    is_org_admin = _is_org_admin(current_user, chapter.organization_id)
 
     # Update role if provided — presidents only, cannot change own role
     new_role = data.get("role")
@@ -102,13 +103,14 @@ def update_member(membership_id):
             return jsonify({"error": "Cannot assign a role higher than your own."}), 403
         membership.role = new_role
 
-    # Update member type if provided — presidents only
+    # Update member type if provided — treasurer+ or org admins; cannot change self
     new_member_type = data.get("member_type")
     if new_member_type is not None:
         if is_self:
             return jsonify({"error": "You cannot change your own member type."}), 403
-        if not user_membership or not user_membership.has_role("president"):
-            return jsonify({"error": "Only presidents can change member type."}), 403
+        can_edit_type = is_org_admin or (user_membership and user_membership.has_role("treasurer"))
+        if not can_edit_type:
+            return jsonify({"error": "You don't have permission to change member type."}), 403
         if new_member_type not in VALID_MEMBER_TYPES:
             return jsonify({
                 "error": f"Invalid member type. Must be one of: {', '.join(sorted(VALID_MEMBER_TYPES))}"

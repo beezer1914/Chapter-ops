@@ -87,6 +87,11 @@ class ChapterMembership(BaseModel):
         """Check if this membership's role meets or exceeds the minimum."""
         return self.ROLE_HIERARCHY.get(self.role, 0) >= self.ROLE_HIERARCHY.get(minimum_role, 0)
 
+    @staticmethod
+    def default_member_type_for(chapter) -> str:
+        """Map a chapter's type to the appropriate default member_type."""
+        return "graduate" if getattr(chapter, "chapter_type", None) == "graduate" else "collegiate"
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,

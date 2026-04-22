@@ -176,6 +176,7 @@ def register():
                 chapter_id=invite.chapter_id,
                 role=invite.role,
                 financial_status=financial_status,
+                member_type=ChapterMembership.default_member_type_for(chapter),
                 initiation_date=initiation_date,
                 active=membership_active,
             )

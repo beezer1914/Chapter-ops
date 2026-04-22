@@ -40,10 +40,12 @@ def _execute_transfer(transfer: ChapterTransferRequest) -> None:
         old_membership.active = False
 
     # Create new membership in target chapter (default role: member)
+    to_chapter = db.session.get(Chapter, transfer.to_chapter_id)
     new_membership = ChapterMembership(
         user_id=transfer.requesting_user_id,
         chapter_id=transfer.to_chapter_id,
         role="member",
+        member_type=ChapterMembership.default_member_type_for(to_chapter),
         active=True,
     )
     db.session.add(new_membership)

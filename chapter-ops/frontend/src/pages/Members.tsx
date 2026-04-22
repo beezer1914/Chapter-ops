@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { useAuthStore } from "@/stores/authStore";
 import { useConfigStore } from "@/stores/configStore";
+import { useRegionStore } from "@/stores/regionStore";
 import {
   fetchMembers,
   updateMember,
@@ -89,11 +90,17 @@ export default function Members() {
   const [suspending, setSuspending] = useState(false);
 
   // Current user's role in this chapter
+  const { isOrgAdmin } = useRegionStore();
   const currentMembership = memberships.find(
     (m) => m.chapter_id === user?.active_chapter_id
   );
   const currentRole = currentMembership?.role ?? "member";
-  const canManage = ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["president"];
+  const isPresidentPlus = ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["president"];
+  const canManage = isPresidentPlus || isOrgAdmin;
+  // Treasurer+ and org admins can edit member_type (but not role/financial/intake).
+  const canEditMemberType =
+    isOrgAdmin || ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["treasurer"];
+  const canOpenEdit = canManage || canEditMemberType;
 
   useEffect(() => {
     loadMembers();
@@ -130,13 +137,20 @@ export default function Members() {
     if (!editingMember) return;
     setSaving(true);
     try {
-      const updated = await updateMember(editingMember.id, {
-        role: editRole,
-        financial_status: editFinancial,
-        member_type: editMemberType,
-        is_intake_officer: editIntakeOfficer,
-        custom_fields: editCustomFields,
-      });
+      // Build payload scoped to what the current user can actually change —
+      // the backend rejects the whole request if any single field is beyond
+      // their permission.
+      const payload: Parameters<typeof updateMember>[1] = {};
+      if (canManage) {
+        payload.role = editRole;
+        payload.financial_status = editFinancial;
+        payload.is_intake_officer = editIntakeOfficer;
+        payload.custom_fields = editCustomFields;
+      }
+      if (canEditMemberType) {
+        payload.member_type = editMemberType;
+      }
+      const updated = await updateMember(editingMember.id, payload);
       setMembers((prev) =>
         prev.map((m) => (m.id === updated.id ? updated : m))
       );
@@ -292,7 +306,7 @@ export default function Members() {
                       ))}
                     </div>
                   )}
-                  {canManage && member.user_id !== user?.id && (
+                  {canOpenEdit && member.user_id !== user?.id && (
                     <div className="mt-3 flex gap-2 pt-3 border-t border-[var(--color-border)]">
                       <button
                         onClick={() => openEdit(member)}
@@ -300,7 +314,7 @@ export default function Members() {
                       >
                         <Edit2 className="w-3.5 h-3.5" /> Edit
                       </button>
-                      {member.suspended ? (
+                      {canManage && (member.suspended ? (
                         <button
                           onClick={() => handleUnsuspend(member)}
                           className="flex-1 inline-flex items-center justify-center gap-1.5 text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/30 py-2 rounded-lg transition-colors text-xs font-medium border border-emerald-200/50"
@@ -314,13 +328,15 @@ export default function Members() {
                         >
                           <ShieldOff className="w-3.5 h-3.5" /> Suspend
                         </button>
+                      ))}
+                      {canManage && (
+                        <button
+                          onClick={() => handleDeactivate(member)}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 text-red-400 bg-red-900/20 hover:bg-red-900/30 py-2 rounded-lg transition-colors text-xs font-medium border border-red-200/50"
+                        >
+                          <UserX className="w-3.5 h-3.5" /> Remove
+                        </button>
                       )}
-                      <button
-                        onClick={() => handleDeactivate(member)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 text-red-400 bg-red-900/20 hover:bg-red-900/30 py-2 rounded-lg transition-colors text-xs font-medium border border-red-200/50"
-                      >
-                        <UserX className="w-3.5 h-3.5" /> Remove
-                      </button>
                     </div>
                   )}
                 </div>
@@ -339,7 +355,7 @@ export default function Members() {
                       <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Financial Status</th>
                       <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Type</th>
                       <th scope="col" className="px-6 py-5 text-left text-xs font-semibold text-content-secondary uppercase tracking-wider">Joined</th>
-                      {canManage && (
+                      {canOpenEdit && (
                         <th scope="col" className="px-6 py-5 text-right text-xs font-semibold text-content-secondary uppercase tracking-wider">Actions</th>
                       )}
                     </tr>
@@ -406,7 +422,7 @@ export default function Members() {
                             ? new Date(member.join_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
                             : "—"}
                         </td>
-                        {canManage && (
+                        {canOpenEdit && (
                           <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
                             {member.user_id !== user?.id ? (
                               <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -417,7 +433,7 @@ export default function Members() {
                                 >
                                   <Edit2 className="w-4 h-4" />
                                 </button>
-                                {member.suspended ? (
+                                {canManage && (member.suspended ? (
                                   <button
                                     onClick={() => handleUnsuspend(member)}
                                     className="inline-flex items-center justify-center text-emerald-400 hover:text-emerald-300 bg-emerald-900/20 hover:bg-emerald-900/30 p-2 rounded-lg transition-colors border border-emerald-200/50"
@@ -433,14 +449,16 @@ export default function Members() {
                                   >
                                     <ShieldOff className="w-4 h-4" />
                                   </button>
+                                ))}
+                                {canManage && (
+                                  <button
+                                    onClick={() => handleDeactivate(member)}
+                                    className="inline-flex items-center justify-center text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/30 p-2 rounded-lg transition-colors border border-red-200/50"
+                                    title="Remove Member"
+                                  >
+                                    <UserX className="w-4 h-4" />
+                                  </button>
                                 )}
-                                <button
-                                  onClick={() => handleDeactivate(member)}
-                                  className="inline-flex items-center justify-center text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/30 p-2 rounded-lg transition-colors border border-red-200/50"
-                                  title="Remove Member"
-                                >
-                                  <UserX className="w-4 h-4" />
-                                </button>
                               </div>
                             ) : (
                               <span className="text-xs text-brand-primary-main/60 bg-brand-primary-50 px-3 py-1.5 rounded-md font-semibold">You</span>
@@ -488,81 +506,89 @@ export default function Members() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-content-secondary mb-1.5">
-                    Assigned Role
-                  </label>
-                  <select
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value as MemberRole)}
-                    className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
-                  >
-                    {assignableRoles.map((role) => (
-                      <option key={role} value={role}>
-                        {getRoleLabel(role)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-content-secondary mb-1.5">
-                    Member Type
-                  </label>
-                  <select
-                    value={editMemberType}
-                    onChange={(e) => setEditMemberType(e.target.value as MemberType)}
-                    className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
-                  >
-                    {(Object.keys(MEMBER_TYPE_LABELS) as MemberType[]).map((type) => (
-                      <option key={type} value={type}>
-                        {MEMBER_TYPE_LABELS[type]}
-                      </option>
-                    ))}
-                  </select>
-                  {editMemberType === "life" && (
-                    <p className="mt-1.5 text-xs text-emerald-400 font-medium">
-                      Life members are permanently exempt from dues.
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-content-secondary mb-1.5">
-                    Financial Status
-                  </label>
-                  <select
-                    value={editFinancial}
-                    onChange={(e) =>
-                      setEditFinancial(e.target.value as FinancialStatus)
-                    }
-                    disabled={editMemberType === "life"}
-                    className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {(
-                      Object.keys(FINANCIAL_LABELS) as FinancialStatus[]
-                    ).map((status) => (
-                      <option key={status} value={status}>
-                        {FINANCIAL_LABELS[status]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-[var(--color-border)]">
+                {canManage && (
                   <div>
-                    <p className="text-sm font-medium text-content-secondary">Intake Officer</p>
-                    <p className="text-xs text-content-secondary mt-0.5">Can access the MIP intake pipeline</p>
+                    <label className="block text-sm font-medium text-content-secondary mb-1.5">
+                      Assigned Role
+                    </label>
+                    <select
+                      value={editRole}
+                      onChange={(e) => setEditRole(e.target.value as MemberRole)}
+                      className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
+                    >
+                      {assignableRoles.map((role) => (
+                        <option key={role} value={role}>
+                          {getRoleLabel(role)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setEditIntakeOfficer((v) => !v)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editIntakeOfficer ? "bg-brand-primary-main" : "bg-white/10"}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editIntakeOfficer ? "translate-x-6" : "translate-x-1"}`} />
-                  </button>
-                </div>
+                )}
 
-                {customFieldDefs.length > 0 && (
+                {canEditMemberType && (
+                  <div>
+                    <label className="block text-sm font-medium text-content-secondary mb-1.5">
+                      Member Type
+                    </label>
+                    <select
+                      value={editMemberType}
+                      onChange={(e) => setEditMemberType(e.target.value as MemberType)}
+                      className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors"
+                    >
+                      {(Object.keys(MEMBER_TYPE_LABELS) as MemberType[]).map((type) => (
+                        <option key={type} value={type}>
+                          {MEMBER_TYPE_LABELS[type]}
+                        </option>
+                      ))}
+                    </select>
+                    {editMemberType === "life" && (
+                      <p className="mt-1.5 text-xs text-emerald-400 font-medium">
+                        Life members are permanently exempt from dues.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {canManage && (
+                  <div>
+                    <label className="block text-sm font-medium text-content-secondary mb-1.5">
+                      Financial Status
+                    </label>
+                    <select
+                      value={editFinancial}
+                      onChange={(e) =>
+                        setEditFinancial(e.target.value as FinancialStatus)
+                      }
+                      disabled={editMemberType === "life"}
+                      className="w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm bg-[var(--color-bg-input)] focus:bg-[var(--color-bg-input)] focus:outline-none focus:ring-2 focus:ring-brand-primary-main transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {(
+                        Object.keys(FINANCIAL_LABELS) as FinancialStatus[]
+                      ).map((status) => (
+                        <option key={status} value={status}>
+                          {FINANCIAL_LABELS[status]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {canManage && (
+                  <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-[var(--color-border)]">
+                    <div>
+                      <p className="text-sm font-medium text-content-secondary">Intake Officer</p>
+                      <p className="text-xs text-content-secondary mt-0.5">Can access the MIP intake pipeline</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditIntakeOfficer((v) => !v)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editIntakeOfficer ? "bg-brand-primary-main" : "bg-white/10"}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editIntakeOfficer ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                  </div>
+                )}
+
+                {canManage && customFieldDefs.length > 0 && (
                   <div className="border-t border-[var(--color-border)] pt-4 space-y-4">
                     <p className="text-xs font-semibold text-content-secondary uppercase tracking-wider">Custom Fields</p>
                     {customFieldDefs.map((field) => (

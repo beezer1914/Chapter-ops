@@ -255,6 +255,7 @@ def create_chapter():
             user_id=current_user.id,
             chapter_id=chapter.id,
             role=founder_role,
+            member_type=ChapterMembership.default_member_type_for(chapter),
         )
         db.session.add(membership)
 
