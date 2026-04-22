@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api from "@/lib/api";
+import api, { setCsrfToken } from "@/lib/api";
 import type {
   User,
   ChapterMembership,
@@ -36,6 +36,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ error: null });
     try {
       const response = await api.post("/auth/login", data);
+      // The backend rotates the session on login, invalidating the old CSRF
+      // token. It returns a fresh token in the response so subsequent
+      // mutations don't have to round-trip through the 400/refresh/retry path.
+      if (response.data.csrf_token) {
+        setCsrfToken(response.data.csrf_token);
+      }
       set({
         user: response.data.user,
         isAuthenticated: true,
@@ -63,6 +69,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ error: null });
     try {
       const response = await api.post("/auth/register", data);
+      if (response.data.csrf_token) {
+        setCsrfToken(response.data.csrf_token);
+      }
       set({
         user: response.data.user,
         isAuthenticated: true,

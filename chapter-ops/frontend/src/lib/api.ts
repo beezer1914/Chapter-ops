@@ -10,14 +10,25 @@ import axios from "axios";
  */
 
 let csrfToken: string | null = null;
+let csrfPromise: Promise<void> | null = null;
 
 export function setCsrfToken(token: string) {
   csrfToken = token;
 }
 
 export async function refreshCsrfToken(): Promise<void> {
-  const res = await api.get<{ csrf_token: string }>("/auth/csrf");
-  setCsrfToken(res.data.csrf_token);
+  // De-dupe concurrent callers so we issue at most one /auth/csrf fetch at a time.
+  if (!csrfPromise) {
+    csrfPromise = (async () => {
+      try {
+        const res = await api.get<{ csrf_token: string }>("/auth/csrf");
+        setCsrfToken(res.data.csrf_token);
+      } finally {
+        csrfPromise = null;
+      }
+    })();
+  }
+  return csrfPromise;
 }
 
 const api = axios.create({
@@ -28,10 +39,21 @@ const api = axios.create({
   },
 });
 
-// Request interceptor — attach CSRF token to all state-changing requests
-api.interceptors.request.use((config) => {
+// Request interceptor — attach CSRF token to all state-changing requests.
+// If a state-changing request fires before the initial CSRF fetch has completed
+// (e.g. user submits the login form immediately on page load), block until a
+// token is available so the request goes out correctly the first time.
+api.interceptors.request.use(async (config) => {
   const method = (config.method || "get").toLowerCase();
-  if (csrfToken && !["get", "head", "options"].includes(method)) {
+  const needsCsrf = !["get", "head", "options"].includes(method);
+  if (needsCsrf && !csrfToken) {
+    try {
+      await refreshCsrfToken();
+    } catch {
+      // Fall through — response interceptor will retry on CSRF error.
+    }
+  }
+  if (needsCsrf && csrfToken) {
     config.headers["X-CSRFToken"] = csrfToken;
   }
   return config;

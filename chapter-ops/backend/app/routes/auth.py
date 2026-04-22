@@ -79,9 +79,12 @@ def login():
     login_user(user, remember=data.get("remember", False))
     _log_auth_event("login_success", user_id=user.id)
 
+    # Issue a fresh CSRF token bound to the new session so the client can
+    # make state-changing requests without a 400/retry handshake.
     return jsonify({
         "success": True,
         "user": user.to_dict(),
+        "csrf_token": generate_csrf(),
     }), 200
 
 
@@ -257,6 +260,7 @@ def register():
         return jsonify({
             "success": True,
             "user": user.to_dict(),
+            "csrf_token": generate_csrf(),
         }), 201
 
     except Exception as e:
