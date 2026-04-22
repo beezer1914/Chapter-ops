@@ -84,6 +84,42 @@ class TestDefaultFloor:
         assert resp.status_code == 200
 
 
+class TestMalformedConfigFailsClosed:
+    """Unknown role strings and non-dict config should not fail open."""
+
+    def test_unknown_role_falls_back_to_default(self, client, app):
+        """permissions.members = 'superadmin' must not grant everyone access."""
+        with app.app_context():
+            org = make_organization()
+            chapter = make_chapter(org)
+            chapter.config = {"permissions": {"invites": "superadmin"}}
+            member = make_user(email="typo@example.com", first_name="T", last_name="Y")
+            member.active_chapter_id = chapter.id
+            make_membership(member, chapter, role="member")
+            _db.session.commit()
+
+        _login(client, email="typo@example.com")
+        # Default for invites is "secretary"; unknown role must fall back to that
+        resp = client.get("/api/invites")
+        assert resp.status_code == 403
+
+    def test_non_dict_permissions_does_not_500(self, client, app):
+        """config.permissions = 'not-a-dict' must not crash the gate."""
+        with app.app_context():
+            org = make_organization()
+            chapter = make_chapter(org)
+            chapter.config = {"permissions": "nonsense"}
+            member = make_user(email="bad@example.com", first_name="B", last_name="A")
+            member.active_chapter_id = chapter.id
+            make_membership(member, chapter, role="member")
+            _db.session.commit()
+
+        _login(client, email="bad@example.com")
+        resp = client.get("/api/members")
+        # Should use DEFAULT_PERMISSIONS["members"] = "member" → allowed
+        assert resp.status_code == 200
+
+
 class TestOrgAdminBypassesModuleGate:
     """Org admins bypass the module gate regardless of chapter role or config override."""
 

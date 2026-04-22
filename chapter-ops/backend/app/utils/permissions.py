@@ -23,6 +23,7 @@ without an authenticated user or chapter context pass through so
 from flask import g, jsonify
 from flask_login import current_user
 
+from app.models import ChapterMembership
 from app.utils.decorators import _is_org_admin
 
 
@@ -67,8 +68,13 @@ def enforce_module_access(module: str):
         if membership and membership.is_intake_officer:
             return None
 
-    permissions = (chapter.config or {}).get("permissions") or {}
-    min_role = permissions.get(module) or DEFAULT_PERMISSIONS.get(module, "member")
+    config = chapter.config if isinstance(chapter.config, dict) else {}
+    permissions = config.get("permissions") if isinstance(config.get("permissions"), dict) else {}
+
+    min_role = permissions.get(module)
+    # Fall back to default if override is missing or not a known role
+    if min_role not in ChapterMembership.ROLE_HIERARCHY:
+        min_role = DEFAULT_PERMISSIONS.get(module, "member")
 
     membership = current_user.get_membership(chapter.id)
     if not membership or not membership.has_role(min_role):
