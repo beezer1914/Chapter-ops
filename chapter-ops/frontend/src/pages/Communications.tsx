@@ -53,7 +53,6 @@ type Tab = "announcements" | "email_blast";
 
 export default function Communications() {
   const { memberships, user } = useAuthStore();
-  const { chapter } = useConfigStore();
   const [tab, setTab] = useState<Tab>("announcements");
 
   const currentMembership = memberships.find((m) => m.chapter_id === user?.active_chapter_id);
@@ -440,6 +439,7 @@ function AnnouncementFormModal({
 // ── Email Blast Tab ───────────────────────────────────────────────────────────
 
 function EmailBlastTab() {
+  const { chapter } = useConfigStore();
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [audience, setAudience] = useState<EmailBlastAudience>("all");
