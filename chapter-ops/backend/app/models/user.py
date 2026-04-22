@@ -41,6 +41,16 @@ class User(BaseModel, UserMixin):
         db.DateTime(timezone=True), nullable=True
     )
 
+    # Pending email change — set when the user requests a new email; the swap
+    # only happens after the new address clicks the confirmation link.
+    pending_email: Mapped[str | None] = mapped_column(db.String(120), nullable=True)
+    pending_email_token: Mapped[str | None] = mapped_column(
+        db.String(100), nullable=True, index=True
+    )
+    pending_email_expires_at: Mapped[datetime | None] = mapped_column(
+        db.DateTime(timezone=True), nullable=True
+    )
+
     # Relationships
     active_chapter: Mapped["Chapter | None"] = relationship("Chapter", foreign_keys=[active_chapter_id])
     memberships: Mapped[list["ChapterMembership"]] = relationship(

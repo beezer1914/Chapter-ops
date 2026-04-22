@@ -167,6 +167,11 @@ def create_app(config_class=None):
     from app.routes.auth import logout
     csrf.exempt(logout)
 
+    # Agent approval POST: the approval token IS the auth (no session), so the
+    # CSRF cookie/header pair is absent. Form is served by the matching GET.
+    from app.routes.agent import agent_approve_execute
+    csrf.exempt(agent_approve_execute)
+
     # ── Start ops agent scheduler ──────────────────────────────────────
     if not app.testing:
         try:

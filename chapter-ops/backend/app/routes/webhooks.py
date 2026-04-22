@@ -46,7 +46,7 @@ def stripe_webhook():
 
     try:
         if event_type == "checkout.session.completed":
-            _handle_checkout_completed(event["data"]["object"])
+            _handle_checkout_completed(event)
         elif event_type == "account.updated":
             _handle_account_updated(event)
         else:
@@ -58,20 +58,46 @@ def stripe_webhook():
     return jsonify({"received": True}), 200
 
 
-def _handle_checkout_completed(session: dict) -> None:
+def _verify_chapter_account(chapter_id: str, account_id: str | None, session_id: str) -> Chapter | None:
+    """Return the chapter only if ``chapter_id`` is bound to ``account_id``.
+
+    Rejects forged metadata that references a chapter the connected Stripe
+    account does not own.
+    """
+    if not account_id:
+        logger.warning(f"Webhook missing event.account for session {session_id}; rejecting")
+        return None
+    chapter = Chapter.query.filter_by(id=chapter_id, stripe_account_id=account_id).first()
+    if not chapter:
+        logger.warning(
+            f"Webhook chapter/account mismatch: chapter_id={chapter_id} account_id={account_id} session={session_id}; rejecting"
+        )
+    return chapter
+
+
+def _handle_checkout_completed(event: dict) -> None:
     """
     Process a completed Stripe Checkout Session.
 
     Creates a Payment or Donation record based on metadata.payment_type.
     Idempotent: checks stripe_session_id before creating to handle retries.
+
+    Verifies the connected account (``event.account``) matches the chapter's
+    ``stripe_account_id`` before trusting ``metadata.chapter_id``.
     """
+    session = event["data"]["object"]
     metadata = session.get("metadata", {})
     payment_type = metadata.get("payment_type")
     chapter_id = metadata.get("chapter_id")
     session_id = session.get("id")
+    account_id = event.get("account")
 
     if not chapter_id or not session_id:
         logger.warning(f"checkout.session.completed missing chapter_id or session_id: {session_id}")
+        return
+
+    chapter = _verify_chapter_account(chapter_id, account_id, session_id)
+    if not chapter:
         return
 
     if payment_type in ("one-time", "installment"):
@@ -229,6 +255,7 @@ def _complete_event_ticket(session: dict, metadata: dict) -> None:
     """Mark an event attendance record as paid after successful Stripe checkout."""
     session_id = session.get("id")
     attendance_id = metadata.get("attendance_id")
+    chapter_id = metadata.get("chapter_id")
 
     if not attendance_id:
         logger.warning(f"event_ticket webhook missing attendance_id: {session_id}")
@@ -237,6 +264,16 @@ def _complete_event_ticket(session: dict, metadata: dict) -> None:
     attendance = db.session.get(EventAttendance, attendance_id)
     if not attendance:
         logger.warning(f"EventAttendance {attendance_id} not found for session {session_id}")
+        return
+
+    # Caller (_handle_checkout_completed) already verified chapter_id against
+    # event.account. Re-check that the target attendance row lives in that
+    # same chapter to block forged attendance_id pointing at another tenant.
+    if attendance.chapter_id != chapter_id:
+        logger.warning(
+            f"EventAttendance {attendance_id} chapter_id={attendance.chapter_id} "
+            f"does not match metadata chapter_id={chapter_id}; rejecting session {session_id}"
+        )
         return
 
     if attendance.payment_status == "paid":

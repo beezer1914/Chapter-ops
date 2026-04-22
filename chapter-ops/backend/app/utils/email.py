@@ -8,12 +8,23 @@ All functions return True on success, False on failure (errors are logged,
 not raised, so a failed email never breaks the request that triggered it).
 """
 
+import html
 import logging
 
 import resend
 from flask import current_app
 
 logger = logging.getLogger(__name__)
+
+
+def _h(value) -> str:
+    """HTML-escape user-controlled content before interpolating into email bodies.
+
+    Names, chapter names, notes and any other DB-backed strings are user-set;
+    interpolating them raw lets someone inject markup into every recipient's
+    inbox by editing their profile. Always wrap user content with _h().
+    """
+    return html.escape(str(value) if value is not None else "", quote=True)
 
 
 def _client() -> None:
@@ -77,10 +88,10 @@ def send_invite_email(
     frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
     register_url = f"{frontend_url}/register?invite={invite_code}"
 
-    html = f"""
+    body = f"""
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>You've been invited to join {chapter_name}</h2>
-        <p>{inviter_name} has invited you to join <strong>{chapter_name}</strong> on ChapterOps.</p>
+        <h2>You've been invited to join {_h(chapter_name)}</h2>
+        <p>{_h(inviter_name)} has invited you to join <strong>{_h(chapter_name)}</strong> on ChapterOps.</p>
         <p>
             <a href="{register_url}"
                style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
@@ -90,14 +101,14 @@ def send_invite_email(
         <p style="color:#6b7280;font-size:14px;">
             Or copy this link: <a href="{register_url}">{register_url}</a>
         </p>
-        <p style="color:#6b7280;font-size:14px;">This invitation expires on {expires_at}.</p>
+        <p style="color:#6b7280;font-size:14px;">This invitation expires on {_h(expires_at)}.</p>
     </div>
     """
 
     return send_email(
         to=to,
         subject=f"You're invited to join {chapter_name}",
-        html=html,
+        html=body,
     )
 
 
@@ -110,10 +121,10 @@ def send_password_reset_email(to: str, reset_token: str, user_name: str) -> bool
     frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
     reset_url = f"{frontend_url}/reset-password?token={reset_token}"
 
-    html = f"""
+    body = f"""
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Reset your password</h2>
-        <p>Hi {user_name},</p>
+        <p>Hi {_h(user_name)},</p>
         <p>We received a request to reset your ChapterOps password. Click the button below to choose a new one.</p>
         <p>
             <a href="{reset_url}"
@@ -133,7 +144,7 @@ def send_password_reset_email(to: str, reset_token: str, user_name: str) -> bool
     return send_email(
         to=to,
         subject="Reset your ChapterOps password",
-        html=html,
+        html=body,
     )
 
 
@@ -158,11 +169,11 @@ def send_chapter_data_export_email(
     _client()
     sender = current_app.config["RESEND_FROM_EMAIL"]
 
-    html = f"""
+    body = f"""
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Chapter Data Export — {chapter_name}</h2>
+        <h2>Chapter Data Export — {_h(chapter_name)}</h2>
         <p>Your chapter deletion request has been received. Your chapter and all associated
-           data will be permanently deleted on <strong>{deletion_date}</strong>.</p>
+           data will be permanently deleted on <strong>{_h(deletion_date)}</strong>.</p>
         <p>Your data export is attached to this email as CSV files:</p>
         <ul>
             <li><strong>members.csv</strong> — Full member roster with roles and financial status</li>
@@ -171,7 +182,7 @@ def send_chapter_data_export_email(
         </ul>
         <p style="color:#6b7280;font-size:14px;">
             To cancel the deletion request, log in to ChapterOps and visit
-            Settings → Chapter before {deletion_date}.
+            Settings → Chapter before {_h(deletion_date)}.
         </p>
         <p style="color:#dc2626;font-size:14px;">
             <strong>This action is irreversible after the grace period.</strong>
@@ -184,7 +195,7 @@ def send_chapter_data_export_email(
         "from": sender,
         "to": [to],
         "subject": f"Chapter Data Export — {chapter_name} (deletion scheduled {deletion_date})",
-        "html": html,
+        "html": body,
         "attachments": [
             {"filename": "members.csv", "content": list(members_csv.encode("utf-8"))},
             {"filename": "payments.csv", "content": list(payments_csv.encode("utf-8"))},
@@ -230,10 +241,10 @@ def send_installment_upcoming_email(
     pay_url = _pay_link()
     due_str = due_date.strftime("%B %d, %Y") if hasattr(due_date, "strftime") else str(due_date)
 
-    html = f"""
+    body = f"""
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;">
-        <h2 style="color:#111827;">Hi {user_name},</h2>
-        <p>A heads-up that your next installment for <strong>{chapter_name}</strong> is coming up.</p>
+        <h2 style="color:#111827;">Hi {_h(user_name)},</h2>
+        <p>A heads-up that your next installment for <strong>{_h(chapter_name)}</strong> is coming up.</p>
         <table style="width:100%; border-collapse:collapse; margin:20px 0; font-size:15px;">
             <tr>
                 <td style="padding:8px 0; color:#6b7280;">Amount due</td>
@@ -241,7 +252,7 @@ def send_installment_upcoming_email(
             </tr>
             <tr>
                 <td style="padding:8px 0; color:#6b7280;">Due date</td>
-                <td style="padding:8px 0; text-align:right; font-weight:600;">{due_str}</td>
+                <td style="padding:8px 0; text-align:right; font-weight:600;">{_h(due_str)}</td>
             </tr>
             <tr>
                 <td style="padding:8px 0; color:#6b7280;">Plan balance remaining</td>
@@ -263,7 +274,7 @@ def send_installment_upcoming_email(
     return send_email(
         to=to,
         subject=f"[{chapter_name}] Installment due {due_str}",
-        html=html,
+        html=body,
     )
 
 
@@ -283,10 +294,10 @@ def send_installment_delinquent_email(
         if hasattr(original_due_date, "strftime") else str(original_due_date)
     )
 
-    html = f"""
+    body = f"""
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937;">
-        <h2 style="color:#111827;">Hi {user_name},</h2>
-        <p>Your installment for <strong>{chapter_name}</strong> was due on <strong>{due_str}</strong>
+        <h2 style="color:#111827;">Hi {_h(user_name)},</h2>
+        <p>Your installment for <strong>{_h(chapter_name)}</strong> was due on <strong>{_h(due_str)}</strong>
            ({days_past_due} day{'s' if days_past_due != 1 else ''} ago). We wanted to check in.</p>
         <table style="width:100%; border-collapse:collapse; margin:20px 0; font-size:15px;">
             <tr>
@@ -319,7 +330,79 @@ def send_installment_delinquent_email(
     return send_email(
         to=to,
         subject=f"[{chapter_name}] Installment overdue — let's get this sorted",
-        html=html,
+        html=body,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Email change verification
+# ---------------------------------------------------------------------------
+
+def send_email_change_confirm(
+    to: str,
+    token: str,
+    user_name: str,
+    new_email: str,
+) -> bool:
+    """Send a confirmation link to the NEW email address to activate an email change."""
+    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
+    confirm_url = f"{frontend_url}/confirm-email-change?token={token}"
+
+    body = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Confirm your new email</h2>
+        <p>Hi {_h(user_name)},</p>
+        <p>You requested to change your ChapterOps account email to <strong>{_h(new_email)}</strong>.
+           Click the button below to confirm this change.</p>
+        <p>
+            <a href="{confirm_url}"
+               style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+                Confirm email change
+            </a>
+        </p>
+        <p style="color:#6b7280;font-size:14px;">
+            Or copy this link: <a href="{confirm_url}">{confirm_url}</a>
+        </p>
+        <p style="color:#6b7280;font-size:14px;">
+            This link expires in 1 hour. If you didn't request this change, ignore this email —
+            your account email will not be updated.
+        </p>
+    </div>
+    """
+
+    return send_email(
+        to=to,
+        subject="Confirm your new ChapterOps email",
+        html=body,
+    )
+
+
+def send_email_change_notice(
+    to: str,
+    user_name: str,
+    new_email: str,
+) -> bool:
+    """Notify the OLD email that an email-change was requested, so the original
+    owner can react if the account is compromised."""
+    body = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Email change requested</h2>
+        <p>Hi {_h(user_name)},</p>
+        <p>Someone requested to change the email on your ChapterOps account from this address
+           to <strong>{_h(new_email)}</strong>.</p>
+        <p>If that was you, no action is needed — the new address must click a confirmation link
+           for the change to take effect.</p>
+        <p style="color:#dc2626;">
+            <strong>If this wasn't you</strong>, your account may be compromised. Sign in now and
+            change your password immediately, then contact support.
+        </p>
+    </div>
+    """
+
+    return send_email(
+        to=to,
+        subject="Email change requested on your ChapterOps account",
+        html=body,
     )
 
 

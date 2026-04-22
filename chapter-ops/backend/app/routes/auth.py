@@ -5,6 +5,7 @@ Handles login, registration (with invite codes), logout, and current user.
 These routes are tenant-exempt (no chapter context needed).
 """
 
+import hashlib
 import secrets
 from datetime import date, datetime, timedelta, timezone
 
@@ -18,9 +19,19 @@ from app.models.workflow import WorkflowTemplate
 from app.models.auth_event import AuthEvent
 from app.services import notification_service, workflow_engine
 from app.utils.password import validate_password
-from app.utils.email import send_password_reset_email
+from app.utils.email import (
+    send_password_reset_email,
+    send_email_change_confirm,
+    send_email_change_notice,
+)
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+
+
+def _hash_token(token: str) -> str:
+    """Return a sha256 hex digest. Reset/confirmation tokens are stored hashed
+    so a DB leak doesn't hand out active tokens."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def _log_auth_event(event_type: str, user_id: str | None = None) -> None:
@@ -281,7 +292,13 @@ def get_current_user():
 @auth_bp.route("/profile", methods=["PUT"])
 @login_required
 def update_profile():
-    """Update the current user's name and/or email."""
+    """Update the current user's name and/or email.
+
+    Email changes don't take effect immediately: the new address must click a
+    confirmation link, and the request requires the current password. This
+    prevents a stolen session from silently hijacking the account via email
+    swap → forgot-password.
+    """
     data = request.get_json()
     if not data:
         return jsonify({"error": "Request body required."}), 400
@@ -298,17 +315,95 @@ def update_profile():
             return jsonify({"error": "last_name cannot be empty."}), 400
         current_user.last_name = val
 
+    email_change_pending = False
+    new_email_value: str | None = None
+
     if "email" in data:
         val = data["email"].strip().lower()
         if not val or "@" not in val:
             return jsonify({"error": "A valid email is required."}), 400
-        existing = User.query.filter_by(email=val).first()
-        if existing and existing.id != current_user.id:
-            return jsonify({"error": "That email is already in use."}), 409
-        current_user.email = val
+
+        if val != current_user.email:
+            current_password = data.get("current_password", "")
+            if not current_password or not current_user.check_password(current_password):
+                return jsonify({"error": "Current password is required to change your email."}), 400
+
+            existing = User.query.filter_by(email=val).first()
+            if existing and existing.id != current_user.id:
+                return jsonify({"error": "That email is already in use."}), 409
+
+            token = secrets.token_urlsafe(32)
+            current_user.pending_email = val
+            current_user.pending_email_token = _hash_token(token)
+            current_user.pending_email_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+            email_change_pending = True
+            new_email_value = val
+            # The plaintext token is only held in memory for the duration of this
+            # request — sent to the new address, then discarded.
+            pending_token_plaintext = token
 
     db.session.commit()
-    return jsonify({"user": current_user.to_dict()}), 200
+
+    if email_change_pending and new_email_value:
+        send_email_change_confirm(
+            to=new_email_value,
+            token=pending_token_plaintext,
+            user_name=current_user.first_name,
+            new_email=new_email_value,
+        )
+        send_email_change_notice(
+            to=current_user.email,
+            user_name=current_user.first_name,
+            new_email=new_email_value,
+        )
+
+    return jsonify({
+        "user": current_user.to_dict(),
+        "pending_email": current_user.pending_email,
+    }), 200
+
+
+@auth_bp.route("/confirm-email-change", methods=["POST"])
+@limiter.limit("10 per hour")
+def confirm_email_change():
+    """Apply a pending email change after the new address clicks the confirm link."""
+    data = request.get_json() or {}
+    token = data.get("token", "").strip()
+    if not token:
+        return jsonify({"error": "Token is required."}), 400
+
+    user = User.query.filter_by(pending_email_token=_hash_token(token)).first()
+    if not user or not user.pending_email or not user.pending_email_expires_at:
+        return jsonify({"error": "Invalid or expired confirmation link."}), 400
+
+    expires = user.pending_email_expires_at
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) > expires:
+        user.pending_email = None
+        user.pending_email_token = None
+        user.pending_email_expires_at = None
+        db.session.commit()
+        return jsonify({"error": "Invalid or expired confirmation link."}), 400
+
+    # Guard against a race where the new address was claimed between request
+    # and confirmation.
+    conflict = User.query.filter_by(email=user.pending_email).first()
+    if conflict and conflict.id != user.id:
+        user.pending_email = None
+        user.pending_email_token = None
+        user.pending_email_expires_at = None
+        db.session.commit()
+        return jsonify({"error": "That email is no longer available."}), 409
+
+    user.email = user.pending_email
+    user.pending_email = None
+    user.pending_email_token = None
+    user.pending_email_expires_at = None
+    db.session.commit()
+    _log_auth_event("email_change", user_id=user.id)
+
+    return jsonify({"success": True, "email": user.email}), 200
 
 
 @auth_bp.route("/change-password", methods=["PUT"])
@@ -351,7 +446,8 @@ def forgot_password():
     user = User.query.filter_by(email=email).first()
     if user and user.active:
         token = secrets.token_urlsafe(32)
-        user.password_reset_token = token
+        # Store only the hash — a DB leak must not expose live reset tokens.
+        user.password_reset_token = _hash_token(token)
         user.password_reset_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         db.session.commit()
         send_password_reset_email(to=user.email, reset_token=token, user_name=user.first_name)
@@ -371,7 +467,7 @@ def reset_password():
     if not token or not new_password:
         return jsonify({"error": "Token and password are required."}), 400
 
-    user = User.query.filter_by(password_reset_token=token).first()
+    user = User.query.filter_by(password_reset_token=_hash_token(token)).first()
     if not user or not user.password_reset_expires_at:
         return jsonify({"error": "Invalid or expired reset link."}), 400
 

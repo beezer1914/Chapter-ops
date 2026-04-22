@@ -28,6 +28,7 @@ import Landing from "@/pages/Landing";
 import LegalPage from "@/pages/LegalPage";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import ConfirmEmailChange from "@/pages/ConfirmEmailChange";
 import StripeCallback from "@/pages/StripeCallback";
 import IHQDashboard from "@/pages/IHQDashboard";
 import MyDues from "@/pages/MyDues";
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/confirm-email-change" element={<ConfirmEmailChange />} />
         <Route path="/legal/:doc" element={<LegalPage />} />
 
         {/* Protected: requires auth but NOT a chapter */}

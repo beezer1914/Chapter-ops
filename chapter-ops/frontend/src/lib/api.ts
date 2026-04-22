@@ -43,7 +43,7 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       const currentPath = window.location.pathname;
-      const publicPaths = ["/", "/login", "/register", "/forgot-password", "/reset-password"];
+      const publicPaths = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/confirm-email-change"];
       const isPublic =
         publicPaths.includes(currentPath) ||
         currentPath.startsWith("/e/") ||

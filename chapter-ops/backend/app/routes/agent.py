@@ -7,10 +7,11 @@ Internal-only endpoints for the ops agent:
   GET  /api/agent/approve/<token> — execute a pending AgentApproval (token-auth, no login needed)
 """
 
+import html
 import logging
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, g
+from flask import Blueprint, jsonify, g, make_response
 from flask_login import current_user, login_required
 
 from app.extensions import db
@@ -67,25 +68,62 @@ def agent_run():
 
 
 @agent_bp.route("/approve/<token>", methods=["GET"])
-def agent_approve(token: str):
+def agent_approve_confirm(token: str):
     """
-    Execute a pending AgentApproval by token.
+    Render a confirmation page for a pending AgentApproval.
 
-    No login required — the token IS the authorization.
-    One-time use, expires after 24 hours.
+    GET is safe: email link-preview scanners (Gmail, Outlook Safe Links, Slack)
+    WILL fetch approval URLs on arrival, so we never execute on GET. The page
+    renders a form that POSTs to the same URL to actually run the action.
     """
     approval = db.session.query(AgentApproval).filter_by(
         approval_token=token, executed=False
     ).first()
 
     if not approval:
-        return jsonify({"error": "Invalid or already-used approval token."}), 404
+        return _render_approval_page(
+            title="Invalid approval link",
+            message="This approval link is invalid or has already been used.",
+            token=None,
+        ), 404
 
     now = datetime.now(timezone.utc)
     if approval.expires_at.replace(tzinfo=timezone.utc) < now:
-        return jsonify({"error": "This approval link has expired."}), 410
+        return _render_approval_page(
+            title="Approval link expired",
+            message="This approval link expired more than 24 hours ago.",
+            token=None,
+        ), 410
 
-    # Execute the staged command
+    return _render_approval_page(
+        title="Confirm agent action",
+        message=approval.description or f"Approve action: {approval.action_id}",
+        token=token,
+    ), 200
+
+
+@agent_bp.route("/approve/<token>", methods=["POST"])
+def agent_approve_execute(token: str):
+    """Execute a pending AgentApproval. Called by the confirmation page form."""
+    approval = db.session.query(AgentApproval).filter_by(
+        approval_token=token, executed=False
+    ).first()
+
+    if not approval:
+        return _render_approval_page(
+            title="Invalid approval link",
+            message="This approval link is invalid or has already been used.",
+            token=None,
+        ), 404
+
+    now = datetime.now(timezone.utc)
+    if approval.expires_at.replace(tzinfo=timezone.utc) < now:
+        return _render_approval_page(
+            title="Approval link expired",
+            message="This approval link expired more than 24 hours ago.",
+            token=None,
+        ), 410
+
     try:
         result = _execute_command(approval.command_json)
         approval.executed = True
@@ -96,17 +134,46 @@ def agent_approve(token: str):
             f"AgentApproval executed: action_id={approval.action_id}, "
             f"token={token[:8]}..."
         )
-        return jsonify({
-            "success": True,
-            "action_id": approval.action_id,
-            "description": approval.description,
-            "result": result,
-        }), 200
+        return _render_approval_page(
+            title="Action executed",
+            message=f"{approval.description}\n\nResult: {result}",
+            token=None,
+        ), 200
 
     except Exception as exc:
         logger.exception(f"AgentApproval execution failed: {exc}")
         db.session.rollback()
-        return jsonify({"error": f"Execution failed: {exc}"}), 500
+        return _render_approval_page(
+            title="Execution failed",
+            message=f"The action failed: {exc}",
+            token=None,
+        ), 500
+
+
+def _render_approval_page(title: str, message: str, token: str | None) -> "flask.Response":
+    """Render a minimal confirmation page. Never execute on GET."""
+    safe_title = html.escape(title)
+    safe_message = html.escape(message).replace("\n", "<br>")
+    form_block = ""
+    if token:
+        safe_token = html.escape(token, quote=True)
+        form_block = (
+            f'<form method="POST" action="/api/agent/approve/{safe_token}" style="margin-top:24px">'
+            f'<button type="submit" style="background:#0a0a0a;color:#fff;border:none;'
+            f'padding:12px 24px;font-family:system-ui,sans-serif;font-size:14px;'
+            f'font-weight:600;cursor:pointer">Approve &amp; execute</button>'
+            f'</form>'
+        )
+    body = f"""<!doctype html>
+<html><head><meta charset="utf-8"><title>{safe_title}</title></head>
+<body style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:48px auto;padding:0 24px;color:#0a0a0a">
+<h1 style="font-size:20px;margin-bottom:12px">{safe_title}</h1>
+<p style="color:#444;line-height:1.5">{safe_message}</p>
+{form_block}
+</body></html>"""
+    resp = make_response(body)
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    return resp
 
 
 def _execute_command(command: dict) -> str:
