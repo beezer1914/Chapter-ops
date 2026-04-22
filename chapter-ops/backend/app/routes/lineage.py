@@ -14,8 +14,14 @@ from app.extensions import db
 from app.models import ChapterMembership, User
 from app.models.milestone import ChapterMilestone, MILESTONE_TYPES
 from app.utils.decorators import chapter_required, role_required
+from app.utils.permissions import enforce_module_access
 
 lineage_bp = Blueprint("lineage", __name__, url_prefix="/api/lineage")
+
+
+@lineage_bp.before_request
+def _gate_module():
+    return enforce_module_access("lineage")
 
 
 # ── Helper ─────────────────────────────────────────────────────────────────────

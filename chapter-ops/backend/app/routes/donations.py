@@ -15,8 +15,14 @@ from app.extensions import db
 from app.models import Donation, ChapterMembership, User
 from app.utils.decorators import chapter_required, role_required
 from app.utils.pagination import paginate
+from app.utils.permissions import enforce_module_access
 
 donations_bp = Blueprint("donations", __name__, url_prefix="/api/donations")
+
+
+@donations_bp.before_request
+def _gate_module():
+    return enforce_module_access("donations")
 
 VALID_METHODS = {"cash", "check", "bank_transfer", "manual"}
 

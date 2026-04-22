@@ -20,8 +20,14 @@ from app.extensions import db
 from app.models.committee import Committee
 from app.models.expense import Expense
 from app.utils.decorators import chapter_required, role_required
+from app.utils.permissions import enforce_module_access
 
 committees_bp = Blueprint("committees", __name__, url_prefix="/api/committees")
+
+
+@committees_bp.before_request
+def _gate_module():
+    return enforce_module_access("expenses")
 
 
 def _is_treasurer_plus() -> bool:

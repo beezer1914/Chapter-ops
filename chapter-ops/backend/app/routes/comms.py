@@ -17,8 +17,14 @@ from app.models.membership import ChapterMembership
 from app.models.user import User
 from app.utils.decorators import chapter_required, role_required
 from app.utils.email import send_email
+from app.utils.permissions import enforce_module_access
 
 comms_bp = Blueprint("comms", __name__, url_prefix="/api/comms")
+
+
+@comms_bp.before_request
+def _gate_module():
+    return enforce_module_access("communications")
 
 OFFICER_ROLES = {"secretary", "treasurer", "vice_president", "president", "admin"}
 

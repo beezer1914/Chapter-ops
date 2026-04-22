@@ -18,8 +18,14 @@ from app.extensions import db
 from app.models import InviteCode, User
 from app.utils.decorators import chapter_required, _is_org_admin
 from app.utils.email import send_invite_email
+from app.utils.permissions import enforce_module_access
 
 invites_bp = Blueprint("invites", __name__, url_prefix="/api/invites")
+
+
+@invites_bp.before_request
+def _gate_module():
+    return enforce_module_access("invites")
 
 VALID_ROLES = {"member", "secretary", "treasurer", "vice_president", "president"}
 

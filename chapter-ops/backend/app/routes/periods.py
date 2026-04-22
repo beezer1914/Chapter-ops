@@ -19,8 +19,14 @@ from app.extensions import db
 from app.models.chapter_period import ChapterPeriod, PERIOD_TYPES
 from app.services.dues_service import seed_period_dues, rollover_unpaid_dues, recompute_financial_status
 from app.utils.decorators import chapter_required, role_required
+from app.utils.permissions import enforce_module_access
 
 periods_bp = Blueprint("periods", __name__, url_prefix="/api/periods")
+
+
+@periods_bp.before_request
+def _gate_module():
+    return enforce_module_access("payments")
 
 
 def _parse_date(value: str | None, field: str):

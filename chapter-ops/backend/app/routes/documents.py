@@ -24,8 +24,14 @@ from app.models.workflow import WorkflowTemplate
 from app.services import workflow_engine
 from app.utils.decorators import chapter_required, role_required
 from app.utils.pagination import paginate
+from app.utils.permissions import enforce_module_access
 
 documents_bp = Blueprint("documents", __name__, url_prefix="/api/documents")
+
+
+@documents_bp.before_request
+def _gate_module():
+    return enforce_module_access("documents")
 
 # Magic byte signatures for document types; None means no reliable signature (skip check)
 _DOC_MAGIC: dict[str, list[tuple[int, bytes]] | None] = {

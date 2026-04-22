@@ -15,8 +15,14 @@ from app.models import ChapterMembership, User
 from app.services import notification_service
 from app.utils.decorators import chapter_required, role_required
 from app.utils.pagination import paginate
+from app.utils.permissions import enforce_module_access
 
 members_bp = Blueprint("members", __name__, url_prefix="/api/members")
+
+
+@members_bp.before_request
+def _gate_module():
+    return enforce_module_access("members")
 
 VALID_ROLES = {"member", "secretary", "treasurer", "vice_president", "president"}
 VALID_FINANCIAL_STATUSES = {"financial", "not_financial", "neophyte", "exempt"}

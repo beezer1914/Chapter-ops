@@ -24,8 +24,14 @@ from app.models.expense import Expense, EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LAB
 from app.models import ChapterMembership
 from app.utils.decorators import chapter_required, role_required
 from app.utils.pagination import paginate
+from app.utils.permissions import enforce_module_access
 
 expenses_bp = Blueprint("expenses", __name__, url_prefix="/api/expenses")
+
+
+@expenses_bp.before_request
+def _gate_module():
+    return enforce_module_access("expenses")
 
 ALLOWED_RECEIPT_EXTENSIONS = {"pdf", "jpg", "jpeg", "png", "heic", "webp"}
 MAX_RECEIPT_SIZE = 10 * 1024 * 1024  # 10 MB

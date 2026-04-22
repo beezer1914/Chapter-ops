@@ -13,8 +13,14 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.models import PaymentPlan, ChapterMembership, User, Payment
 from app.utils.decorators import chapter_required, role_required
+from app.utils.permissions import enforce_module_access
 
 payment_plans_bp = Blueprint("payment_plans", __name__, url_prefix="/api/payment-plans")
+
+
+@payment_plans_bp.before_request
+def _gate_module():
+    return enforce_module_access("payments")
 
 VALID_FREQUENCIES = {"weekly", "biweekly", "monthly", "quarterly"}
 

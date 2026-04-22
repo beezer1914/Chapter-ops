@@ -18,8 +18,14 @@ from app.models import Payment, PaymentPlan, ChapterMembership, User
 from app.services import notification_service
 from app.utils.decorators import chapter_required, role_required
 from app.utils.pagination import paginate
+from app.utils.permissions import enforce_module_access
 
 payments_bp = Blueprint("payments", __name__, url_prefix="/api/payments")
+
+
+@payments_bp.before_request
+def _gate_module():
+    return enforce_module_access("payments")
 
 VALID_METHODS = {"cash", "check", "bank_transfer", "zelle", "venmo", "cashapp", "manual"}
 VALID_PAYMENT_TYPES = {"one-time", "installment"}

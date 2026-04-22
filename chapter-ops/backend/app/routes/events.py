@@ -19,8 +19,14 @@ from app.models.workflow import WorkflowTemplate
 from app.services import notification_service, workflow_engine
 from app.utils.decorators import chapter_required, role_required
 from app.utils.pagination import paginate
+from app.utils.permissions import enforce_module_access
 
 events_bp = Blueprint("events", __name__, url_prefix="/api/events")
+
+
+@events_bp.before_request
+def _gate_module():
+    return enforce_module_access("events")
 
 VALID_EVENT_TYPES = {"social", "fundraiser", "community_service"}
 VALID_STATUSES = {"draft", "published", "cancelled"}

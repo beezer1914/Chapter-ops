@@ -18,8 +18,14 @@ from app.models import (
 )
 from app.services import notification_service
 from app.utils.decorators import chapter_required, role_required, region_role_required
+from app.utils.permissions import enforce_module_access
 
 invoices_bp = Blueprint("invoices", __name__, url_prefix="/api/invoices")
+
+
+@invoices_bp.before_request
+def _gate_module():
+    return enforce_module_access("invoices")
 
 VALID_STATUSES = {"draft", "sent", "paid", "overdue", "cancelled"}
 

@@ -21,8 +21,14 @@ from app.models.organization import Organization
 from app.models.chapter import Chapter
 from app.utils.decorators import chapter_required, role_required
 from app.utils.pagination import paginate
+from app.utils.permissions import enforce_module_access
 
 kb_bp = Blueprint("kb", __name__, url_prefix="/api/kb")
+
+
+@kb_bp.before_request
+def _gate_module():
+    return enforce_module_access("knowledge_base")
 
 # Tags and attributes allowed in article bodies (Tiptap output)
 _ALLOWED_TAGS = {

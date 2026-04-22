@@ -23,6 +23,7 @@ from app.extensions import db
 from app.models import InviteCode, User
 from app.models.intake import IntakeCandidate, IntakeDocument, INTAKE_STAGES, INTAKE_DOC_TYPES
 from app.utils.decorators import chapter_required, role_required, intake_access_required
+from app.utils.permissions import enforce_module_access
 
 # ── Config helpers ─────────────────────────────────────────────────────────────
 
@@ -71,6 +72,12 @@ def _pre_terminal_stage_id(chapter) -> str | None:
     return None
 
 intake_bp = Blueprint("intake", __name__, url_prefix="/api/intake")
+
+
+@intake_bp.before_request
+def _gate_module():
+    return enforce_module_access("intake")
+
 
 ALLOWED_DOC_EXTENSIONS = {
     "pdf", "doc", "docx", "jpg", "jpeg", "png", "txt", "csv",

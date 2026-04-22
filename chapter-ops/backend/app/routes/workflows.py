@@ -27,8 +27,14 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.utils.decorators import _is_org_admin, chapter_required, role_required
+from app.utils.permissions import enforce_module_access
 
 workflows_bp = Blueprint("workflows", __name__, url_prefix="/api/workflows")
+
+
+@workflows_bp.before_request
+def _gate_module():
+    return enforce_module_access("workflows")
 
 
 # ── Permission helpers ────────────────────────────────────────────────────────
