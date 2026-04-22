@@ -64,6 +64,27 @@ export default function ChapterConfigTab({
     }
   }
 
+  async function handleSavePassFees(next: boolean) {
+    const prev = settings.pass_stripe_fees_to_payer ?? false;
+    const nextSettings = { ...settings, pass_stripe_fees_to_payer: next };
+    setSettings(nextSettings);
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await updateChapterConfig({ settings: nextSettings });
+      onSave(updated);
+      setSuccess(next ? "Members will now cover Stripe fees." : "Chapter will now cover Stripe fees.");
+    } catch (err: unknown) {
+      setSettings((s) => ({ ...s, pass_stripe_fees_to_payer: prev }));
+      const message =
+        (err as { response?: { data?: { error?: string } } }).response?.data
+          ?.error || "Failed to update fee policy.";
+      setError(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function addFeeType() {
     setFeeTypes((prev) => [...prev, { id: "", label: "", default_amount: 0 }]);
   }
@@ -228,6 +249,33 @@ export default function ChapterConfigTab({
           </button>
         )}
       </div>
+
+      {/* Payment Processing — treasurer+ */}
+      {canEditFees && (
+        <div className="bg-surface-card-solid rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-content-primary mb-1">Payment Processing</h3>
+          <p className="text-sm text-content-secondary mb-4">
+            Control how Stripe processing fees are handled on card payments.
+          </p>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={settings.pass_stripe_fees_to_payer ?? false}
+              onChange={(e) => handleSavePassFees(e.target.checked)}
+              disabled={saving}
+              className="mt-1 rounded"
+            />
+            <div>
+              <p className="text-sm font-medium text-content-primary">
+                Pass Stripe fees to the payer
+              </p>
+              <p className="text-xs text-content-secondary mt-0.5">
+                When on, members see a gross-up (2.9% + $0.30) at checkout so the chapter receives the full dues amount. When off, the chapter absorbs the fee.
+              </p>
+            </div>
+          </label>
+        </div>
+      )}
 
       {/* Billing Periods — visible to treasurer+ */}
       {ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["treasurer"] && (

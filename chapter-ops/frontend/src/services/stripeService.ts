@@ -37,6 +37,18 @@ export async function createDuesCheckout(
   return res.data.checkout_url;
 }
 
+export interface CheckoutPreview {
+  subtotal: string;
+  processing_fee: string;
+  total: string;
+  pass_fees_enabled: boolean;
+}
+
+export async function getCheckoutPreview(amount: number): Promise<CheckoutPreview> {
+  const res = await api.post("/payments/checkout/preview", { amount });
+  return res.data;
+}
+
 export async function createInstallmentCheckout(
   planId: string,
   amount?: number,

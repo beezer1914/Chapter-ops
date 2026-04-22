@@ -7,7 +7,7 @@ Handles manual payment recording, financial summaries, and Stripe Checkout.
 import stripe
 
 from datetime import datetime, timezone
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from flask import Blueprint, current_app, jsonify, request, g
 from flask_login import current_user, login_required
@@ -23,6 +23,29 @@ payments_bp = Blueprint("payments", __name__, url_prefix="/api/payments")
 
 VALID_METHODS = {"cash", "check", "bank_transfer", "zelle", "venmo", "cashapp", "manual"}
 VALID_PAYMENT_TYPES = {"one-time", "installment"}
+
+# Stripe standard US card pricing: 2.9% + $0.30 per successful charge.
+# Gross-up is charged = (net + fixed) / (1 - pct) so the chapter nets `net`
+# after Stripe takes its cut.
+STRIPE_FEE_PCT = Decimal("0.029")
+STRIPE_FEE_FIXED = Decimal("0.30")
+
+
+def compute_fee_breakdown(net_amount: Decimal) -> dict:
+    """
+    Given the net amount the chapter wants to receive, return the grossed-up
+    total the member must be charged plus the processing-fee delta.
+
+    Returns a dict with Decimal values (callers format for display/cents).
+    """
+    total = (net_amount + STRIPE_FEE_FIXED) / (Decimal("1") - STRIPE_FEE_PCT)
+    total = total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    processing_fee = (total - net_amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return {"subtotal": net_amount, "processing_fee": processing_fee, "total": total}
+
+
+def _pass_fees_enabled(chapter) -> bool:
+    return bool(((chapter.config or {}).get("settings") or {}).get("pass_stripe_fees_to_payer"))
 
 
 @payments_bp.route("", methods=["GET"])
@@ -275,7 +298,11 @@ def create_dues_checkout():
     except (InvalidOperation, ValueError):
         return jsonify({"error": "Invalid amount."}), 400
 
-    amount_cents = int(amount * 100)
+    if _pass_fees_enabled(chapter):
+        charge_amount = compute_fee_breakdown(amount)["total"]
+    else:
+        charge_amount = amount
+    amount_cents = int(charge_amount * 100)
     frontend_url = current_app.config["FRONTEND_URL"]
 
     try:
@@ -351,12 +378,18 @@ def create_installment_checkout(plan_id: str):
             remaining = Decimal(str(plan.total_amount)) - Decimal(str(plan.total_paid()))
             if custom_amount > remaining:
                 return jsonify({"error": f"Amount exceeds remaining balance of ${remaining:.2f}."}), 400
-            amount_cents = int(custom_amount * 100)
+            net_amount = custom_amount
         except Exception as e:
             current_app.logger.error(f"Invalid amount in installment checkout: {e}")
             return jsonify({"error": "Invalid amount."}), 400
     else:
-        amount_cents = int(plan.installment_amount * 100)
+        net_amount = Decimal(str(plan.installment_amount))
+
+    if _pass_fees_enabled(chapter):
+        charge_amount = compute_fee_breakdown(net_amount)["total"]
+    else:
+        charge_amount = net_amount
+    amount_cents = int(charge_amount * 100)
     frontend_url = current_app.config["FRONTEND_URL"]
 
     try:
@@ -385,3 +418,39 @@ def create_installment_checkout(plan_id: str):
         return jsonify({"error": str(e.user_message or e)}), 502
 
     return jsonify({"checkout_url": session.url}), 200
+
+
+@payments_bp.route("/checkout/preview", methods=["POST"])
+@login_required
+@chapter_required
+@role_required("member")
+def preview_checkout():
+    """
+    Preview the Stripe charge breakdown before creating a checkout session.
+
+    Body: { amount: number }  — the net amount the chapter wants to receive.
+    Returns: { subtotal, processing_fee, total, pass_fees_enabled }.
+    When pass_fees_enabled is false, processing_fee is 0 and total == subtotal.
+    """
+    chapter = g.current_chapter
+    data = request.get_json() or {}
+
+    try:
+        amount = Decimal(str(data.get("amount", 0)))
+        if amount <= 0:
+            return jsonify({"error": "Amount must be greater than zero."}), 400
+    except (InvalidOperation, ValueError):
+        return jsonify({"error": "Invalid amount."}), 400
+
+    pass_fees = _pass_fees_enabled(chapter)
+    if pass_fees:
+        breakdown = compute_fee_breakdown(amount)
+    else:
+        breakdown = {"subtotal": amount, "processing_fee": Decimal("0.00"), "total": amount}
+
+    return jsonify({
+        "subtotal": str(breakdown["subtotal"].quantize(Decimal("0.01"))),
+        "processing_fee": str(breakdown["processing_fee"]),
+        "total": str(breakdown["total"]),
+        "pass_fees_enabled": pass_fees,
+    }), 200

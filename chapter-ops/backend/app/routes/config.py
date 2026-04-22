@@ -323,6 +323,9 @@ def update_chapter_config():
         if "allow_payment_plans" in settings:
             current_settings["allow_payment_plans"] = bool(settings["allow_payment_plans"])
 
+        if "pass_stripe_fees_to_payer" in settings:
+            current_settings["pass_stripe_fees_to_payer"] = bool(settings["pass_stripe_fees_to_payer"])
+
         current_config["settings"] = current_settings
 
     # ── Access permissions ───────────────────────────────────────────

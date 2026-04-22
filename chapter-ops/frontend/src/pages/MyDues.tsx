@@ -4,7 +4,12 @@ import Layout from "@/components/Layout";
 import { useAuthStore } from "@/stores/authStore";
 import { useConfigStore } from "@/stores/configStore";
 import { fetchPeriods, fetchMyDues } from "@/services/periodService";
-import { createDuesCheckout, getStripeAccountStatus } from "@/services/stripeService";
+import {
+  createDuesCheckout,
+  getStripeAccountStatus,
+  getCheckoutPreview,
+  type CheckoutPreview,
+} from "@/services/stripeService";
 import { TOUR_TARGETS } from "@/tours/tourTargets";
 import type { ChapterPeriod, ChapterPeriodDues, DuesStatus } from "@/types";
 import { CheckCircle, AlertCircle, Clock, Shield, ArrowRight, CreditCard } from "lucide-react";
@@ -168,6 +173,10 @@ export default function MyDues() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState<string | null>(null);
+  const [pendingPay, setPendingPay] = useState<{
+    dues: ChapterPeriodDues;
+    preview: CheckoutPreview;
+  } | null>(null);
 
   const currentMembership = memberships.find((m) => m.chapter_id === user?.active_chapter_id);
   const [financialStatus, setFinancialStatus] = useState<string>(
@@ -208,8 +217,22 @@ export default function MyDues() {
     if (remaining <= 0) return;
     setPaying(duesRow.id);
     try {
+      const preview = await getCheckoutPreview(remaining);
+      setPendingPay({ dues: duesRow, preview });
+    } catch {
+      setError("Could not load payment preview. Please try again.");
+    } finally {
+      setPaying(null);
+    }
+  }
+
+  async function confirmPay() {
+    if (!pendingPay) return;
+    const { dues: duesRow } = pendingPay;
+    setPaying(duesRow.id);
+    try {
       const url = await createDuesCheckout({
-        amount: remaining,
+        amount: parseFloat(duesRow.amount_remaining),
         fee_type_id: duesRow.fee_type_id,
         notes: `${duesRow.fee_type_label} — ${activePeriod?.name ?? ""}`,
       });
@@ -217,6 +240,7 @@ export default function MyDues() {
     } catch {
       setError("Could not start checkout. Please try again.");
       setPaying(null);
+      setPendingPay(null);
     }
   }
 
@@ -374,6 +398,64 @@ export default function MyDues() {
           </>
         )}
       </div>
+
+      {/* ── Checkout confirmation modal ──────────────────────────────── */}
+      {pendingPay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md border border-[var(--color-border)] bg-[var(--color-bg-card-solid)] shadow-xl">
+            <div className="border-b border-[var(--color-border)] px-6 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-content-muted mb-0.5">
+                Review payment
+              </p>
+              <h2 className="font-heading text-xl font-black text-content-heading tracking-tight">
+                {pendingPay.dues.fee_type_label}
+              </h2>
+            </div>
+
+            <div className="px-6 py-5 space-y-2.5 text-sm">
+              <div className="flex justify-between text-content-secondary">
+                <span>Subtotal</span>
+                <span className="font-mono">${parseFloat(pendingPay.preview.subtotal).toFixed(2)}</span>
+              </div>
+              {pendingPay.preview.pass_fees_enabled && (
+                <div className="flex justify-between text-content-secondary">
+                  <span>Processing fee (2.9% + $0.30)</span>
+                  <span className="font-mono">+${parseFloat(pendingPay.preview.processing_fee).toFixed(2)}</span>
+                </div>
+              )}
+              <div className="border-t border-[var(--color-border)] pt-2.5 flex justify-between items-baseline">
+                <span className="font-heading font-bold text-content-heading">Total charged</span>
+                <span className="font-heading font-black text-2xl text-content-heading font-mono">
+                  ${parseFloat(pendingPay.preview.total).toFixed(2)}
+                </span>
+              </div>
+              {pendingPay.preview.pass_fees_enabled && (
+                <p className="text-xs text-content-muted pt-1">
+                  Your chapter passes Stripe processing fees to the payer so the full dues amount reaches the treasury.
+                </p>
+              )}
+            </div>
+
+            <div className="border-t border-[var(--color-border)] px-6 py-4 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setPendingPay(null)}
+                disabled={paying !== null}
+                className="px-4 py-2 text-sm font-semibold text-content-secondary hover:text-content-heading transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmPay}
+                disabled={paying !== null}
+                className="px-5 py-2 text-sm font-semibold bg-[var(--color-text-heading)] text-[var(--color-bg-deep)] hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+              >
+                <CreditCard className="w-4 h-4" />
+                {paying ? "Redirecting…" : "Continue to Stripe"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

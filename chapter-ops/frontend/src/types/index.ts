@@ -137,6 +137,7 @@ export interface ChapterSettings {
   fiscal_year_start_month?: number;
   payment_deadline_day?: number;
   allow_payment_plans?: boolean;
+  pass_stripe_fees_to_payer?: boolean;
 }
 
 export type ModuleKey =
