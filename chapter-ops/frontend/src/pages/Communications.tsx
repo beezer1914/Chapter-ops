@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { useAuthStore } from "@/stores/authStore";
+import { useConfigStore } from "@/stores/configStore";
 import {
   fetchAnnouncements,
   createAnnouncement,
@@ -52,6 +53,7 @@ type Tab = "announcements" | "email_blast";
 
 export default function Communications() {
   const { memberships, user } = useAuthStore();
+  const { chapter } = useConfigStore();
   const [tab, setTab] = useState<Tab>("announcements");
 
   const currentMembership = memberships.find((m) => m.chapter_id === user?.active_chapter_id);
@@ -548,7 +550,7 @@ function EmailBlastTab() {
             className="w-full px-3 py-2.5 border border-[var(--color-border-brand)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-main/30"
           />
           <p className="mt-1 text-xs text-content-muted">
-            Recipients will see: <span className="font-mono">[{"{Chapter Name}"}] {subject || "Your subject"}</span>
+            Recipients will see: <span className="font-mono">[{chapter?.name ?? "Chapter"}] {subject || "Your subject"}</span>
           </p>
         </div>
 
