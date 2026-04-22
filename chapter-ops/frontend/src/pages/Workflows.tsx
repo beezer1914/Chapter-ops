@@ -28,6 +28,9 @@ import {
   submitStepAction,
   cancelInstance,
 } from "@/services/workflowService";
+import { fetchExpenses } from "@/services/expenseService";
+import { fetchEvents } from "@/services/eventService";
+import { fetchMembers } from "@/services/chapterService";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -1434,6 +1437,8 @@ function StartWorkflowButton({
   );
 }
 
+type TriggerOption = { id: string; label: string; sublabel?: string };
+
 function StartWorkflowModal({
   templates,
   onClose,
@@ -1448,11 +1453,71 @@ function StartWorkflowModal({
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [options, setOptions] = useState<TriggerOption[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+
   const selectedTemplate = templates.find((t) => t.id === templateId);
+  const triggerType = selectedTemplate?.trigger_type ?? "document";
+
+  useEffect(() => {
+    setTriggerId("");
+    if (triggerType === "document") {
+      setOptions([]);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingOptions(true);
+    (async () => {
+      try {
+        let opts: TriggerOption[] = [];
+        if (triggerType === "expense") {
+          const res = await fetchExpenses("pending");
+          opts = res.expenses.map((e) => ({
+            id: e.id,
+            label: `${e.title} — $${e.amount}`,
+            sublabel: e.submitted_by?.full_name ?? undefined,
+          }));
+        } else if (triggerType === "event") {
+          const events = await fetchEvents();
+          opts = events.map((e) => ({
+            id: e.id,
+            label: e.title,
+            sublabel: new Date(e.start_datetime).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+          }));
+        } else if (triggerType === "member_application") {
+          const members = await fetchMembers();
+          opts = members
+            .filter((m) => m.active)
+            .map((m) => ({
+              id: m.user.id,
+              label: m.user.full_name,
+              sublabel: m.user.email,
+            }));
+        }
+        if (!cancelled) setOptions(opts);
+      } catch {
+        if (!cancelled) setOptions([]);
+      } finally {
+        if (!cancelled) setLoadingOptions(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [triggerType]);
 
   async function handleStart() {
     if (!triggerId.trim()) {
-      setError("Trigger ID is required.");
+      setError(
+        triggerType === "document"
+          ? "Trigger ID is required."
+          : "Please select an item.",
+      );
       return;
     }
     setStarting(true);
@@ -1460,7 +1525,7 @@ function StartWorkflowModal({
     try {
       await startWorkflow({
         template_id: templateId,
-        trigger_type: selectedTemplate?.trigger_type ?? "document",
+        trigger_type: triggerType,
         trigger_id: triggerId.trim(),
       });
       onStarted();
@@ -1472,6 +1537,20 @@ function StartWorkflowModal({
       setStarting(false);
     }
   }
+
+  const pickerLabel: Record<WorkflowTriggerType, string> = {
+    document: "Trigger ID",
+    expense: "Expense",
+    event: "Event",
+    member_application: "Applicant",
+  };
+
+  const emptyMessage: Record<WorkflowTriggerType, string> = {
+    document: "",
+    expense: "No pending expenses in this chapter.",
+    event: "No events in this chapter yet.",
+    member_application: "No active members to review.",
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -1502,25 +1581,44 @@ function StartWorkflowModal({
 
           <div>
             <label className="block text-xs font-medium text-content-secondary mb-1">
-              Trigger ID
+              {pickerLabel[triggerType]}
             </label>
-            <input
-              value={triggerId}
-              onChange={(e) => setTriggerId(e.target.value)}
-              placeholder="ID of the document or item being reviewed"
-              className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
-            />
-            <p className="text-xs text-content-muted mt-1">
-              In Phase 2 this will be a document picker. For now, paste the
-              item's ID.
-            </p>
+
+            {triggerType === "document" ? (
+              <input
+                value={triggerId}
+                onChange={(e) => setTriggerId(e.target.value)}
+                placeholder="ID of the document being reviewed"
+                className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
+              />
+            ) : loadingOptions ? (
+              <p className="text-xs text-content-muted">Loading…</p>
+            ) : options.length === 0 ? (
+              <p className="text-xs text-content-muted">
+                {emptyMessage[triggerType]}
+              </p>
+            ) : (
+              <select
+                value={triggerId}
+                onChange={(e) => setTriggerId(e.target.value)}
+                className="w-full border border-[var(--color-border-brand)] rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="">Select…</option>
+                {options.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                    {o.sublabel ? ` — ${o.sublabel}` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 
         <div className="flex gap-3 mt-6">
           <button
             onClick={handleStart}
-            disabled={starting}
+            disabled={starting || (triggerType !== "document" && options.length === 0)}
             className="bg-brand-primary text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-brand-primary-dark disabled:opacity-50 flex-1"
           >
             {starting ? "Starting..." : "Start"}
