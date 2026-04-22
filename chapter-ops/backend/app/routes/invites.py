@@ -16,7 +16,7 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import InviteCode, User
-from app.utils.decorators import chapter_required, role_required
+from app.utils.decorators import chapter_required, _is_org_admin
 from app.utils.email import send_invite_email
 
 invites_bp = Blueprint("invites", __name__, url_prefix="/api/invites")
@@ -33,10 +33,18 @@ def _generate_code(length: int = 8) -> str:
 @invites_bp.route("", methods=["GET"])
 @login_required
 @chapter_required
-@role_required("secretary")
 def list_invites():
-    """List all invites for the current chapter."""
+    """List all invites for the current chapter.
+
+    Accessible to org admins (full access) or chapter secretary+.
+    """
     chapter = g.current_chapter
+    is_admin = _is_org_admin(current_user, chapter.organization_id)
+    if not is_admin:
+        membership = current_user.get_membership(chapter.id)
+        if not membership or not membership.has_role("secretary"):
+            return jsonify({"error": "Insufficient permissions. Requires secretary or higher."}), 403
+
     invites = (
         InviteCode.query
         .filter_by(chapter_id=chapter.id)
@@ -61,10 +69,12 @@ def list_invites():
 @invites_bp.route("", methods=["POST"])
 @login_required
 @chapter_required
-@role_required("treasurer")
 def create_invite():
     """
     Create a new invite code for the current chapter.
+
+    Accessible to org admins (any invite role) or chapter treasurer+
+    (capped at the inviter's own role).
 
     Body:
         role (str): Role to assign on redemption (default: "member")
@@ -77,10 +87,13 @@ def create_invite():
     if role not in VALID_ROLES:
         return jsonify({"error": f"Invalid role. Must be one of: {', '.join(sorted(VALID_ROLES))}"}), 400
 
-    # Cannot create invites for roles above your own
-    user_membership = current_user.get_membership(chapter.id)
-    if not user_membership.has_role(role):
-        return jsonify({"error": "Cannot create invites for a role higher than your own."}), 403
+    is_admin = _is_org_admin(current_user, chapter.organization_id)
+    if not is_admin:
+        user_membership = current_user.get_membership(chapter.id)
+        if not user_membership or not user_membership.has_role("treasurer"):
+            return jsonify({"error": "Insufficient permissions. Requires treasurer or higher."}), 403
+        if not user_membership.has_role(role):
+            return jsonify({"error": "Cannot create invites for a role higher than your own."}), 403
 
     expires_in_days = data.get("expires_in_days", 7)
     if not isinstance(expires_in_days, int) or expires_in_days < 1 or expires_in_days > 90:
@@ -126,10 +139,18 @@ def create_invite():
 @invites_bp.route("/<invite_id>", methods=["DELETE"])
 @login_required
 @chapter_required
-@role_required("treasurer")
 def revoke_invite(invite_id):
-    """Revoke an unused invite code."""
+    """Revoke an unused invite code.
+
+    Accessible to org admins or chapter treasurer+.
+    """
     chapter = g.current_chapter
+    is_admin = _is_org_admin(current_user, chapter.organization_id)
+    if not is_admin:
+        membership = current_user.get_membership(chapter.id)
+        if not membership or not membership.has_role("treasurer"):
+            return jsonify({"error": "Insufficient permissions. Requires treasurer or higher."}), 403
+
     invite = db.session.get(InviteCode, invite_id)
 
     if not invite or invite.chapter_id != chapter.id:

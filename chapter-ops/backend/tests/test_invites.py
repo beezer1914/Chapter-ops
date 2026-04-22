@@ -2,7 +2,14 @@
 
 import pytest
 from app.extensions import db as _db
-from tests.conftest import make_user, make_organization, make_chapter, make_membership, make_invite
+from tests.conftest import (
+    make_user,
+    make_organization,
+    make_chapter,
+    make_membership,
+    make_invite,
+    make_org_membership,
+)
 
 
 def _login(client, email="president@example.com", password="Str0ng!Password1"):
@@ -208,3 +215,60 @@ class TestRevokeInvite:
         _login(client)
         resp = client.delete("/api/invites/nonexistent-id")
         assert resp.status_code == 404
+
+
+class TestOrgAdminBypass:
+    """Org admins should have full invite access regardless of chapter role."""
+
+    def test_org_admin_with_treasurer_role_can_invite_president(self, client, app):
+        """Mirrors Brandon's case: chapter treasurer + org admin invites a president."""
+        with app.app_context():
+            org = make_organization()
+            chapter = make_chapter(org)
+            user = make_user(email="founder@example.com", first_name="Org", last_name="Admin")
+            user.active_chapter_id = chapter.id
+            make_membership(user, chapter, role="treasurer")
+            make_org_membership(user, org, role="admin")
+            _db.session.commit()
+
+        _login(client, email="founder@example.com")
+        resp = client.post("/api/invites", json={"role": "president", "expires_in_days": 7})
+        assert resp.status_code == 201
+        assert resp.get_json()["invite"]["role"] == "president"
+
+    def test_org_admin_with_member_role_can_list_and_create(self, client, app):
+        """Org admin with only member-level chapter role still has full access."""
+        with app.app_context():
+            org = make_organization()
+            chapter = make_chapter(org)
+            user = make_user(email="admin@example.com", first_name="Adm", last_name="In")
+            user.active_chapter_id = chapter.id
+            make_membership(user, chapter, role="member")
+            make_org_membership(user, org, role="admin")
+            _db.session.commit()
+
+        _login(client, email="admin@example.com")
+        list_resp = client.get("/api/invites")
+        assert list_resp.status_code == 200
+
+        create_resp = client.post("/api/invites", json={"role": "vice_president"})
+        assert create_resp.status_code == 201
+
+    def test_org_admin_can_revoke_any_invite_in_org(self, client, app):
+        """Org admin with low chapter role can still revoke invites."""
+        with app.app_context():
+            org = make_organization()
+            chapter = make_chapter(org)
+            president = _setup_president(chapter)
+            invite = make_invite(chapter, created_by=president.id, code="ADMINREV")
+            invite_id = invite.id
+
+            admin_user = make_user(email="admin2@example.com", first_name="Adm", last_name="Two")
+            admin_user.active_chapter_id = chapter.id
+            make_membership(admin_user, chapter, role="member")
+            make_org_membership(admin_user, org, role="admin")
+            _db.session.commit()
+
+        _login(client, email="admin2@example.com")
+        resp = client.delete(f"/api/invites/{invite_id}")
+        assert resp.status_code == 200

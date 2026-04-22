@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { useAuthStore } from "@/stores/authStore";
 import { useConfigStore } from "@/stores/configStore";
+import { useRegionStore } from "@/stores/regionStore";
 import {
   fetchInvites,
   createInvite,
@@ -31,6 +32,7 @@ const CREATABLE_ROLES: MemberRole[] = [
 export default function Invites() {
   const { memberships, user } = useAuthStore();
   const { getRoleLabel } = useConfigStore();
+  const { isOrgAdmin } = useRegionStore();
   const [invites, setInvites] = useState<InviteCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,13 +50,13 @@ export default function Invites() {
     (m) => m.chapter_id === user?.active_chapter_id
   );
   const currentRole = currentMembership?.role ?? "member";
-  const canCreate = ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["treasurer"];
-  const canView = ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["secretary"];
+  const canCreate = isOrgAdmin || ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["treasurer"];
+  const canView = isOrgAdmin || ROLE_HIERARCHY[currentRole] >= ROLE_HIERARCHY["secretary"];
 
-  // Roles this user can create invites for (up to their own level)
-  const allowedRoles = CREATABLE_ROLES.filter(
-    (r) => ROLE_HIERARCHY[r] <= ROLE_HIERARCHY[currentRole]
-  );
+  // Org admins can invite any role; otherwise capped at the user's chapter role
+  const allowedRoles = isOrgAdmin
+    ? CREATABLE_ROLES
+    : CREATABLE_ROLES.filter((r) => ROLE_HIERARCHY[r] <= ROLE_HIERARCHY[currentRole]);
 
   useEffect(() => {
     if (canView) loadInvites();
