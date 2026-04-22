@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
+import { executeRecaptcha, preloadRecaptcha } from "@/lib/recaptcha";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -9,12 +10,17 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    preloadRecaptcha();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
     setSubmitting(true);
     try {
-      await login({ email, password });
+      const recaptcha_token = await executeRecaptcha("login");
+      await login({ email, password, recaptcha_token });
       const user = useAuthStore.getState().user;
       if (user?.active_chapter_id) {
         navigate("/dashboard");

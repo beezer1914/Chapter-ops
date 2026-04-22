@@ -19,6 +19,7 @@ export interface LoginRequest {
   email: string;
   password: string;
   remember?: boolean;
+  recaptcha_token?: string | null;
 }
 
 export interface RegisterRequest {
@@ -29,6 +30,7 @@ export interface RegisterRequest {
   phone?: string;
   invite_code?: string;
   initiation_date?: string;
+  recaptcha_token?: string | null;
 }
 
 export interface AuthResponse {

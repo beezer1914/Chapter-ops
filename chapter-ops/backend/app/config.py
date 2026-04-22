@@ -82,6 +82,11 @@ class BaseConfig:
     # Frontend
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
+    # Google reCAPTCHA v3 — gates /auth/login and /auth/register. If
+    # RECAPTCHA_SECRET_KEY is blank, verification is skipped (dev/CI).
+    RECAPTCHA_SECRET_KEY = os.environ.get("RECAPTCHA_SECRET_KEY", "")
+    RECAPTCHA_MIN_SCORE = float(os.environ.get("RECAPTCHA_MIN_SCORE", "0.5"))
+
     # Ops Agent
     FOUNDER_EMAIL = os.environ.get("FOUNDER_EMAIL", "")
     AGENT_ENABLED = os.environ.get("AGENT_ENABLED", "true").lower() not in ("false", "0", "no")

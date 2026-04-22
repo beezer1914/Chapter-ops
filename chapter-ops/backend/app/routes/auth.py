@@ -19,6 +19,7 @@ from app.models.workflow import WorkflowTemplate
 from app.models.auth_event import AuthEvent
 from app.services import notification_service, workflow_engine
 from app.utils.password import validate_password
+from app.utils.recaptcha import verify_recaptcha
 from app.utils.email import (
     send_password_reset_email,
     send_email_change_confirm,
@@ -64,6 +65,10 @@ def login():
     if not data or not data.get("email") or not data.get("password"):
         return jsonify({"error": "Email and password are required."}), 400
 
+    ok, captcha_error = verify_recaptcha(data.get("recaptcha_token"), "login")
+    if not ok:
+        return jsonify({"error": captcha_error}), 400
+
     user = User.query.filter_by(email=data["email"].lower().strip()).first()
 
     if not user or not user.check_password(data["password"]):
@@ -103,6 +108,10 @@ def register():
     missing = [f for f in required_fields if not data.get(f)]
     if missing:
         return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
+
+    ok, captcha_error = verify_recaptcha(data.get("recaptcha_token"), "register")
+    if not ok:
+        return jsonify({"error": captcha_error}), 400
 
     # Validate password strength
     is_valid, error_msg = validate_password(data["password"])

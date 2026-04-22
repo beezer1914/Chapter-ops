@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuthStore } from "@/stores/authStore";
+import { executeRecaptcha, preloadRecaptcha } from "@/lib/recaptcha";
 
 const registerSchema = z
   .object({
@@ -67,10 +68,15 @@ export default function Register() {
 
   const password = watch("password", "");
 
+  useEffect(() => {
+    preloadRecaptcha();
+  }, []);
+
   const onSubmit = async (data: RegisterFormData) => {
     clearError();
     setSubmitting(true);
     try {
+      const recaptcha_token = await executeRecaptcha("register");
       await registerUser({
         first_name: data.first_name,
         last_name: data.last_name,
@@ -79,6 +85,7 @@ export default function Register() {
         phone: data.phone || undefined,
         invite_code: data.invite_code || undefined,
         initiation_date: data.initiation_date || undefined,
+        recaptcha_token,
       });
       const user = useAuthStore.getState().user;
       if (user?.active_chapter_id) {
