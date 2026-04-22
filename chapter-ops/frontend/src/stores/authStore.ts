@@ -7,6 +7,7 @@ import type {
   RegisterRequest,
 } from "@/types";
 import { useConfigStore } from "@/stores/configStore";
+import { useTourStore } from "@/stores/tourStore";
 
 interface AuthState {
   user: User | null;
@@ -96,6 +97,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
         error: null,
       });
+      useTourStore.getState().clear();
     }
   },
 

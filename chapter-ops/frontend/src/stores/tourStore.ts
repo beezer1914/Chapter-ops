@@ -12,9 +12,10 @@ interface TourState {
   loadSeen: () => Promise<void>;
   markSeen: (tourId: string, role: Role) => Promise<void>;
   reset: () => Promise<void>;
+  clear: () => void;
 }
 
-export const useTourStore = create<TourState>((set, get) => ({
+export const useTourStore = create<TourState>((set) => ({
   seen: {},
   loaded: false,
 
@@ -28,29 +29,33 @@ export const useTourStore = create<TourState>((set, get) => ({
   },
 
   markSeen: async (tourId, role) => {
-    const prev = get().seen;
-    set({
+    // Preserve the optimistic update even on failure — reverting would cause the
+    // tour to re-fire within the same session. If the server write fails we log
+    // it; the dismissal is still honored for the current session and can retry
+    // on the next mark.
+    set((state) => ({
       seen: {
-        ...prev,
+        ...state.seen,
         [tourId]: { seen_at: new Date().toISOString(), role },
       },
-    });
+    }));
     try {
       const seen = await apiMarkSeen(tourId, role);
       set({ seen });
-    } catch {
-      set({ seen: prev });
+    } catch (err) {
+      console.warn(`[tourStore] Failed to persist tour "${tourId}":`, err);
     }
   },
 
   reset: async () => {
-    const prev = get().seen;
     set({ seen: {} });
     try {
       const seen = await apiReset();
       set({ seen });
-    } catch {
-      set({ seen: prev });
+    } catch (err) {
+      console.warn("[tourStore] Failed to reset tour state:", err);
     }
   },
+
+  clear: () => set({ seen: {}, loaded: false }),
 }));
