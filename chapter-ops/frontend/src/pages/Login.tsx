@@ -151,6 +151,13 @@ export default function Login() {
               </Link>
             </div>
 
+            <p className="mt-4 text-[11px] text-content-muted text-center leading-relaxed">
+              This site is protected by reCAPTCHA and the Google{" "}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-primary-main">Privacy Policy</a>
+              {" "}and{" "}
+              <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-brand-primary-main">Terms of Service</a>{" "}apply.
+            </p>
+
             <div className="mt-4 text-center anim-card-reveal" style={{ animationDelay: "540ms" }}>
               <p className="text-sm text-content-muted">
                 Don't have an account?{" "}

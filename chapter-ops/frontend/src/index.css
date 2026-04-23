@@ -527,3 +527,7 @@ option {
   position: relative;
   z-index: 95;
 }
+
+/* Hide reCAPTCHA v3 badge globally — Google requires disclosure text
+   on pages where reCAPTCHA is active instead (see Login/Register). */
+.grecaptcha-badge { visibility: hidden; }
