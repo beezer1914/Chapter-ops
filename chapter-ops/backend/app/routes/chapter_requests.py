@@ -20,6 +20,7 @@ import logging
 from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
+from sqlalchemy import text as sa_text
 from flask_login import current_user, login_required
 
 from app.extensions import db
@@ -139,3 +140,37 @@ def submit_chapter_request():
         logger.exception("Failed to send approver notifications for request %s", req.id)
 
     return jsonify({"success": True, "request": req.to_dict()}), 201
+
+
+@chapter_requests_bp.route("/api/onboarding/chapter-requests/mine", methods=["GET"])
+@login_required
+def my_chapter_request():
+    """Return the current user's most recent chapter request, or null if none."""
+    req = (
+        db.session.query(ChapterRequest)
+        .filter_by(requester_user_id=current_user.id)
+        .order_by(ChapterRequest.created_at.desc(), sa_text("rowid DESC"))
+        .first()
+    )
+    return jsonify({"request": req.to_dict() if req else None}), 200
+
+
+@chapter_requests_bp.route("/api/onboarding/chapter-requests/<request_id>", methods=["DELETE"])
+@login_required
+def cancel_chapter_request(request_id: str):
+    """Requester cancels their own pending request."""
+    req = db.session.get(ChapterRequest, request_id)
+    if not req:
+        return jsonify({"error": "Request not found."}), 404
+
+    if req.requester_user_id != current_user.id:
+        return jsonify({"error": "You cannot cancel another user's request."}), 403
+
+    if req.status != "pending":
+        return jsonify({"error": f"Cannot cancel a {req.status} request."}), 409
+
+    req.status = "cancelled"
+    req.acted_at = datetime.now(timezone.utc)
+    db.session.commit()
+
+    return jsonify({"success": True, "request": req.to_dict()}), 200
