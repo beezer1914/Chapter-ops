@@ -173,3 +173,55 @@ def cancel_chapter_request(request_id: str):
     db.session.commit()
 
     return jsonify({"success": True, "request": req.to_dict()}), 200
+
+
+# ── Approver endpoints ────────────────────────────────────────────────────────
+
+def _orgs_user_admins(user_id: str) -> list[str]:
+    """Return list of organization_ids where the user is an active admin."""
+    rows = db.session.query(OrganizationMembership.organization_id).filter_by(
+        user_id=user_id, role="admin", active=True
+    ).all()
+    return [r[0] for r in rows]
+
+
+@chapter_requests_bp.route("/api/chapter-requests/pending", methods=["GET"])
+@login_required
+def list_pending_chapter_requests():
+    """
+    List chapter requests the caller is authorized to act on.
+
+    - If the caller is an org admin of any org, they see pending `org_admin`-scoped
+      requests for THOSE orgs.
+    - If the caller is the platform founder, they additionally see pending
+      `platform_admin`-scoped requests.
+    - Everyone else sees an empty list (no 403 — approvers don't need to know
+      this endpoint exists).
+    """
+    admin_org_ids = _orgs_user_admins(current_user.id)
+    results: list[ChapterRequest] = []
+
+    if admin_org_ids:
+        results.extend(
+            db.session.query(ChapterRequest)
+            .filter(
+                ChapterRequest.status == "pending",
+                ChapterRequest.approver_scope == "org_admin",
+                ChapterRequest.organization_id.in_(admin_org_ids),
+            )
+            .order_by(ChapterRequest.created_at.asc())
+            .all()
+        )
+
+    if is_founder():
+        results.extend(
+            db.session.query(ChapterRequest)
+            .filter(
+                ChapterRequest.status == "pending",
+                ChapterRequest.approver_scope == "platform_admin",
+            )
+            .order_by(ChapterRequest.created_at.asc())
+            .all()
+        )
+
+    return jsonify({"requests": [r.to_dict() for r in results]}), 200
