@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blue Column Systems — Technology for Organizations</title>
+  <meta name="description" content="Blue Column Systems builds software platforms that help organizations operate with clarity and efficiency. Our flagship product, ChapterOps, serves Greek letter organizations." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #07090f;
+      --ink-mid: #0d1120;
+      --ink-card: #111827;
+      --blue: #2563EB;
+      --blue-light: #3b82f6;
+      --blue-dim: #1d4ed8;
+      --blue-glow: rgba(37, 99, 235, 0.12);
+      --gold: #C8A96E;
+      --white: #ffffff;
+      --white-80: rgba(255,255,255,0.8);
+      --white-50: rgba(255,255,255,0.5);
+      --white-20: rgba(255,255,255,0.2);
+      --white-08: rgba(255,255,255,0.08);
+      --white-04: rgba(255,255,255,0.04);
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans: 'DM Sans', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--ink);
+      color: var(--white);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 3rem;
+      background: rgba(7, 9, 15, 0.9);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--white-08);
+    }
+
+    .nav-logo {
+      font-family: var(--serif);
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    .nav-logo span { color: var(--blue-light); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      color: var(--white-50);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--white); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 8rem 3rem 5rem;
+      position: relative;
+      overflow: hidden;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse 70% 50% at 60% 20%, rgba(37,99,235,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--blue-light);
+      margin-bottom: 1.75rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.1s;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--blue-light);
+    }
+
+    h1 {
+      font-family: var(--serif);
+      font-size: clamp(3rem, 6vw, 5rem);
+      font-weight: 500;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      margin-bottom: 1.75rem;
+      max-width: 820px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.2s;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--blue-light);
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--white-50);
+      max-width: 560px;
+      line-height: 1.75;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.3s;
+    }
+
+    .hero-cta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.4s;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--blue);
+      color: var(--white);
+      font-family: var(--sans);
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 0.875rem 2rem;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .btn-primary:hover { background: var(--blue-dim); }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.875rem;
+      font-weight: 400;
+      color: var(--white-50);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .btn-ghost:hover { color: var(--white); }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--white-08), transparent);
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 6rem 3rem;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--blue-light);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-label::before {
+      content: '';
+      width: 20px;
+      height: 1px;
+      background: var(--blue-light);
+    }
+
+    h2 {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 500;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      margin-bottom: 1.25rem;
+    }
+
+    h2 em { font-style: italic; color: var(--blue-light); }
+
+    .section-body {
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--white-50);
+      line-height: 1.8;
+      max-width: 640px;
+    }
+
+    /* ── PRODUCT CARD ── */
+    .product-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    @media (max-width: 768px) {
+      .product-grid { grid-template-columns: 1fr; }
+      nav { padding: 1rem 1.5rem; }
+      .hero, section { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .nav-links { display: none; }
+    }
+
+    .product-card {
+      background: var(--ink-card);
+      border: 1px solid var(--white-08);
+      border-radius: 12px;
+      padding: 2rem;
+      transition: border-color 0.2s;
+    }
+
+    .product-card:hover { border-color: rgba(37,99,235,0.3); }
+
+    .product-card.featured {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      background: linear-gradient(135deg, var(--ink-card) 0%, rgba(37,99,235,0.06) 100%);
+      border-color: rgba(37,99,235,0.2);
+    }
+
+    @media (max-width: 768px) {
+      .product-card.featured { grid-template-columns: 1fr; gap: 1.5rem; }
+    }
+
+    .product-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--blue-light);
+      background: var(--blue-glow);
+      border: 1px solid rgba(37,99,235,0.2);
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+
+    .product-tag.beta { color: var(--gold); background: rgba(200,169,110,0.08); border-color: rgba(200,169,110,0.2); }
+
+    .product-card h3 {
+      font-family: var(--serif);
+      font-size: 1.75rem;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+    }
+
+    .product-card p {
+      font-size: 0.9rem;
+      font-weight: 300;
+      color: var(--white-50);
+      line-height: 1.75;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--white-80);
+    }
+
+    .feature-list li::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--blue-light);
+      shrink: 0;
+      flex-shrink: 0;
+    }
+
+    /* ── VALUES ── */
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    @media (max-width: 768px) {
+      .values-grid { grid-template-columns: 1fr; }
+    }
+
+    .value-item {
+      padding: 1.75rem;
+      border: 1px solid var(--white-08);
+      border-radius: 10px;
+      background: var(--white-04);
+    }
+
+    .value-num {
+      font-family: var(--serif);
+      font-size: 2.5rem;
+      font-weight: 400;
+      color: rgba(37,99,235,0.25);
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+
+    .value-item h4 {
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .value-item p {
+      font-size: 0.875rem;
+      font-weight: 300;
+      color: var(--white-50);
+      line-height: 1.7;
+    }
+
+    /* ── CONTACT ── */
+    .contact-card {
+      background: var(--ink-card);
+      border: 1px solid var(--white-08);
+      border-radius: 12px;
+      padding: 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      margin-top: 3rem;
+    }
+
+    @media (max-width: 768px) {
+      .contact-card { grid-template-columns: 1fr; gap: 1.5rem; padding: 2rem; }
+    }
+
+    .contact-info { display: flex; flex-direction: column; gap: 1rem; }
+
+    .contact-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .contact-label {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--white-20);
+    }
+
+    .contact-value {
+      font-size: 0.95rem;
+      color: var(--white-80);
+    }
+
+    .contact-value a {
+      color: var(--blue-light);
+      text-decoration: none;
+    }
+
+    .contact-value a:hover { text-decoration: underline; }
+
+    /* ── LEGAL PAGES ── */
+    .legal-section {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 8rem 3rem 5rem;
+    }
+
+    .legal-section h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      animation: none;
+      opacity: 1;
+    }
+
+    .legal-date {
+      font-size: 0.85rem;
+      color: var(--white-50);
+      margin-bottom: 3rem;
+    }
+
+    .legal-body h2 {
+      font-size: 1.25rem;
+      margin-top: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .legal-body p, .legal-body li {
+      font-size: 0.925rem;
+      font-weight: 300;
+      color: var(--white-50);
+      line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+
+    .legal-body ul { padding-left: 1.5rem; }
+    .legal-body li { margin-bottom: 0.5rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--white-08);
+      padding: 2.5rem 3rem;
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-logo {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--white-50);
+      text-decoration: none;
+    }
+
+    .footer-logo span { color: var(--blue-light); }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-size: 0.8rem;
+      color: var(--white-20);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--white-50); }
+
+    .footer-copy {
+      font-size: 0.8rem;
+      color: var(--white-20);
+    }
+
+    /* ── PAGE ROUTING ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ── -->
+  <nav>
+    <a href="#" class="nav-logo" onclick="showPage('home')">Blue Column <span>Systems</span></a>
+    <ul class="nav-links">
+      <li><a href="#" onclick="showPage('home'); scrollToSection('products')">Products</a></li>
+      <li><a href="#" onclick="showPage('home'); scrollToSection('about')">About</a></li>
+      <li><a href="#" onclick="showPage('home'); scrollToSection('contact')">Contact</a></li>
+      <li><a href="#" onclick="showPage('tos')">Terms</a></li>
+      <li><a href="#" onclick="showPage('privacy')">Privacy</a></li>
+    </ul>
+  </nav>
+
+  <!-- ══════════════════════════════════════════
+       HOME PAGE
+  ══════════════════════════════════════════ -->
+  <div id="page-home" class="page active">
+
+    <!-- HERO -->
+    <div style="position:relative;">
+      <div class="hero">
+        <div class="hero-eyebrow">Blue Column Systems LLC</div>
+        <h1>Software built for<br /><em>organizations that matter.</em></h1>
+        <p class="hero-sub">We build technology platforms that help membership organizations operate with clarity, efficiency, and the professionalism their mission demands.</p>
+        <div class="hero-cta">
+          <a href="#" class="btn-primary" onclick="scrollToSection('products')">Our Products →</a>
+          <a href="#" class="btn-ghost" onclick="scrollToSection('contact')">Get in touch</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- PRODUCTS -->
+    <section id="products">
+      <div class="section-label">Products</div>
+      <h2>Platforms we <em>build & operate.</em></h2>
+      <p class="section-body">Each product we build is purpose-built for a specific community — no generic tools, no compromises.</p>
+
+      <div class="product-grid">
+        <!-- ChapterOps featured card -->
+        <div class="product-card featured">
+          <div>
+            <div class="product-tag beta">Early Access · Beta</div>
+            <h3>ChapterOps</h3>
+            <p>A converged chapter operations platform built specifically for Greek letter organizations. ChapterOps replaces the fragmented patchwork of disconnected tools most chapters rely on — bringing member management, dues collection, intake pipelines, events, communications, documents, and lineage tracking into a single platform.</p>
+            <ul class="feature-list">
+              <li>Member management & chapter transfers</li>
+              <li>Stripe-powered dues collection & payment plans</li>
+              <li>Intake & MIP pipeline management</li>
+              <li>Events, communications & document vault</li>
+              <li>Lineage tracking & chapter history</li>
+              <li>Regional dashboards & multi-chapter oversight</li>
+            </ul>
+          </div>
+          <div>
+            <div style="background: rgba(37,99,235,0.06); border: 1px solid rgba(37,99,235,0.15); border-radius: 10px; padding: 2rem;">
+              <p style="font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color: var(--blue-light); margin-bottom:1rem; font-weight:500;">Platform Modules</p>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Members</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Payments</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Intake</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Events</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Communications</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Documents</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Lineage</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Workflows</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Expenses</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Invoicing</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Knowledge Base</div>
+                <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:0.5rem 0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.7);">Regional</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Future product placeholder -->
+        <div class="product-card" style="opacity:0.5;">
+          <div class="product-tag">Coming Soon</div>
+          <h3 style="font-family:var(--serif); font-size:1.5rem; font-weight:500; margin-bottom:0.75rem;">Future Product</h3>
+          <p>Blue Column Systems is actively developing additional platforms for membership-based organizations. More details coming soon.</p>
+        </div>
+
+        <div class="product-card" style="opacity:0.5;">
+          <div class="product-tag">Coming Soon</div>
+          <h3 style="font-family:var(--serif); font-size:1.5rem; font-weight:500; margin-bottom:0.75rem;">Future Product</h3>
+          <p>We build software where community and operations intersect. Stay tuned for announcements on our next platform.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- ABOUT -->
+    <section id="about">
+      <div class="section-label">About</div>
+      <h2>Built by people who <em>know the problem.</em></h2>
+      <p class="section-body" style="margin-bottom:2rem;">Blue Column Systems was founded in Georgia with a simple belief: the best software is built by people who have lived the problem firsthand. We don't adapt generic tools for niche communities — we build from the ground up with deep domain knowledge baked in from day one.</p>
+      <p class="section-body">Our team brings together software engineering and insider knowledge of the organizations we serve, allowing us to build platforms that feel native to their users rather than foreign impositions.</p>
+
+      <div class="values-grid">
+        <div class="value-item">
+          <div class="value-num">01</div>
+          <h4>Domain First</h4>
+          <p>We don't start with technology. We start with a deep understanding of the community, its culture, and the real problems its members face day to day.</p>
+        </div>
+        <div class="value-item">
+          <div class="value-num">02</div>
+          <h4>Convergence Over Complexity</h4>
+          <p>Every product we build aims to reduce the number of tools an organization needs — not add to the pile. One platform that works is worth ten that almost work.</p>
+        </div>
+        <div class="value-item">
+          <div class="value-num">03</div>
+          <h4>Built to Last</h4>
+          <p>We build with enterprise-grade architecture from day one — multi-tenant isolation, role-based access, and security practices that scale with our customers.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- CONTACT -->
+    <section id="contact">
+      <div class="section-label">Contact</div>
+      <h2>Get in <em>touch.</em></h2>
+      <p class="section-body">Whether you're interested in ChapterOps, want to learn more about what we're building, or have a partnership inquiry — we'd love to hear from you.</p>
+
+      <div class="contact-card">
+        <div class="contact-info">
+          <div class="contact-row">
+            <span class="contact-label">Company</span>
+            <span class="contact-value">Blue Column Systems LLC</span>
+          </div>
+          <div class="contact-row">
+            <span class="contact-label">Email</span>
+            <span class="contact-value"><a href="mailto:support@bluecolumnsystems.com">support@bluecolumnsystems.com</a></span>
+          </div>
+          <div class="contact-row">
+            <span class="contact-label">Incorporated</span>
+            <span class="contact-value">Georgia, United States</span>
+          </div>
+          <div class="contact-row">
+            <span class="contact-label">Flagship Product</span>
+            <span class="contact-value">ChapterOps — Greek Organization Management</span>
+          </div>
+        </div>
+        <div>
+          <p style="font-size:0.9rem; color:var(--white-50); line-height:1.8; margin-bottom:1.5rem;">For product inquiries, beta access requests, partnership discussions, or general questions, reach out directly via email. We respond to all inquiries within one business day.</p>
+          <a href="mailto:support@bluecolumnsystems.com" class="btn-primary">Send us a message →</a>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /page-home -->
+
+
+  <!-- ══════════════════════════════════════════
+       TERMS OF SERVICE PAGE
+  ══════════════════════════════════════════ -->
+  <div id="page-tos" class="page">
+    <div class="legal-section">
+      <div name="termly-embed" data-id="1cc51ee3-3265-436b-9ff2-5f26e8ec6693"></div>
+      <script type="text/javascript">(function(d, s, id) {
+        var js, tjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://app.termly.io/embed-policy.min.js";
+        tjs.parentNode.insertBefore(js, tjs);
+      }(document, 'script', 'termly-jssdk'));</script>
+    </div>
+  </div><!-- /page-tos -->
+
+
+
+
+  <!-- ══════════════════════════════════════════
+       PRIVACY POLICY PAGE
+  ══════════════════════════════════════════ -->
+  <div id="page-privacy" class="page">
+    <div class="legal-section">
+      <div name="termly-embed" data-id="94ee9f08-0272-4579-803a-247e93c259c3"></div>
+      <script type="text/javascript">(function(d, s, id) {
+        var js, tjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://app.termly.io/embed-policy.min.js";
+        tjs.parentNode.insertBefore(js, tjs);
+      }(document, 'script', 'termly-jssdk'));</script>
+    </div>
+  </div><!-- /page-privacy -->
+
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="footer-inner">
+      <a href="#" class="footer-logo" onclick="showPage('home')">Blue Column <span>Systems</span></a>
+      <ul class="footer-links">
+        <li><a href="#" onclick="showPage('home'); scrollToSection('products')">Products</a></li>
+        <li><a href="#" onclick="showPage('home'); scrollToSection('about')">About</a></li>
+        <li><a href="#" onclick="showPage('home'); scrollToSection('contact')">Contact</a></li>
+        <li><a href="#" onclick="showPage('tos')">Terms of Service</a></li>
+        <li><a href="#" onclick="showPage('privacy')">Privacy Policy</a></li>
+      </ul>
+      <span class="footer-copy">© <span id="year"></span> Blue Column Systems LLC</span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    function showPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return false;
+    }
+
+    function scrollToSection(id) {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      return false;
+    }
+  </script>
+</body>
+</html>
