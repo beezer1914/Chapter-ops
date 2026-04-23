@@ -494,6 +494,41 @@ h2 em { font-style: italic; color: var(--blue-light); }
 .legal-body ul { padding-left: 1.5rem; }
 .legal-body li { margin-bottom: 0.5rem; }
 
+/* Termly embed — force readable colors on dark background.
+   Termly ships with light-mode defaults (near-black text), so override
+   aggressively within the legal section only. */
+.legal-section [name="termly-embed"],
+.legal-section [name="termly-embed"] * {
+  color: var(--white-80) !important;
+  background: transparent !important;
+}
+
+.legal-section [name="termly-embed"] h1,
+.legal-section [name="termly-embed"] h2,
+.legal-section [name="termly-embed"] h3,
+.legal-section [name="termly-embed"] h4,
+.legal-section [name="termly-embed"] h5,
+.legal-section [name="termly-embed"] h6 {
+  color: var(--white) !important;
+  font-family: var(--serif);
+  font-weight: 500;
+}
+
+.legal-section [name="termly-embed"] strong,
+.legal-section [name="termly-embed"] b {
+  color: var(--white) !important;
+  font-weight: 500;
+}
+
+.legal-section [name="termly-embed"] a {
+  color: var(--blue-light) !important;
+  text-decoration: underline;
+}
+
+.legal-section [name="termly-embed"] a:hover {
+  color: var(--white) !important;
+}
+
 /* ── FOOTER ── */
 footer {
   border-top: 1px solid var(--white-08);
