@@ -20,7 +20,6 @@ import logging
 from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
-from sqlalchemy import text as sa_text
 from flask_login import current_user, login_required
 
 from app.extensions import db
@@ -149,7 +148,7 @@ def my_chapter_request():
     req = (
         db.session.query(ChapterRequest)
         .filter_by(requester_user_id=current_user.id)
-        .order_by(ChapterRequest.created_at.desc(), sa_text("rowid DESC"))
+        .order_by(ChapterRequest.created_at.desc())
         .first()
     )
     return jsonify({"request": req.to_dict() if req else None}), 200

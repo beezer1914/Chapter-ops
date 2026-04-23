@@ -1,5 +1,7 @@
 """Tests for GET /mine and DELETE /<id>."""
 
+from datetime import datetime, timezone, timedelta
+
 from app.extensions import db
 from app.models import ChapterRequest
 from tests.conftest import make_user, make_organization, make_region
@@ -59,10 +61,12 @@ class TestMineEndpoint:
 
         login(client, "alice@example.com")
         first = _submit(client, org, region, "First Name")
-        # Reject the first one manually
+        # Reject the first one manually and backdate it so the second submit is
+        # definitively more recent regardless of same-second SQLite precision.
         req = db_session.get(ChapterRequest, first.get_json()["request"]["id"])
         req.status = "rejected"
         req.rejected_reason = "testing"
+        req.created_at = datetime.now(timezone.utc) - timedelta(seconds=2)
         db_session.commit()
 
         second = _submit(client, org, region, "Second Name")
