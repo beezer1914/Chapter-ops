@@ -519,6 +519,7 @@ class TestReassignChapter:
 
 class TestOrgMembershipAutoCreation:
     def test_creating_org_creates_org_membership(self, client, app):
+        app.config["FOUNDER_EMAIL"] = "founder@example.com"
         with app.app_context():
             user = make_user(email="founder@example.com", password=VALID_PASSWORD)
             db.session.commit()

@@ -272,6 +272,7 @@ class TestUpdateChapterConfig:
 
 class TestOnboardingSeeds:
     def test_org_creation_seeds_config(self, client, app):
+        app.config["FOUNDER_EMAIL"] = "founder@example.com"
         with app.app_context():
             user = make_user(email="founder@example.com")
             _db.session.commit()
