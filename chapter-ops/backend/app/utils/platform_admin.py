@@ -14,10 +14,18 @@ from flask_login import current_user
 
 
 def is_founder() -> bool:
-    """Return True if the current user's email matches FOUNDER_EMAIL (case-insensitive)."""
+    """Return True if the current user's email matches FOUNDER_EMAIL (case-insensitive).
+
+    Safe to call outside a Flask request context — returns False in that case
+    rather than raising.
+    """
     try:
         authenticated = current_user.is_authenticated
-    except Exception:
+    except (RuntimeError, AttributeError):
+        # No active request context (e.g. called from a CLI command or a
+        # unit test without an active request) — treat as unauthenticated.
+        # Flask-Login 0.6.x raises AttributeError on the proxy when there is
+        # no current request; older versions raise RuntimeError.
         return False
     if not authenticated:
         return False
