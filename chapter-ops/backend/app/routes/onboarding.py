@@ -16,6 +16,7 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.models import Organization, OrganizationMembership, Region, Chapter, ChapterMembership
 from app.models.chapter_period import ChapterPeriod
+from app.utils.platform_admin import require_founder
 
 onboarding_bp = Blueprint("onboarding", __name__, url_prefix="/api/onboarding")
 
@@ -32,12 +33,14 @@ def list_organizations():
 
 @onboarding_bp.route("/organizations", methods=["POST"])
 @login_required
+@require_founder
 def create_organization():
     """
     Create a new organization.
 
-    For Phase 1, this is used when the desired org doesn't exist yet.
-    Eventually, orgs may be pre-seeded and this becomes admin-only.
+    Platform-admin only. General users pick from the pre-seeded NPHC
+    organization list instead of creating their own. Kept as an endpoint
+    so the founder can add non-NPHC orgs once the platform broadens.
     """
     data = request.get_json()
 

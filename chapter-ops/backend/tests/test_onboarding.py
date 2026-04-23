@@ -44,7 +44,8 @@ class TestListOrganizations:
 
 
 class TestCreateOrganization:
-    def test_create_org_success(self, client, db_session):
+    def test_create_org_success(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "alice@example.com"
         make_user(email="alice@example.com", password=VALID_PASSWORD)
         db_session.commit()
         login(client, "alice@example.com")
@@ -59,7 +60,8 @@ class TestCreateOrganization:
         assert data["success"] is True
         assert data["organization"]["abbreviation"] == "PBS"  # uppercased
 
-    def test_create_org_duplicate_abbreviation(self, client, db_session):
+    def test_create_org_duplicate_abbreviation(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "alice@example.com"
         make_user(email="alice@example.com", password=VALID_PASSWORD)
         make_organization(abbreviation="PBS")
         db_session.commit()
@@ -73,7 +75,8 @@ class TestCreateOrganization:
         assert resp.status_code == 409
         assert "already exists" in resp.get_json()["error"]
 
-    def test_create_org_invalid_type(self, client, db_session):
+    def test_create_org_invalid_type(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "alice@example.com"
         make_user(email="alice@example.com", password=VALID_PASSWORD)
         db_session.commit()
         login(client, "alice@example.com")
@@ -85,7 +88,8 @@ class TestCreateOrganization:
         })
         assert resp.status_code == 400
 
-    def test_create_org_missing_fields(self, client, db_session):
+    def test_create_org_missing_fields(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "alice@example.com"
         make_user(email="alice@example.com", password=VALID_PASSWORD)
         db_session.commit()
         login(client, "alice@example.com")
@@ -103,6 +107,35 @@ class TestCreateOrganization:
             "org_type": "fraternity",
         })
         assert resp.status_code == 401
+
+    def test_create_org_requires_founder(self, app, client, db_session):
+        """Non-founders cannot create organizations."""
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        make_user(email="nobody@example.com", password=VALID_PASSWORD)
+        db_session.commit()
+        login(client, "nobody@example.com")
+
+        resp = client.post("/api/onboarding/organizations", json={
+            "name": "Some Org",
+            "abbreviation": "SOM",
+            "org_type": "fraternity",
+        })
+        assert resp.status_code == 403
+        assert "Platform admin" in resp.get_json()["error"]
+
+    def test_create_org_allowed_for_founder(self, app, client, db_session):
+        """Platform founder can still create orgs."""
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        make_user(email="brandon@example.com", password=VALID_PASSWORD)
+        db_session.commit()
+        login(client, "brandon@example.com")
+
+        resp = client.post("/api/onboarding/organizations", json={
+            "name": "Delta Sigma Theta Sorority, Inc.",
+            "abbreviation": "DST",
+            "org_type": "sorority",
+        })
+        assert resp.status_code == 201
 
 
 class TestListRegions:
@@ -323,7 +356,7 @@ class TestCreateChapter:
 class TestFullOnboardingFlow:
     """End-to-end: register → create org → create region → create chapter."""
 
-    def test_founder_flow(self, client, db_session):
+    def test_founder_flow(self, app, client, db_session):
         # 1. Register without invite
         resp = client.post("/api/auth/register", json={
             "email": "founder@example.com",
@@ -334,6 +367,9 @@ class TestFullOnboardingFlow:
         assert resp.status_code == 201
         user_data = resp.get_json()["user"]
         assert user_data["active_chapter_id"] is None
+
+        # Set FOUNDER_EMAIL so the registered user can create the org
+        app.config["FOUNDER_EMAIL"] = "founder@example.com"
 
         # 2. List orgs (should be empty)
         resp = client.get("/api/onboarding/organizations")
