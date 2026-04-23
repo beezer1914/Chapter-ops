@@ -18,6 +18,7 @@ from app.models.invite import InviteCode
 from app.models.donation import Donation
 from app.models.notification import Notification
 from app.models.transfer_request import ChapterTransferRequest
+from app.models.chapter_request import ChapterRequest
 from app.models.workflow import (
     WorkflowTemplate,
     WorkflowStep,
@@ -56,6 +57,7 @@ __all__ = [
     "Donation",
     "Notification",
     "ChapterTransferRequest",
+    "ChapterRequest",
     "WorkflowTemplate",
     "WorkflowStep",
     "WorkflowInstance",
