@@ -8,14 +8,12 @@ Handles the chapter creation flow:
 4. User becomes the chapter's first admin/president
 """
 
-from datetime import date
-
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import Organization, OrganizationMembership, Region, Chapter, ChapterMembership
-from app.models.chapter_period import ChapterPeriod
+from app.services.chapter_service import create_chapter_with_founder
 from app.utils.platform_admin import require_founder
 
 onboarding_bp = Blueprint("onboarding", __name__, url_prefix="/api/onboarding")
@@ -196,10 +194,10 @@ def create_chapter():
         return jsonify({"error": "Region does not belong to this organization."}), 400
 
     try:
-        # Create the chapter
-        chapter = Chapter(
-            organization_id=org.id,
-            region_id=region.id,
+        chapter, first_period, membership = create_chapter_with_founder(
+            requester=current_user,
+            organization=org,
+            region=region,
             name=data["name"].strip(),
             designation=data.get("designation", "").strip() or None,
             chapter_type=data["chapter_type"],
@@ -207,63 +205,8 @@ def create_chapter():
             state=data.get("state", "").strip() or None,
             country=data.get("country", "United States").strip(),
             timezone=data.get("timezone", "America/New_York").strip(),
-            config={
-                "fee_types": [
-                    {"id": "dues", "label": "Dues", "default_amount": 0.00},
-                ],
-                "settings": {
-                    "allow_payment_plans": True,
-                },
-            },
+            founder_role=founder_role,
         )
-        db.session.add(chapter)
-        db.session.flush()  # Get chapter.id
-
-        # Auto-create the first billing period based on chapter type
-        today = date.today()
-        year = today.year
-        month = today.month
-        if data["chapter_type"] == "undergraduate":
-            # Semester-based: Spring = Jan–May, Fall = Aug–Dec, Summer = Jun–Jul
-            if month <= 5:
-                period_name = f"Spring {year}"
-                p_start, p_end = date(year, 1, 1), date(year, 5, 31)
-            elif month <= 7:
-                period_name = f"Summer {year}"
-                p_start, p_end = date(year, 6, 1), date(year, 7, 31)
-            else:
-                period_name = f"Fall {year}"
-                p_start, p_end = date(year, 8, 1), date(year, 12, 31)
-            period_type = "semester"
-        else:
-            # Annual (graduate/alumni)
-            period_name = f"FY {year}"
-            p_start, p_end = date(year, 1, 1), date(year, 12, 31)
-            period_type = "annual"
-
-        first_period = ChapterPeriod(
-            chapter_id=chapter.id,
-            name=period_name,
-            period_type=period_type,
-            start_date=p_start,
-            end_date=p_end,
-            is_active=True,
-        )
-        db.session.add(first_period)
-
-        # Create the creator's chapter membership with their declared role.
-        # financial_status falls back to the DB default ("not_financial") and is
-        # derived from dues rows by recompute_financial_status after seeding.
-        membership = ChapterMembership(
-            user_id=current_user.id,
-            chapter_id=chapter.id,
-            role=founder_role,
-            member_type=ChapterMembership.default_member_type_for(chapter),
-        )
-        db.session.add(membership)
-
-        # Set this as the user's active chapter
-        current_user.active_chapter_id = chapter.id
 
         db.session.commit()
 
