@@ -21,7 +21,7 @@
 **Purpose:** Ship additive, fully-nullable columns so later deploys can dual-write and backfill. No data changes, no behavior changes.
 
 **Files:**
-- Create: `chapter-ops/backend/migrations/versions/a1b2c3d4e5f6_add_polymorphic_columns_invoice_payment.py`
+- Create: `chapter-ops/backend/migrations/versions/c5f8a2e6b9d1_add_polymorphic_columns_invoice_payment.py`
 
 - [ ] **Step 1: Create the migration file**
 
@@ -32,7 +32,7 @@ Adds nullable issuer_type/id + target_type/id on invoice and
 payer_type/id + receiver_type/id on payment. No data changes.
 Columns remain nullable until Deploy 2 completes backfill.
 
-Revision ID: a1b2c3d4e5f6
+Revision ID: c5f8a2e6b9d1
 Revises: b4e8d1c9a3f7
 Create Date: 2026-04-24 10:00:00.000000
 
@@ -40,7 +40,7 @@ Create Date: 2026-04-24 10:00:00.000000
 from alembic import op
 import sqlalchemy as sa
 
-revision = 'a1b2c3d4e5f6'
+revision = 'c5f8a2e6b9d1'
 down_revision = 'b4e8d1c9a3f7'
 branch_labels = None
 depends_on = None
@@ -82,17 +82,17 @@ def downgrade():
 - [ ] **Step 2: Run the migration locally**
 
 Run: `cd chapter-ops/backend && flask db upgrade`
-Expected: `INFO  [alembic.runtime.migration] Running upgrade b4e8d1c9a3f7 -> a1b2c3d4e5f6, add polymorphic columns to invoice and payment`
+Expected: `INFO  [alembic.runtime.migration] Running upgrade b4e8d1c9a3f7 -> c5f8a2e6b9d1, add polymorphic columns to invoice and payment`
 
 - [ ] **Step 3: Verify reversibility**
 
 Run: `cd chapter-ops/backend && flask db downgrade && flask db upgrade`
-Expected: clean downgrade to `b4e8d1c9a3f7`, then clean upgrade back to `a1b2c3d4e5f6`.
+Expected: clean downgrade to `b4e8d1c9a3f7`, then clean upgrade back to `c5f8a2e6b9d1`.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add chapter-ops/backend/migrations/versions/a1b2c3d4e5f6_add_polymorphic_columns_invoice_payment.py
+git add chapter-ops/backend/migrations/versions/c5f8a2e6b9d1_add_polymorphic_columns_invoice_payment.py
 git commit -m "feat(db): add polymorphic columns to invoice and payment (nullable)"
 ```
 
@@ -364,7 +364,7 @@ git commit -m "feat(models): add polymorphic payer/receiver columns to Payment"
 ## Task 4: Alembic migration — add Stripe Connect fields to Organization and Region
 
 **Files:**
-- Create: `chapter-ops/backend/migrations/versions/a2b3c4d5e6f7_add_stripe_connect_to_org_region.py`
+- Create: `chapter-ops/backend/migrations/versions/c6e9b3f7a0d2_add_stripe_connect_to_org_region.py`
 
 - [ ] **Step 1: Create the migration file**
 
@@ -375,16 +375,16 @@ Adds stripe_account_id (nullable, partial unique index) and
 stripe_onboarding_complete (default false) to both tables.
 Unique index is partial — only enforced when stripe_account_id is not null.
 
-Revision ID: a2b3c4d5e6f7
-Revises: a1b2c3d4e5f6
+Revision ID: c6e9b3f7a0d2
+Revises: c5f8a2e6b9d1
 Create Date: 2026-04-24 10:15:00.000000
 
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = 'a2b3c4d5e6f7'
-down_revision = 'a1b2c3d4e5f6'
+revision = 'c6e9b3f7a0d2'
+down_revision = 'c5f8a2e6b9d1'
 branch_labels = None
 depends_on = None
 
@@ -447,7 +447,7 @@ def downgrade():
 - [ ] **Step 2: Run the migration**
 
 Run: `cd chapter-ops/backend && flask db upgrade`
-Expected: `INFO  [alembic.runtime.migration] Running upgrade a1b2c3d4e5f6 -> a2b3c4d5e6f7`.
+Expected: `INFO  [alembic.runtime.migration] Running upgrade c5f8a2e6b9d1 -> c6e9b3f7a0d2`.
 
 - [ ] **Step 3: Verify reversibility**
 
@@ -457,7 +457,7 @@ Expected: clean down, clean up.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add chapter-ops/backend/migrations/versions/a2b3c4d5e6f7_add_stripe_connect_to_org_region.py
+git add chapter-ops/backend/migrations/versions/c6e9b3f7a0d2_add_stripe_connect_to_org_region.py
 git commit -m "feat(db): add stripe_account_id and stripe_onboarding_complete to Organization and Region"
 ```
 
