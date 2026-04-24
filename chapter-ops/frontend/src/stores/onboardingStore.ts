@@ -1,14 +1,12 @@
 import { create } from "zustand";
-import type { Organization, Region, CreateOrganizationRequest, CreateRegionRequest, CreateChapterRequest } from "@/types";
+import type { Organization, Region, CreateOrganizationRequest, CreateRegionRequest } from "@/types";
 import type { ChapterRequest } from "@/types/chapterRequest";
 import {
   fetchOrganizations,
   createOrganization,
   fetchRegions,
   createRegion,
-  createChapter,
 } from "@/services/onboardingService";
-import { useAuthStore } from "@/stores/authStore";
 
 interface OnboardingState {
   currentStep: number;
@@ -27,13 +25,12 @@ interface OnboardingState {
   loadRegions: (organizationId: string) => Promise<void>;
   selectRegion: (region: Region) => void;
   submitNewRegion: (data: CreateRegionRequest) => Promise<void>;
-  submitChapter: (data: CreateChapterRequest) => Promise<void>;
   goToPendingApproval: (request: ChapterRequest) => void;
   clearError: () => void;
   reset: () => void;
 }
 
-export const useOnboardingStore = create<OnboardingState>((set, get) => ({
+export const useOnboardingStore = create<OnboardingState>((set) => ({
   currentStep: 1,
   organizations: [],
   selectedOrganization: null,
@@ -102,26 +99,6 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
       const message =
         (err as { response?: { data?: { error?: string } } }).response?.data?.error ||
         "Failed to create region.";
-      set({ error: message, isLoading: false });
-      throw err;
-    }
-  },
-
-  submitChapter: async (data) => {
-    set({ isLoading: true, error: null });
-    try {
-      const selectedRegion = get().selectedRegion;
-      await createChapter({
-        ...data,
-        region_id: selectedRegion!.id,
-      });
-      // Refresh auth state so user.active_chapter_id is populated
-      await useAuthStore.getState().initializeAuth();
-      set({ currentStep: 4, isLoading: false });
-    } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { error?: string } } }).response?.data?.error ||
-        "Failed to create chapter.";
       set({ error: message, isLoading: false });
       throw err;
     }
