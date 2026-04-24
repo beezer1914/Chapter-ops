@@ -14,7 +14,7 @@ export async function submitChapterRequest(
   payload: SubmitChapterRequestPayload
 ): Promise<ChapterRequest> {
   const { data } = await api.post<{ success: true; request: ChapterRequest }>(
-    "/api/onboarding/chapter-requests",
+    "/onboarding/chapter-requests",
     payload
   );
   return data.request;
@@ -22,18 +22,18 @@ export async function submitChapterRequest(
 
 export async function fetchMyChapterRequest(): Promise<ChapterRequest | null> {
   const { data } = await api.get<{ request: ChapterRequest | null }>(
-    "/api/onboarding/chapter-requests/mine"
+    "/onboarding/chapter-requests/mine"
   );
   return data.request;
 }
 
 export async function cancelMyChapterRequest(requestId: string): Promise<void> {
-  await api.delete(`/api/onboarding/chapter-requests/${requestId}`);
+  await api.delete(`/onboarding/chapter-requests/${requestId}`);
 }
 
 export async function fetchPendingChapterRequests(): Promise<ChapterRequest[]> {
   const { data } = await api.get<{ requests: ChapterRequest[] }>(
-    "/api/chapter-requests/pending"
+    "/chapter-requests/pending"
   );
   return data.requests;
 }
@@ -42,7 +42,7 @@ export async function approveChapterRequest(
   requestId: string
 ): Promise<ChapterApprovedResponse> {
   const { data } = await api.post<ChapterApprovedResponse>(
-    `/api/chapter-requests/${requestId}/approve`
+    `/chapter-requests/${requestId}/approve`
   );
   return data;
 }
@@ -52,7 +52,7 @@ export async function rejectChapterRequest(
   reason: string
 ): Promise<ChapterRequest> {
   const { data } = await api.post<{ success: true; request: ChapterRequest }>(
-    `/api/chapter-requests/${requestId}/reject`,
+    `/chapter-requests/${requestId}/reject`,
     { reason }
   );
   return data.request;
