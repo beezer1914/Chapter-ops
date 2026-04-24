@@ -22,7 +22,7 @@ def upgrade():
     # Organization
     op.add_column(
         'organization',
-        sa.Column('stripe_account_id', sa.String(200), nullable=True),
+        sa.Column('stripe_account_id', sa.String(100), nullable=True),
     )
     op.add_column(
         'organization',
@@ -44,7 +44,7 @@ def upgrade():
     # Region
     op.add_column(
         'region',
-        sa.Column('stripe_account_id', sa.String(200), nullable=True),
+        sa.Column('stripe_account_id', sa.String(100), nullable=True),
     )
     op.add_column(
         'region',
