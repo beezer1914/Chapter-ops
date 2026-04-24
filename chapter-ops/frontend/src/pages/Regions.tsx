@@ -64,8 +64,14 @@ export default function Regions() {
   const [activeTab, setActiveTab] = useState<"regions" | "directory">("regions");
 
   useEffect(() => {
+    // Clear any stale selection carried over from a prior chapter/org session.
+    // The regionStore is module-global, so selectedRegion survives unmount;
+    // without this clear, a user who selected a region under Org A and then
+    // switched active chapter to Org B would see Org A's region detail on
+    // first render of this page.
+    clearSelectedRegion();
     loadRegions();
-  }, [loadRegions]);
+  }, [loadRegions, clearSelectedRegion]);
 
   if (selectedRegion) {
     return (
