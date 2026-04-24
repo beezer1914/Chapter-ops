@@ -113,7 +113,8 @@ class TestUpdateOrgConfig:
         assert len(fields) == 2
         assert fields[0]["key"] == "line_number"
 
-    def test_president_cannot_update_org_config(self, client, app):
+    def test_president_can_update_org_config(self, client, app):
+        """Presidents are allowed to update org config (president+ or org admin)."""
         with app.app_context():
             chapter = _setup_chapter()
             _setup_president(chapter)
@@ -123,7 +124,9 @@ class TestUpdateOrgConfig:
         resp = client.put("/api/config/organization", json={
             "role_titles": {"president": "Basileus"},
         })
-        assert resp.status_code == 403
+        assert resp.status_code == 200
+        data = resp.get_json()["organization_config"]
+        assert data["role_titles"]["president"] == "Basileus"
 
     def test_invalid_role_key_rejected(self, client, app):
         with app.app_context():
@@ -218,7 +221,8 @@ class TestUpdateChapterConfig:
         assert settings["payment_deadline_day"] == 15
         assert settings["allow_payment_plans"] is False
 
-    def test_president_cannot_update_chapter_config(self, client, app):
+    def test_president_can_update_chapter_config(self, client, app):
+        """Presidents (treasurer+) can update non-permissions/branding chapter config fields."""
         with app.app_context():
             chapter = _setup_chapter()
             _setup_president(chapter)
@@ -228,7 +232,10 @@ class TestUpdateChapterConfig:
         resp = client.put("/api/config/chapter", json={
             "fee_types": [{"id": "test", "label": "Test", "default_amount": 10}],
         })
-        assert resp.status_code == 403
+        assert resp.status_code == 200
+        fee_types = resp.get_json()["chapter_config"]["fee_types"]
+        assert len(fee_types) == 1
+        assert fee_types[0]["id"] == "test"
 
     def test_negative_amount_rejected(self, client, app):
         with app.app_context():

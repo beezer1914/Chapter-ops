@@ -67,11 +67,13 @@ class TestListRegions:
         assert data["is_org_admin"] is True
         assert len(data["regions"]) == 3  # Default + Southern + Eastern
 
-    def test_regional_director_sees_only_their_regions(self, client, app):
+    def test_regional_director_sees_all_org_regions(self, client, app):
+        """All active org members see all active regions — directors are not limited to their own."""
         with app.app_context():
             org = make_organization()
             region1 = make_region(org, name="Southern Region")
             make_region(org, name="Eastern Region")
+            # _setup_regional_director also calls make_chapter, which auto-creates "Default Region"
             director = _setup_regional_director(org, region1)
             db.session.commit()
 
@@ -80,13 +82,16 @@ class TestListRegions:
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["is_org_admin"] is False
-        assert len(data["regions"]) == 1
-        assert data["regions"][0]["name"] == "Southern Region"
+        assert data["is_regional_director"] is True
+        # Southern + Eastern + Default Region (auto-created by make_chapter) = 3
+        assert len(data["regions"]) == 3
 
-    def test_regular_member_sees_no_regions(self, client, app):
+    def test_regular_member_sees_all_org_regions(self, client, app):
+        """Any active org member (via any chapter membership) sees all active regions."""
         with app.app_context():
             org = make_organization()
             make_region(org, name="Southern Region")
+            # _setup_regular_member creates a chapter membership, which auto-creates "Default Region"
             _setup_regular_member(org)
             db.session.commit()
 
@@ -95,7 +100,8 @@ class TestListRegions:
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["is_org_admin"] is False
-        assert len(data["regions"]) == 0
+        # Southern Region + Default Region (auto-created by make_chapter) = 2
+        assert len(data["regions"]) == 2
 
     def test_includes_chapter_and_member_counts(self, client, app):
         with app.app_context():
@@ -154,7 +160,8 @@ class TestGetRegionDetail:
         resp = client.get(f"/api/regions/{region_id}")
         assert resp.status_code == 200
 
-    def test_regular_member_denied(self, client, app):
+    def test_regular_member_can_view_region_detail(self, client, app):
+        """Any active org member can view region detail (read-only; write actions are gated per route)."""
         with app.app_context():
             org = make_organization()
             region = make_region(org, name="Southern Region")
@@ -164,7 +171,9 @@ class TestGetRegionDetail:
 
         _login(client, "regular@example.com")
         resp = client.get(f"/api/regions/{region_id}")
-        assert resp.status_code == 403
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["region"]["name"] == "Southern Region"
 
     def test_nonexistent_region_returns_404(self, client, app):
         with app.app_context():
