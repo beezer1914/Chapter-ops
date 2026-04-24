@@ -93,3 +93,26 @@ class TestIsFounder:
         with client:
             client.get("/api/auth/user")
             assert is_founder() is True
+
+    def test_auth_user_exposes_is_platform_admin_true_for_founder(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        make_user(email="brandon@example.com", password="Str0ng!Password1")
+        db_session.commit()
+        client.post("/api/auth/login", json={
+            "email": "brandon@example.com",
+            "password": "Str0ng!Password1",
+        })
+        resp = client.get("/api/auth/user")
+        assert resp.status_code == 200
+        assert resp.get_json()["is_platform_admin"] is True
+
+    def test_auth_user_exposes_is_platform_admin_false_for_others(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        make_user(email="someone@example.com", password="Str0ng!Password1")
+        db_session.commit()
+        client.post("/api/auth/login", json={
+            "email": "someone@example.com",
+            "password": "Str0ng!Password1",
+        })
+        resp = client.get("/api/auth/user")
+        assert resp.get_json()["is_platform_admin"] is False
