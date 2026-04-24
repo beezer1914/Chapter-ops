@@ -38,6 +38,7 @@ export default function PendingApprovalScreen({ initialRequest, onStartOver }: P
         // Silent — polling continues.
       }
     };
+    tick();  // fire once immediately on mount
     const handle = setInterval(tick, POLL_INTERVAL_MS);
     return () => clearInterval(handle);
   }, [navigate]);
