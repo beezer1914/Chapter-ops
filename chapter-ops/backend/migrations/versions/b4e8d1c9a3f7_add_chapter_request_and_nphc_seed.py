@@ -32,7 +32,7 @@ NPHC_ORGS = [
     },
     {
         "name": "Alpha Phi Alpha Fraternity, Inc.",
-        "abbreviation": "APA",
+        "abbreviation": "APhi",
         "greek_letters": "ΑΦΑ",
         "org_type": "fraternity",
         "council": "NPHC",

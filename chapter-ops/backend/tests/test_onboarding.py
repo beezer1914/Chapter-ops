@@ -15,7 +15,7 @@ def login(client, email, password=VALID_PASSWORD):
 class TestListOrganizations:
     def test_list_orgs_authenticated(self, client, db_session):
         make_user(email="alice@example.com", password=VALID_PASSWORD)
-        make_organization(name="Alpha Phi Alpha", abbreviation="APA")
+        make_organization(name="Alpha Phi Alpha", abbreviation="APhi")
         make_organization(name="Delta Sigma Theta", abbreviation="DST", org_type="sorority")
         db_session.commit()
 
