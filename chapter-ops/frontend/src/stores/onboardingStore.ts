@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Organization, Region, CreateOrganizationRequest, CreateRegionRequest, CreateChapterRequest } from "@/types";
+import type { ChapterRequest } from "@/types/chapterRequest";
 import {
   fetchOrganizations,
   createOrganization,
@@ -17,6 +18,7 @@ interface OnboardingState {
   selectedRegion: Region | null;
   isLoading: boolean;
   error: string | null;
+  pendingRequest: ChapterRequest | null;
 
   setStep: (step: number) => void;
   loadOrganizations: () => Promise<void>;
@@ -26,6 +28,7 @@ interface OnboardingState {
   selectRegion: (region: Region) => void;
   submitNewRegion: (data: CreateRegionRequest) => Promise<void>;
   submitChapter: (data: CreateChapterRequest) => Promise<void>;
+  goToPendingApproval: (request: ChapterRequest) => void;
   clearError: () => void;
   reset: () => void;
 }
@@ -38,6 +41,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   selectedRegion: null,
   isLoading: false,
   error: null,
+  pendingRequest: null,
 
   setStep: (step) => set({ currentStep: step }),
 
@@ -123,6 +127,9 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     }
   },
 
+  goToPendingApproval: (request) =>
+    set({ pendingRequest: request, currentStep: 5 }),
+
   clearError: () => set({ error: null }),
 
   reset: () =>
@@ -134,5 +141,6 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
       selectedRegion: null,
       isLoading: false,
       error: null,
+      pendingRequest: null,
     }),
 }));

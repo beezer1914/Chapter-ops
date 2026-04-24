@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { submitChapterRequest } from "@/services/chapterRequestService";
 
 const chapterSchema = z.object({
   name: z.string().min(1, "Chapter name is required"),
@@ -58,8 +60,11 @@ const timezoneLabels: Record<string, string> = {
 };
 
 export default function ChapterStep() {
-  const { selectedOrganization, selectedRegion, isLoading, error, setStep, submitChapter, clearError } =
+  const { selectedOrganization, selectedRegion, setStep, goToPendingApproval } =
     useOnboardingStore();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -81,9 +86,10 @@ export default function ChapterStep() {
 
   const onSubmit = async (data: ChapterFormData) => {
     if (!selectedOrganization || !selectedRegion) return;
-    clearError();
+    setSubmitError(null);
+    setIsSubmitting(true);
     try {
-      await submitChapter({
+      const request = await submitChapterRequest({
         organization_id: selectedOrganization.id,
         region_id: selectedRegion.id,
         name: data.name,
@@ -95,8 +101,13 @@ export default function ChapterStep() {
         timezone: data.timezone,
         founder_role: data.founder_role,
       });
-    } catch {
-      // Error handled by store
+      goToPendingApproval(request);
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } }).response?.data?.error ||
+        "Failed to submit chapter request. Please try again.";
+      setSubmitError(message);
+      setIsSubmitting(false);
     }
   };
 
@@ -124,9 +135,9 @@ export default function ChapterStep() {
         </button>
       </div>
 
-      {error && (
+      {submitError && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
-          {error}
+          {submitError}
         </div>
       )}
 
@@ -284,10 +295,10 @@ export default function ChapterStep() {
           </button>
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isSubmitting}
             className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Creating..." : "Create Chapter"}
+            {isSubmitting ? "Submitting..." : "Request Chapter"}
           </button>
         </div>
       </form>
