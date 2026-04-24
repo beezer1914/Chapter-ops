@@ -289,24 +289,29 @@ class TestOnboardingSeeds:
         assert config["role_titles"]["president"] == "President"
         assert config["custom_member_fields"] == []
 
-    def test_chapter_creation_seeds_config(self, client, app):
-        with app.app_context():
-            user = make_user(email="founder@example.com")
-            org = make_organization(abbreviation="TC")
-            region = make_region(org)
-            org_id = org.id
-            region_id = region.id
-            _db.session.commit()
+    def test_chapter_creation_seeds_config(self, db_session):
+        from app.services.chapter_service import create_chapter_with_founder
 
-        _login(client, email="founder@example.com")
-        resp = client.post("/api/onboarding/chapters", json={
-            "organization_id": org_id,
-            "region_id": region_id,
-            "name": "Test Chapter",
-            "chapter_type": "graduate",
-        })
-        assert resp.status_code == 201
-        config = resp.get_json()["chapter"]["config"]
-        assert "fee_types" in config
-        assert config["fee_types"][0]["id"] == "dues"
-        assert config["settings"]["allow_payment_plans"] is True
+        user = make_user(email="founder@example.com")
+        org = make_organization(abbreviation="TC")
+        region = make_region(org)
+        _db.session.commit()
+
+        chapter, _, _ = create_chapter_with_founder(
+            requester=user,
+            organization=org,
+            region=region,
+            name="Test Chapter",
+            designation=None,
+            chapter_type="graduate",
+            city=None,
+            state=None,
+            country="United States",
+            timezone="America/New_York",
+            founder_role="president",
+        )
+        _db.session.commit()
+
+        assert "fee_types" in chapter.config
+        assert chapter.config["fee_types"][0]["id"] == "dues"
+        assert chapter.config["settings"]["allow_payment_plans"] is True

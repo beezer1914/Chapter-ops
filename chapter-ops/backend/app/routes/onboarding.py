@@ -12,8 +12,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
 
 from app.extensions import db
-from app.models import Organization, OrganizationMembership, Region, Chapter, ChapterMembership
-from app.services.chapter_service import create_chapter_with_founder
+from app.models import Organization, OrganizationMembership, Region
 from app.utils.platform_admin import require_founder
 
 onboarding_bp = Blueprint("onboarding", __name__, url_prefix="/api/onboarding")
@@ -149,73 +148,3 @@ def create_region():
 
     return jsonify({"success": True, "region": region.to_dict()}), 201
 
-
-# ── Chapter endpoint ──────────────────────────────────────────────────
-
-
-@onboarding_bp.route("/chapters", methods=["POST"])
-@login_required
-def create_chapter():
-    """
-    Create a new chapter and grant the current user a membership.
-
-    The founder declares their actual chapter role via `founder_role`
-    (default "president" for backward compat). Org-level admin access is
-    already granted separately when the organization is created.
-    """
-    data = request.get_json()
-
-    required = ["organization_id", "region_id", "name", "chapter_type"]
-    missing = [f for f in required if not data.get(f)]
-    if missing:
-        return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
-
-    if data["chapter_type"] not in ("undergraduate", "graduate"):
-        return jsonify({"error": "chapter_type must be 'undergraduate' or 'graduate'."}), 400
-
-    # The founder can declare their actual chapter role. They're already the
-    # org admin (granted when the organization was created), so org-level
-    # settings stay accessible even if they choose "member" here.
-    valid_founder_roles = {"member", "secretary", "treasurer", "vice_president", "president"}
-    founder_role = (data.get("founder_role") or "president").strip()
-    if founder_role not in valid_founder_roles:
-        return jsonify({"error": f"founder_role must be one of: {', '.join(sorted(valid_founder_roles))}."}), 400
-
-    # Verify organization exists
-    org = db.session.get(Organization, data["organization_id"])
-    if not org:
-        return jsonify({"error": "Organization not found."}), 404
-
-    # Verify region exists and belongs to this organization
-    region = db.session.get(Region, data["region_id"])
-    if not region:
-        return jsonify({"error": "Region not found."}), 404
-    if region.organization_id != org.id:
-        return jsonify({"error": "Region does not belong to this organization."}), 400
-
-    try:
-        chapter, first_period, membership = create_chapter_with_founder(
-            requester=current_user,
-            organization=org,
-            region=region,
-            name=data["name"].strip(),
-            designation=data.get("designation", "").strip() or None,
-            chapter_type=data["chapter_type"],
-            city=data.get("city", "").strip() or None,
-            state=data.get("state", "").strip() or None,
-            country=data.get("country", "United States").strip(),
-            timezone=data.get("timezone", "America/New_York").strip(),
-            founder_role=founder_role,
-        )
-
-        db.session.commit()
-
-        return jsonify({
-            "success": True,
-            "chapter": chapter.to_dict(),
-            "membership": membership.to_dict(),
-        }), 201
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": "Failed to create chapter. Please try again."}), 500
