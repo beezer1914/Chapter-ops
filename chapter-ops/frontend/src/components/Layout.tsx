@@ -177,7 +177,7 @@ function SidebarContent({
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { user, memberships, logout } = useAuthStore();
+  const { user, memberships, logout, isPlatformAdmin } = useAuthStore();
   const { organization, chapter } = useConfigStore();
   const { isRegionalDirector, isOrgAdmin, loadRegions } = useRegionStore();
 
@@ -207,7 +207,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     ),
   })).filter((section) => section.items.length > 0);
 
-  // Inject Region Dashboard for regional directors and IHQ Dashboard for org admins
+  // Inject Region Dashboard for regional directors, IHQ Dashboard for org admins,
+  // and Platform Dashboard for platform admins
   const navSections = filteredSections.map((section) => {
     if (section.label === "Overview") {
       const extra = [];
@@ -216,6 +217,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       }
       if (isOrgAdmin) {
         extra.push({ to: "/ihq", label: "IHQ Dashboard", icon: Globe, module: "dashboard" as ModuleKey });
+      }
+      if (isPlatformAdmin) {
+        extra.push({ to: "/platform", label: "Platform Dashboard", icon: ShieldCheck, module: "dashboard" as ModuleKey });
       }
       if (extra.length === 0) return section;
       return { ...section, items: [...section.items, ...extra] };

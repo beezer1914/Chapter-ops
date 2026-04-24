@@ -13,6 +13,7 @@ interface AuthState {
   user: User | null;
   memberships: ChapterMembership[];
   isAuthenticated: boolean;
+  isPlatformAdmin: boolean;
   isLoading: boolean;
   error: string | null;
 
@@ -29,6 +30,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   memberships: [],
   isAuthenticated: false,
+  isPlatformAdmin: false,
   isLoading: true,
   error: null,
 
@@ -44,12 +46,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       set({
         user: response.data.user,
+        isPlatformAdmin: response.data.is_platform_admin ?? false,
         isAuthenticated: true,
       });
       // Fetch memberships + config — don't let this break the login flow
       try {
         const userResponse = await api.get("/auth/user");
-        set({ memberships: userResponse.data.memberships });
+        set({
+          memberships: userResponse.data.memberships,
+          isPlatformAdmin: userResponse.data.is_platform_admin ?? false,
+        });
         if (userResponse.data.user.active_chapter_id) {
           useConfigStore.getState().loadConfig();
         }
@@ -74,12 +80,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
       set({
         user: response.data.user,
+        isPlatformAdmin: response.data.is_platform_admin ?? false,
         isAuthenticated: true,
       });
       // Fetch memberships + config — don't let this break the register flow
       try {
         const userResponse = await api.get("/auth/user");
-        set({ memberships: userResponse.data.memberships });
+        set({
+          memberships: userResponse.data.memberships,
+          isPlatformAdmin: userResponse.data.is_platform_admin ?? false,
+        });
         if (userResponse.data.user.active_chapter_id) {
           useConfigStore.getState().loadConfig();
         }
@@ -103,6 +113,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: null,
         memberships: [],
         isAuthenticated: false,
+        isPlatformAdmin: false,
         isLoading: false,
         error: null,
       });
@@ -117,6 +128,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({
         user: response.data.user,
         memberships: response.data.memberships,
+        isPlatformAdmin: response.data.is_platform_admin ?? false,
         isAuthenticated: true,
         isLoading: false,
       });
@@ -129,6 +141,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: null,
         memberships: [],
         isAuthenticated: false,
+        isPlatformAdmin: false,
         isLoading: false,
       });
     }
