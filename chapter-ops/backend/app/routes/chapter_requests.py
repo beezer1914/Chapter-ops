@@ -45,8 +45,17 @@ def _resolve_approver_scope(organization_id: str) -> str:
     return "org_admin" if has_admin else "platform_admin"
 
 
-def _dedup_collides(organization_id: str, region_id: str, name_normalized: str) -> bool:
-    """True if an active chapter or pending request already uses this normalized name."""
+def _dedup_collides(
+    organization_id: str,
+    region_id: str,
+    name_normalized: str,
+    exclude_request_id: str | None = None,
+) -> bool:
+    """True if an active chapter or pending request already uses this normalized name.
+
+    Pass *exclude_request_id* when calling from the approve endpoint so the
+    request being approved does not match itself in the pending-request check.
+    """
     # Active chapter in this org+region with a name that normalizes the same?
     existing_chapters = (
         db.session.query(Chapter.id, Chapter.name)
@@ -58,13 +67,15 @@ def _dedup_collides(organization_id: str, region_id: str, name_normalized: str) 
             return True
 
     # Pending request for the same (org, region, normalized_name)?
-    pending_exists = db.session.query(ChapterRequest.id).filter_by(
+    q = db.session.query(ChapterRequest.id).filter_by(
         organization_id=organization_id,
         region_id=region_id,
         name_normalized=name_normalized,
         status="pending",
-    ).first() is not None
-    return pending_exists
+    )
+    if exclude_request_id is not None:
+        q = q.filter(ChapterRequest.id != exclude_request_id)
+    return q.first() is not None
 
 
 # ── Requester endpoints ───────────────────────────────────────────────────────
@@ -225,3 +236,92 @@ def list_pending_chapter_requests():
         )
 
     return jsonify({"requests": [r.to_dict() for r in results]}), 200
+
+
+def _caller_can_act_on(req: ChapterRequest) -> bool:
+    """True if the current user is authorized to approve/reject this request."""
+    if req.approver_scope == "platform_admin":
+        return is_founder()
+    # org_admin scope — requires an admin OrganizationMembership for this specific org
+    return db.session.query(OrganizationMembership.id).filter_by(
+        user_id=current_user.id,
+        organization_id=req.organization_id,
+        role="admin",
+        active=True,
+    ).first() is not None
+
+
+@chapter_requests_bp.route("/api/chapter-requests/<request_id>/approve", methods=["POST"])
+@login_required
+def approve_chapter_request(request_id: str):
+    """Approve a pending chapter request: create the Chapter + period + membership."""
+    # Lock the row for the duration of this transaction to prevent double-approve races.
+    # SQLite is a no-op for with_for_update; the status-check below is the real guard there.
+    req = (
+        db.session.query(ChapterRequest)
+        .filter_by(id=request_id)
+        .with_for_update()
+        .first()
+    )
+    if not req:
+        return jsonify({"error": "Request not found."}), 404
+
+    if req.status != "pending":
+        return jsonify({"error": f"Request is already {req.status}."}), 409
+
+    if not _caller_can_act_on(req):
+        return jsonify({"error": "You are not authorized to approve this request."}), 403
+
+    # Re-check dedup against live chapters — state may have changed since submit.
+    # Exclude the request itself from the pending-request half of the check.
+    if _dedup_collides(req.organization_id, req.region_id, req.name_normalized, exclude_request_id=req.id):
+        return jsonify({
+            "error": (
+                "A chapter with this name already exists in this region. "
+                "Reject this request or ask the founder to choose a different name."
+            )
+        }), 409
+
+    requester = db.session.get(User, req.requester_user_id)
+    org = db.session.get(Organization, req.organization_id)
+    region = db.session.get(Region, req.region_id)
+
+    from app.services.chapter_service import create_chapter_with_founder
+
+    try:
+        chapter, _period, _membership = create_chapter_with_founder(
+            requester=requester,
+            organization=org,
+            region=region,
+            name=req.name,
+            designation=req.designation,
+            chapter_type=req.chapter_type,
+            city=req.city,
+            state=req.state,
+            country=req.country,
+            timezone=req.timezone,
+            founder_role=req.founder_role,
+        )
+
+        req.status = "approved"
+        req.approved_by_user_id = current_user.id
+        req.resulting_chapter_id = chapter.id
+        req.acted_at = datetime.now(timezone.utc)
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        logger.exception("Failed to approve chapter request %s", req.id)
+        return jsonify({"error": "Failed to approve request. Please try again."}), 500
+
+    try:
+        from app.services.chapter_request_notifications import notify_requester_approved
+        notify_requester_approved(req)
+    except Exception:
+        logger.exception("Failed to send approval notification for %s", req.id)
+
+    return jsonify({
+        "success": True,
+        "chapter": chapter.to_dict(),
+        "request": req.to_dict(),
+    }), 200
