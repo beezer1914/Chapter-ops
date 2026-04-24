@@ -28,6 +28,14 @@ class Organization(BaseModel):
     # "beta" = Chapter Pro features at $0 during beta period
     plan: Mapped[str] = mapped_column(db.String(20), nullable=False, default="beta")
 
+    # ── Stripe Connect (Deploy 1) ────────────────────────────────
+    stripe_account_id: Mapped[str | None] = mapped_column(
+        db.String(100), nullable=True
+    )
+    stripe_onboarding_complete: Mapped[bool] = mapped_column(
+        db.Boolean, default=False, nullable=False
+    )
+
     # Organization-level configuration (role titles, custom member fields)
     config: Mapped[dict] = mapped_column(db.JSON, nullable=False, default=dict)
 
@@ -52,6 +60,7 @@ class Organization(BaseModel):
             "website": self.website,
             "active": self.active,
             "plan": self.plan,
+            "stripe_onboarding_complete": self.stripe_onboarding_complete,
             "config": self.config,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

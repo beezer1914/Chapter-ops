@@ -22,6 +22,20 @@ class Invoice(BaseModel):
         db.String(20), nullable=False
     )  # "member" | "chapter"
 
+    # ── Polymorphic entity pointers (Deploy 1 — nullable during migration) ─
+    issuer_type: Mapped[str | None] = mapped_column(
+        db.String(20), nullable=True
+    )  # "organization" | "region" | "chapter"
+    issuer_id: Mapped[str | None] = mapped_column(
+        db.String(36), nullable=True
+    )
+    target_type: Mapped[str | None] = mapped_column(
+        db.String(20), nullable=True
+    )  # "chapter" | "user"
+    target_id: Mapped[str | None] = mapped_column(
+        db.String(36), nullable=True
+    )
+
     # ── Chapter-level invoicing (member dues) ────────────────────
     chapter_id: Mapped[str | None] = mapped_column(
         db.String(36), db.ForeignKey("chapter.id"), nullable=True, index=True
@@ -99,6 +113,10 @@ class Invoice(BaseModel):
         return {
             "id": self.id,
             "scope": self.scope,
+            "issuer_type": self.issuer_type,
+            "issuer_id": self.issuer_id,
+            "target_type": self.target_type,
+            "target_id": self.target_id,
             "chapter_id": self.chapter_id,
             "billed_user_id": self.billed_user_id,
             "fee_type_id": self.fee_type_id,

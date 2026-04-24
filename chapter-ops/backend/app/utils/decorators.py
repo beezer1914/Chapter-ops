@@ -168,3 +168,40 @@ def region_role_required(minimum_role: str):
             return jsonify({"error": "You do not have access to this region."}), 403
         return decorated_function
     return decorator
+
+
+def org_admin_required(f):
+    """
+    Decorator that grants access only to organization admins.
+
+    Extracts ``org_id`` from the URL kwargs. Returns 404 if the org
+    does not exist, 403 if the user is not an active admin of it.
+    Sets ``g.current_organization`` for use in handlers.
+
+    Usage:
+        @bp.route("/<org_id>/something")
+        @login_required
+        @org_admin_required
+        def some_view(org_id):
+            ...
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        from app.models import Organization
+
+        org_id = kwargs.get("org_id")
+        if not org_id:
+            return jsonify({"error": "Organization ID required."}), 400
+
+        org = db.session.get(Organization, org_id)
+        if not org:
+            return jsonify({"error": "Organization not found."}), 404
+
+        if not _is_org_admin(current_user, org.id):
+            return jsonify({
+                "error": "Organization admin role required."
+            }), 403
+
+        g.current_organization = org
+        return f(*args, **kwargs)
+    return decorated_function

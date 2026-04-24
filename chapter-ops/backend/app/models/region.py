@@ -27,6 +27,14 @@ class Region(BaseModel):
     # Region-level configuration
     config: Mapped[dict] = mapped_column(db.JSON, nullable=False, default=dict)
 
+    # ── Stripe Connect (Deploy 1) ────────────────────────────────
+    stripe_account_id: Mapped[str | None] = mapped_column(
+        db.String(100), nullable=True
+    )
+    stripe_onboarding_complete: Mapped[bool] = mapped_column(
+        db.Boolean, default=False, nullable=False
+    )
+
     __table_args__ = (
         db.UniqueConstraint("organization_id", "name", name="uq_org_region_name"),
     )
@@ -47,5 +55,6 @@ class Region(BaseModel):
             "description": self.description,
             "active": self.active,
             "config": self.config,
+            "stripe_onboarding_complete": self.stripe_onboarding_complete,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

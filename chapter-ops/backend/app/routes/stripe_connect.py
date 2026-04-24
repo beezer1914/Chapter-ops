@@ -7,7 +7,6 @@ to land in their account with an optional platform application_fee.
 """
 
 import secrets
-import stripe
 from urllib.parse import urlencode
 
 from flask import Blueprint, current_app, g, jsonify, request, session
@@ -62,6 +61,11 @@ def stripe_callback():
     The frontend StripeCallback page extracts ?code and ?state from the
     redirect URL, then calls this endpoint to complete the connection.
     """
+    from app.services.stripe_connect_service import (
+        exchange_oauth_code,
+        StripeConnectError,
+    )
+
     chapter = g.current_chapter
     code = request.args.get("code")
     state = request.args.get("state")
@@ -74,24 +78,14 @@ def stripe_callback():
     if not code:
         return jsonify({"error": "Missing authorization code."}), 400
 
-    # Validate CSRF state token
     expected_state = session.pop("stripe_oauth_state", None)
     if not expected_state or state != expected_state:
         return jsonify({"error": "Invalid state parameter. Please try connecting again."}), 400
 
     try:
-        response = stripe.OAuth.token(
-            grant_type="authorization_code",
-            code=code,
-        )
-    except stripe.oauth_error.OAuthError as e:
-        return jsonify({"error": str(e.user_message or e)}), 400
-    except stripe.error.StripeError as e:
-        return jsonify({"error": str(e.user_message or e)}), 400
-
-    stripe_account_id = response.get("stripe_user_id")
-    if not stripe_account_id:
-        return jsonify({"error": "Failed to retrieve Stripe account ID."}), 500
+        stripe_account_id = exchange_oauth_code(code)
+    except StripeConnectError as e:
+        return jsonify({"error": str(e)}), 400
 
     chapter.stripe_account_id = stripe_account_id
     chapter.stripe_onboarding_complete = True
@@ -113,26 +107,28 @@ def get_account_status():
 
     Returns connected=false if the chapter hasn't linked a Stripe account.
     """
+    from app.services.stripe_connect_service import (
+        retrieve_account_status,
+        StripeConnectError,
+    )
+
     chapter = g.current_chapter
 
     if not chapter.stripe_account_id:
         return jsonify({"connected": False}), 200
 
     try:
-        account = stripe.Account.retrieve(chapter.stripe_account_id)
-    except stripe.error.StripeError as e:
-        return jsonify({"error": str(e.user_message or e)}), 502
+        status = retrieve_account_status(
+            chapter.stripe_account_id,
+            fallback_display_name=chapter.name,
+        )
+    except StripeConnectError as e:
+        return jsonify({"error": str(e)}), 502
 
     return jsonify({
         "connected": True,
         "stripe_account_id": chapter.stripe_account_id,
-        "charges_enabled": account.get("charges_enabled", False),
-        "payouts_enabled": account.get("payouts_enabled", False),
-        "display_name": (
-            account.get("settings", {}).get("dashboard", {}).get("display_name")
-            or account.get("business_profile", {}).get("name")
-            or chapter.name
-        ),
+        **status,
     }), 200
 
 
@@ -147,20 +143,14 @@ def disconnect_stripe():
     Requires president role. Deauthorizes the OAuth connection on Stripe's side
     (best-effort) and clears the stored account ID.
     """
+    from app.services.stripe_connect_service import deauthorize_account
+
     chapter = g.current_chapter
 
     if not chapter.stripe_account_id:
         return jsonify({"error": "No Stripe account is connected."}), 400
 
-    client_id = current_app.config["STRIPE_CLIENT_ID"]
-    try:
-        stripe.OAuth.deauthorize(
-            client_id=client_id,
-            stripe_user_id=chapter.stripe_account_id,
-        )
-    except stripe.error.StripeError:
-        # Best-effort: clear local record even if Stripe call fails
-        pass
+    deauthorize_account(chapter.stripe_account_id)
 
     chapter.stripe_account_id = None
     chapter.stripe_onboarding_complete = False
