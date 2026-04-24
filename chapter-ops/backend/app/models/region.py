@@ -55,7 +55,6 @@ class Region(BaseModel):
             "description": self.description,
             "active": self.active,
             "config": self.config,
-            "stripe_account_id": self.stripe_account_id,
             "stripe_onboarding_complete": self.stripe_onboarding_complete,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
