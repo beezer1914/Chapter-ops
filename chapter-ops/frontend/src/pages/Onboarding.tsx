@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
@@ -6,6 +6,9 @@ import OrganizationStep from "@/pages/onboarding/OrganizationStep";
 import RegionStep from "@/pages/onboarding/RegionStep";
 import ChapterStep from "@/pages/onboarding/ChapterStep";
 import SuccessStep from "@/pages/onboarding/SuccessStep";
+import PendingApprovalScreen from "@/pages/onboarding/PendingApprovalScreen";
+import { fetchMyChapterRequest } from "@/services/chapterRequestService";
+import type { ChapterRequest } from "@/types/chapterRequest";
 
 const steps = ["Organization", "Region", "Chapter", "Complete"];
 
@@ -60,16 +63,80 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 }
 
 export default function Onboarding() {
-  const { currentStep } = useOnboardingStore();
+  const { currentStep, pendingRequest, reset } = useOnboardingStore();
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  // If user already has a chapter, redirect to dashboard
+  // activeRequest holds any pre-existing pending/rejected request found on mount.
+  // It is separate from the store's pendingRequest so we can clear it on start-over.
+  const [activeRequest, setActiveRequest] = useState<ChapterRequest | null>(null);
+  const [requestCheckLoading, setRequestCheckLoading] = useState(true);
+
+  // Check for an existing pending/rejected request on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const req = await fetchMyChapterRequest();
+        if (!cancelled) {
+          if (req && (req.status === "pending" || req.status === "rejected")) {
+            setActiveRequest(req);
+          } else {
+            setActiveRequest(null);
+          }
+        }
+      } catch {
+        // Non-fatal: if fetch fails, fall through to normal wizard
+        if (!cancelled) setActiveRequest(null);
+      } finally {
+        if (!cancelled) setRequestCheckLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // If user already has a chapter (and we're not on the success step), redirect to dashboard
   useEffect(() => {
     if (user?.active_chapter_id && currentStep !== 4) {
       navigate("/dashboard", { replace: true });
     }
   }, [user?.active_chapter_id, currentStep, navigate]);
+
+  // The request to display in PendingApprovalScreen:
+  // Either a freshly submitted one (from store) or a pre-existing one (from mount check).
+  const displayRequest = pendingRequest ?? activeRequest;
+
+  const handleStartOver = () => {
+    setActiveRequest(null);
+    reset();
+  };
+
+  if (requestCheckLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-content-muted">Loading...</div>
+      </div>
+    );
+  }
+
+  // If there's an active (pending or rejected) request, show the holding screen
+  // without the wizard chrome.
+  if (displayRequest) {
+    return (
+      <div className="min-h-screen bg-white/5">
+        <nav className="bg-surface-card-solid shadow-glass border-b border-[var(--color-border)]">
+          <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 className="text-xl font-bold text-content-primary">ChapterOps</h1>
+            <span className="text-sm text-content-secondary">{user?.full_name}</span>
+          </div>
+        </nav>
+        <PendingApprovalScreen
+          initialRequest={displayRequest}
+          onStartOver={handleStartOver}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white/5">

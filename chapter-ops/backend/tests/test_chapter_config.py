@@ -113,7 +113,8 @@ class TestUpdateOrgConfig:
         assert len(fields) == 2
         assert fields[0]["key"] == "line_number"
 
-    def test_president_cannot_update_org_config(self, client, app):
+    def test_president_can_update_org_config(self, client, app):
+        """Presidents are allowed to update org config (president+ or org admin)."""
         with app.app_context():
             chapter = _setup_chapter()
             _setup_president(chapter)
@@ -123,7 +124,9 @@ class TestUpdateOrgConfig:
         resp = client.put("/api/config/organization", json={
             "role_titles": {"president": "Basileus"},
         })
-        assert resp.status_code == 403
+        assert resp.status_code == 200
+        data = resp.get_json()["organization_config"]
+        assert data["role_titles"]["president"] == "Basileus"
 
     def test_invalid_role_key_rejected(self, client, app):
         with app.app_context():
@@ -218,7 +221,8 @@ class TestUpdateChapterConfig:
         assert settings["payment_deadline_day"] == 15
         assert settings["allow_payment_plans"] is False
 
-    def test_president_cannot_update_chapter_config(self, client, app):
+    def test_president_can_update_chapter_config(self, client, app):
+        """Presidents (treasurer+) can update non-permissions/branding chapter config fields."""
         with app.app_context():
             chapter = _setup_chapter()
             _setup_president(chapter)
@@ -228,7 +232,10 @@ class TestUpdateChapterConfig:
         resp = client.put("/api/config/chapter", json={
             "fee_types": [{"id": "test", "label": "Test", "default_amount": 10}],
         })
-        assert resp.status_code == 403
+        assert resp.status_code == 200
+        fee_types = resp.get_json()["chapter_config"]["fee_types"]
+        assert len(fee_types) == 1
+        assert fee_types[0]["id"] == "test"
 
     def test_negative_amount_rejected(self, client, app):
         with app.app_context():
@@ -272,6 +279,7 @@ class TestUpdateChapterConfig:
 
 class TestOnboardingSeeds:
     def test_org_creation_seeds_config(self, client, app):
+        app.config["FOUNDER_EMAIL"] = "founder@example.com"
         with app.app_context():
             user = make_user(email="founder@example.com")
             _db.session.commit()
@@ -288,24 +296,29 @@ class TestOnboardingSeeds:
         assert config["role_titles"]["president"] == "President"
         assert config["custom_member_fields"] == []
 
-    def test_chapter_creation_seeds_config(self, client, app):
-        with app.app_context():
-            user = make_user(email="founder@example.com")
-            org = make_organization(abbreviation="TC")
-            region = make_region(org)
-            org_id = org.id
-            region_id = region.id
-            _db.session.commit()
+    def test_chapter_creation_seeds_config(self, db_session):
+        from app.services.chapter_service import create_chapter_with_founder
 
-        _login(client, email="founder@example.com")
-        resp = client.post("/api/onboarding/chapters", json={
-            "organization_id": org_id,
-            "region_id": region_id,
-            "name": "Test Chapter",
-            "chapter_type": "graduate",
-        })
-        assert resp.status_code == 201
-        config = resp.get_json()["chapter"]["config"]
-        assert "fee_types" in config
-        assert config["fee_types"][0]["id"] == "dues"
-        assert config["settings"]["allow_payment_plans"] is True
+        user = make_user(email="founder@example.com")
+        org = make_organization(abbreviation="TC")
+        region = make_region(org)
+        _db.session.commit()
+
+        chapter, _, _ = create_chapter_with_founder(
+            requester=user,
+            organization=org,
+            region=region,
+            name="Test Chapter",
+            designation=None,
+            chapter_type="graduate",
+            city=None,
+            state=None,
+            country="United States",
+            timezone="America/New_York",
+            founder_role="president",
+        )
+        _db.session.commit()
+
+        assert "fee_types" in chapter.config
+        assert chapter.config["fee_types"][0]["id"] == "dues"
+        assert chapter.config["settings"]["allow_payment_plans"] is True

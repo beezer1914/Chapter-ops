@@ -89,6 +89,11 @@ class BaseConfig:
 
     # Ops Agent
     FOUNDER_EMAIL = os.environ.get("FOUNDER_EMAIL", "")
+    # Platform-admin identity — email of the user who can approve platform-scoped
+    # chapter requests. Defaults to FOUNDER_EMAIL if unset (the common case where
+    # delivery and login are the same address). Set this separately when the
+    # founder's login email differs from the digest delivery address.
+    PLATFORM_ADMIN_EMAIL = os.environ.get("PLATFORM_ADMIN_EMAIL", "")
     AGENT_ENABLED = os.environ.get("AGENT_ENABLED", "true").lower() not in ("false", "0", "no")
     AGENT_DIGEST_HOUR = int(os.environ.get("AGENT_DIGEST_HOUR", "7"))
     STATUSPAGE_API_KEY = os.environ.get("STATUSPAGE_API_KEY", "")

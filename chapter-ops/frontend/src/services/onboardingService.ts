@@ -4,9 +4,6 @@ import type {
   Region,
   CreateOrganizationRequest,
   CreateRegionRequest,
-  CreateChapterRequest,
-  Chapter,
-  ChapterMembership,
 } from "@/types";
 
 export async function fetchOrganizations(): Promise<Organization[]> {
@@ -39,15 +36,4 @@ export async function createRegion(data: CreateRegionRequest): Promise<Region> {
     data
   );
   return response.data.region;
-}
-
-export async function createChapter(
-  data: CreateChapterRequest
-): Promise<{ chapter: Chapter; membership: ChapterMembership }> {
-  const response = await api.post<{
-    success: boolean;
-    chapter: Chapter;
-    membership: ChapterMembership;
-  }>("/onboarding/chapters", data);
-  return { chapter: response.data.chapter, membership: response.data.membership };
 }

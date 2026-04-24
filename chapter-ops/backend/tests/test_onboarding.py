@@ -15,7 +15,7 @@ def login(client, email, password=VALID_PASSWORD):
 class TestListOrganizations:
     def test_list_orgs_authenticated(self, client, db_session):
         make_user(email="alice@example.com", password=VALID_PASSWORD)
-        make_organization(name="Alpha Phi Alpha", abbreviation="APA")
+        make_organization(name="Alpha Phi Alpha", abbreviation="APhi")
         make_organization(name="Delta Sigma Theta", abbreviation="DST", org_type="sorority")
         db_session.commit()
 
@@ -44,7 +44,8 @@ class TestListOrganizations:
 
 
 class TestCreateOrganization:
-    def test_create_org_success(self, client, db_session):
+    def test_create_org_success(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "alice@example.com"
         make_user(email="alice@example.com", password=VALID_PASSWORD)
         db_session.commit()
         login(client, "alice@example.com")
@@ -59,7 +60,8 @@ class TestCreateOrganization:
         assert data["success"] is True
         assert data["organization"]["abbreviation"] == "PBS"  # uppercased
 
-    def test_create_org_duplicate_abbreviation(self, client, db_session):
+    def test_create_org_duplicate_abbreviation(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "alice@example.com"
         make_user(email="alice@example.com", password=VALID_PASSWORD)
         make_organization(abbreviation="PBS")
         db_session.commit()
@@ -73,7 +75,8 @@ class TestCreateOrganization:
         assert resp.status_code == 409
         assert "already exists" in resp.get_json()["error"]
 
-    def test_create_org_invalid_type(self, client, db_session):
+    def test_create_org_invalid_type(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "alice@example.com"
         make_user(email="alice@example.com", password=VALID_PASSWORD)
         db_session.commit()
         login(client, "alice@example.com")
@@ -85,7 +88,8 @@ class TestCreateOrganization:
         })
         assert resp.status_code == 400
 
-    def test_create_org_missing_fields(self, client, db_session):
+    def test_create_org_missing_fields(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "alice@example.com"
         make_user(email="alice@example.com", password=VALID_PASSWORD)
         db_session.commit()
         login(client, "alice@example.com")
@@ -103,6 +107,35 @@ class TestCreateOrganization:
             "org_type": "fraternity",
         })
         assert resp.status_code == 401
+
+    def test_create_org_requires_founder(self, app, client, db_session):
+        """Non-founders cannot create organizations."""
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        make_user(email="nobody@example.com", password=VALID_PASSWORD)
+        db_session.commit()
+        login(client, "nobody@example.com")
+
+        resp = client.post("/api/onboarding/organizations", json={
+            "name": "Some Org",
+            "abbreviation": "SOM",
+            "org_type": "fraternity",
+        })
+        assert resp.status_code == 403
+        assert "Platform admin" in resp.get_json()["error"]
+
+    def test_create_org_allowed_for_founder(self, app, client, db_session):
+        """Platform founder can still create orgs."""
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        make_user(email="brandon@example.com", password=VALID_PASSWORD)
+        db_session.commit()
+        login(client, "brandon@example.com")
+
+        resp = client.post("/api/onboarding/organizations", json={
+            "name": "Delta Sigma Theta Sorority, Inc.",
+            "abbreviation": "DST",
+            "org_type": "sorority",
+        })
+        assert resp.status_code == 201
 
 
 class TestListRegions:
@@ -201,178 +234,87 @@ class TestCreateRegion:
         assert resp.status_code == 404
 
 
-class TestCreateChapter:
-    def test_create_chapter_success(self, client, db_session):
-        user = make_user(email="alice@example.com", password=VALID_PASSWORD)
-        org = make_organization()
-        region = make_region(org)
+class TestChapterRequestFullFlow:
+    """E2E: register → submit chapter request → approve → chapter exists and active_chapter set."""
+
+    def test_org_admin_approval_flow(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        # Org admin already exists
+        admin = make_user(email="admin@aka.org", password=VALID_PASSWORD)
+        org = make_organization(name="Alpha Kappa Alpha", abbreviation="AKA", org_type="sorority")
+        region = make_region(org, name="Unaffiliated")
+        from tests.conftest import make_org_membership
+        make_org_membership(admin, org, role="admin")
         db_session.commit()
-        login(client, "alice@example.com")
 
-        resp = client.post("/api/onboarding/chapters", json={
-            "organization_id": org.id,
-            "region_id": region.id,
-            "name": "Alpha Gamma Chapter",
-            "chapter_type": "undergraduate",
-            "city": "Atlanta",
-            "state": "Georgia",
-        })
-        assert resp.status_code == 201
-        data = resp.get_json()
-        assert data["success"] is True
-        assert data["chapter"]["name"] == "Alpha Gamma Chapter"
-        assert data["chapter"]["region_id"] == region.id
-        assert data["membership"]["role"] == "president"
-        assert data["membership"]["financial_status"] == "not_financial"
-
-        # User's active_chapter_id should be set
-        db_session.expire_all()
-        from app.models import User
-        updated_user = db_session.get(User, user.id)
-        assert updated_user.active_chapter_id == data["chapter"]["id"]
-
-    def test_create_chapter_invalid_org(self, client, db_session):
-        make_user(email="alice@example.com", password=VALID_PASSWORD)
-        db_session.commit()
-        login(client, "alice@example.com")
-
-        resp = client.post("/api/onboarding/chapters", json={
-            "organization_id": "nonexistent-uuid",
-            "region_id": "nonexistent-uuid",
-            "name": "Ghost Chapter",
-            "chapter_type": "undergraduate",
-        })
-        assert resp.status_code == 404
-
-    def test_create_chapter_invalid_region(self, client, db_session):
-        make_user(email="alice@example.com", password=VALID_PASSWORD)
-        org = make_organization()
-        db_session.commit()
-        login(client, "alice@example.com")
-
-        resp = client.post("/api/onboarding/chapters", json={
-            "organization_id": org.id,
-            "region_id": "nonexistent-uuid",
-            "name": "Ghost Chapter",
-            "chapter_type": "undergraduate",
-        })
-        assert resp.status_code == 404
-
-    def test_create_chapter_region_org_mismatch(self, client, db_session):
-        make_user(email="alice@example.com", password=VALID_PASSWORD)
-        org1 = make_organization(name="Org One", abbreviation="O1")
-        org2 = make_organization(name="Org Two", abbreviation="O2")
-        region = make_region(org2, name="Other Region")
-        db_session.commit()
-        login(client, "alice@example.com")
-
-        resp = client.post("/api/onboarding/chapters", json={
-            "organization_id": org1.id,
-            "region_id": region.id,
-            "name": "Mismatch Chapter",
-            "chapter_type": "undergraduate",
-        })
-        assert resp.status_code == 400
-        assert "does not belong" in resp.get_json()["error"]
-
-    def test_create_chapter_invalid_type(self, client, db_session):
-        make_user(email="alice@example.com", password=VALID_PASSWORD)
-        org = make_organization()
-        region = make_region(org)
-        db_session.commit()
-        login(client, "alice@example.com")
-
-        resp = client.post("/api/onboarding/chapters", json={
-            "organization_id": org.id,
-            "region_id": region.id,
-            "name": "Bad Type Chapter",
-            "chapter_type": "invalid",
-        })
-        assert resp.status_code == 400
-
-    def test_create_chapter_missing_fields(self, client, db_session):
-        make_user(email="alice@example.com", password=VALID_PASSWORD)
-        db_session.commit()
-        login(client, "alice@example.com")
-
-        resp = client.post("/api/onboarding/chapters", json={
-            "name": "No Org Chapter",
-        })
-        assert resp.status_code == 400
-
-    def test_create_chapter_defaults(self, client, db_session):
-        """Verify default values for country and timezone."""
-        make_user(email="alice@example.com", password=VALID_PASSWORD)
-        org = make_organization()
-        region = make_region(org)
-        db_session.commit()
-        login(client, "alice@example.com")
-
-        resp = client.post("/api/onboarding/chapters", json={
-            "organization_id": org.id,
-            "region_id": region.id,
-            "name": "Defaults Chapter",
-            "chapter_type": "graduate",
-        })
-        assert resp.status_code == 201
-        chapter = resp.get_json()["chapter"]
-        assert chapter["country"] == "United States"
-        assert chapter["timezone"] == "America/New_York"
-
-
-class TestFullOnboardingFlow:
-    """End-to-end: register → create org → create region → create chapter."""
-
-    def test_founder_flow(self, client, db_session):
-        # 1. Register without invite
+        # 1. Requester registers
         resp = client.post("/api/auth/register", json={
-            "email": "founder@example.com",
+            "email": "pres@example.com",
             "password": VALID_PASSWORD,
-            "first_name": "Jane",
+            "first_name": "New",
+            "last_name": "President",
+        })
+        assert resp.status_code == 201
+
+        # 2. Requester submits chapter request
+        resp = client.post("/api/onboarding/chapter-requests", json={
+            "organization_id": org.id,
+            "region_id": region.id,
+            "name": "Beta Zeta Chapter",
+            "chapter_type": "undergraduate",
+            "founder_role": "president",
+        })
+        assert resp.status_code == 201
+        request_id = resp.get_json()["request"]["id"]
+        assert resp.get_json()["request"]["approver_scope"] == "org_admin"
+
+        # 3. Requester checks /mine
+        resp = client.get("/api/onboarding/chapter-requests/mine")
+        assert resp.get_json()["request"]["status"] == "pending"
+
+        # 4. Switch to admin, approve
+        client.post("/api/auth/logout")
+        login(client, "admin@aka.org")
+        resp = client.post(f"/api/chapter-requests/{request_id}/approve")
+        assert resp.status_code == 200
+        chapter_id = resp.get_json()["chapter"]["id"]
+
+        # 5. Requester logs back in, should have active chapter
+        client.post("/api/auth/logout")
+        login(client, "pres@example.com")
+        resp = client.get("/api/auth/user")
+        assert resp.get_json()["user"]["active_chapter_id"] == chapter_id
+
+    def test_platform_admin_approval_flow(self, app, client, db_session):
+        """Grassroots path: unclaimed org, platform admin approves."""
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        make_user(email="brandon@example.com", password=VALID_PASSWORD)
+        org = make_organization(name="Zeta Phi Beta", abbreviation="ZPhiB", org_type="sorority")
+        region = make_region(org, name="Unaffiliated")
+        db_session.commit()
+
+        # Requester registers and submits
+        client.post("/api/auth/register", json={
+            "email": "zeta@example.com",
+            "password": VALID_PASSWORD,
+            "first_name": "Zeta",
             "last_name": "Founder",
         })
-        assert resp.status_code == 201
-        user_data = resp.get_json()["user"]
-        assert user_data["active_chapter_id"] is None
-
-        # 2. List orgs (should be empty)
-        resp = client.get("/api/onboarding/organizations")
-        assert resp.status_code == 200
-        assert len(resp.get_json()["organizations"]) == 0
-
-        # 3. Create org
-        resp = client.post("/api/onboarding/organizations", json={
-            "name": "Phi Beta Sigma Fraternity, Inc.",
-            "abbreviation": "PBS",
-            "org_type": "fraternity",
-        })
-        assert resp.status_code == 201
-        org_id = resp.get_json()["organization"]["id"]
-
-        # 4. Create region
-        resp = client.post("/api/onboarding/regions", json={
-            "organization_id": org_id,
-            "name": "Southern Region",
-        })
-        assert resp.status_code == 201
-        region_id = resp.get_json()["region"]["id"]
-
-        # 5. Create chapter
-        resp = client.post("/api/onboarding/chapters", json={
-            "organization_id": org_id,
-            "region_id": region_id,
-            "name": "Sigma Delta Sigma Chapter",
+        resp = client.post("/api/onboarding/chapter-requests", json={
+            "organization_id": org.id,
+            "region_id": region.id,
+            "name": "Pioneer Chapter",
             "chapter_type": "graduate",
-            "city": "Washington",
-            "state": "District of Columbia",
+            "founder_role": "president",
         })
         assert resp.status_code == 201
-        data = resp.get_json()
-        assert data["membership"]["role"] == "president"
+        request_id = resp.get_json()["request"]["id"]
+        assert resp.get_json()["request"]["approver_scope"] == "platform_admin"
 
-        # 6. Verify user now has active chapter
-        resp = client.get("/api/auth/user")
+        # Platform admin (founder) approves
+        client.post("/api/auth/logout")
+        login(client, "brandon@example.com")
+        resp = client.post(f"/api/chapter-requests/{request_id}/approve")
         assert resp.status_code == 200
-        user = resp.get_json()["user"]
-        assert user["active_chapter_id"] is not None
-        assert len(resp.get_json()["memberships"]) == 1
+
+

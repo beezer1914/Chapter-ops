@@ -8,16 +8,6 @@ vi.mock("@/services/onboardingService", () => ({
   createOrganization: vi.fn(),
   fetchRegions: vi.fn(),
   createRegion: vi.fn(),
-  createChapter: vi.fn(),
-}));
-
-// Mock the auth store
-vi.mock("@/stores/authStore", () => ({
-  useAuthStore: {
-    getState: () => ({
-      initializeAuth: vi.fn().mockResolvedValue(undefined),
-    }),
-  },
 }));
 
 import {
@@ -25,14 +15,12 @@ import {
   createOrganization,
   fetchRegions,
   createRegion,
-  createChapter,
 } from "@/services/onboardingService";
 
 const mockFetchOrgs = vi.mocked(fetchOrganizations);
 const mockCreateOrg = vi.mocked(createOrganization);
 const mockFetchRegions = vi.mocked(fetchRegions);
 const mockCreateRegion = vi.mocked(createRegion);
-const mockCreateChapter = vi.mocked(createChapter);
 
 const mockOrg: Organization = {
   id: "org-1",
@@ -205,28 +193,6 @@ describe("onboardingStore", () => {
       ).rejects.toBeDefined();
 
       expect(useOnboardingStore.getState().error).toBe("Region already exists.");
-    });
-  });
-
-  describe("submitChapter", () => {
-    it("creates chapter and advances to step 4", async () => {
-      // Set up selected region first
-      useOnboardingStore.getState().selectRegion(mockRegion);
-
-      mockCreateChapter.mockResolvedValue({
-        chapter: { id: "ch-1" } as never,
-        membership: { id: "m-1" } as never,
-      });
-
-      await useOnboardingStore.getState().submitChapter({
-        organization_id: "org-1",
-        region_id: "region-1",
-        name: "Alpha Chapter",
-        chapter_type: "undergraduate",
-      });
-
-      expect(useOnboardingStore.getState().currentStep).toBe(4);
-      expect(useOnboardingStore.getState().isLoading).toBe(false);
     });
   });
 
