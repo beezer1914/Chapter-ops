@@ -216,8 +216,7 @@ export default function ChapterStep() {
             ))}
           </select>
           <p className="mt-1 text-xs text-content-muted">
-            You're already set as an organization admin, so you can administer settings
-            regardless of the chapter role you pick here.
+            Your chapter role will apply once your request is approved.
           </p>
           {errors.founder_role && (
             <p className="mt-1 text-xs text-red-600">{errors.founder_role.message}</p>
