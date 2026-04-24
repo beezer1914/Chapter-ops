@@ -234,3 +234,87 @@ class TestCreateRegion:
         assert resp.status_code == 404
 
 
+class TestChapterRequestFullFlow:
+    """E2E: register → submit chapter request → approve → chapter exists and active_chapter set."""
+
+    def test_org_admin_approval_flow(self, app, client, db_session):
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        # Org admin already exists
+        admin = make_user(email="admin@aka.org", password=VALID_PASSWORD)
+        org = make_organization(name="Alpha Kappa Alpha", abbreviation="AKA", org_type="sorority")
+        region = make_region(org, name="Unaffiliated")
+        from tests.conftest import make_org_membership
+        make_org_membership(admin, org, role="admin")
+        db_session.commit()
+
+        # 1. Requester registers
+        resp = client.post("/api/auth/register", json={
+            "email": "pres@example.com",
+            "password": VALID_PASSWORD,
+            "first_name": "New",
+            "last_name": "President",
+        })
+        assert resp.status_code == 201
+
+        # 2. Requester submits chapter request
+        resp = client.post("/api/onboarding/chapter-requests", json={
+            "organization_id": org.id,
+            "region_id": region.id,
+            "name": "Beta Zeta Chapter",
+            "chapter_type": "undergraduate",
+            "founder_role": "president",
+        })
+        assert resp.status_code == 201
+        request_id = resp.get_json()["request"]["id"]
+        assert resp.get_json()["request"]["approver_scope"] == "org_admin"
+
+        # 3. Requester checks /mine
+        resp = client.get("/api/onboarding/chapter-requests/mine")
+        assert resp.get_json()["request"]["status"] == "pending"
+
+        # 4. Switch to admin, approve
+        client.post("/api/auth/logout")
+        login(client, "admin@aka.org")
+        resp = client.post(f"/api/chapter-requests/{request_id}/approve")
+        assert resp.status_code == 200
+        chapter_id = resp.get_json()["chapter"]["id"]
+
+        # 5. Requester logs back in, should have active chapter
+        client.post("/api/auth/logout")
+        login(client, "pres@example.com")
+        resp = client.get("/api/auth/user")
+        assert resp.get_json()["user"]["active_chapter_id"] == chapter_id
+
+    def test_platform_admin_approval_flow(self, app, client, db_session):
+        """Grassroots path: unclaimed org, platform admin approves."""
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        make_user(email="brandon@example.com", password=VALID_PASSWORD)
+        org = make_organization(name="Zeta Phi Beta", abbreviation="ZPhiB", org_type="sorority")
+        region = make_region(org, name="Unaffiliated")
+        db_session.commit()
+
+        # Requester registers and submits
+        client.post("/api/auth/register", json={
+            "email": "zeta@example.com",
+            "password": VALID_PASSWORD,
+            "first_name": "Zeta",
+            "last_name": "Founder",
+        })
+        resp = client.post("/api/onboarding/chapter-requests", json={
+            "organization_id": org.id,
+            "region_id": region.id,
+            "name": "Pioneer Chapter",
+            "chapter_type": "graduate",
+            "founder_role": "president",
+        })
+        assert resp.status_code == 201
+        request_id = resp.get_json()["request"]["id"]
+        assert resp.get_json()["request"]["approver_scope"] == "platform_admin"
+
+        # Platform admin (founder) approves
+        client.post("/api/auth/logout")
+        login(client, "brandon@example.com")
+        resp = client.post(f"/api/chapter-requests/{request_id}/approve")
+        assert resp.status_code == 200
+
+
