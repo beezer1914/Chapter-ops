@@ -39,6 +39,20 @@ class Payment(BaseModel):
         db.String(36), db.ForeignKey("payment_plan.id"), nullable=True
     )
 
+    # ── Polymorphic entity pointers (Deploy 1 — nullable during migration) ─
+    payer_type: Mapped[str | None] = mapped_column(
+        db.String(20), nullable=True
+    )  # "user" | "chapter"
+    payer_id: Mapped[str | None] = mapped_column(
+        db.String(36), nullable=True
+    )
+    receiver_type: Mapped[str | None] = mapped_column(
+        db.String(20), nullable=True
+    )  # "organization" | "region" | "chapter"
+    receiver_id: Mapped[str | None] = mapped_column(
+        db.String(36), nullable=True
+    )
+
     # Relationships
     user: Mapped["User"] = relationship("User", backref="payments")
     plan: Mapped["PaymentPlan | None"] = relationship("PaymentPlan", back_populates="payments")
@@ -54,5 +68,9 @@ class Payment(BaseModel):
             "notes": self.notes,
             "fee_type_id": self.fee_type_id,
             "plan_id": self.plan_id,
+            "payer_type": self.payer_type,
+            "payer_id": self.payer_id,
+            "receiver_type": self.receiver_type,
+            "receiver_id": self.receiver_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
