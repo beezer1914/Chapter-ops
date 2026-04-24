@@ -90,6 +90,21 @@ class TestApproveEndpoint:
         resp = client.post(f"/api/chapter-requests/{req.id}/approve")
         assert resp.status_code == 403
 
+    def test_platform_admin_cannot_approve_org_admin_scope(self, app, client, db_session):
+        """The founder is not a shortcut for org-admin authority on claimed orgs."""
+        app.config["FOUNDER_EMAIL"] = "brandon@example.com"
+        make_user(email="brandon@example.com", password=VALID_PASSWORD)
+        requester = make_user(email="new@example.com", password=VALID_PASSWORD)
+        org = make_organization()
+        region = make_region(org)
+        # NOTE: no make_org_membership — brandon has no org admin membership on this org.
+        req = _insert_request(db_session, requester, org, region, approver_scope="org_admin")
+        db_session.commit()
+
+        login(client, "brandon@example.com")
+        resp = client.post(f"/api/chapter-requests/{req.id}/approve")
+        assert resp.status_code == 403
+
     def test_random_user_cannot_approve(self, app, client, db_session):
         app.config["FOUNDER_EMAIL"] = "brandon@example.com"
         make_user(email="random@example.com", password=VALID_PASSWORD)
