@@ -13,8 +13,21 @@ from flask import current_app, jsonify
 from flask_login import current_user
 
 
+def _platform_admin_email() -> str:
+    """Return the normalized email of the platform admin (identity).
+
+    Prefers PLATFORM_ADMIN_EMAIL so identity can be separated from the
+    delivery address in FOUNDER_EMAIL. Falls back to FOUNDER_EMAIL for
+    backward compatibility (common case where login and delivery match).
+    """
+    explicit = (current_app.config.get("PLATFORM_ADMIN_EMAIL") or "").strip().lower()
+    if explicit:
+        return explicit
+    return (current_app.config.get("FOUNDER_EMAIL") or "").strip().lower()
+
+
 def is_founder() -> bool:
-    """Return True if the current user's email matches FOUNDER_EMAIL (case-insensitive).
+    """Return True if the current user's email matches the platform admin identity.
 
     Safe to call outside a Flask request context — returns False in that case
     rather than raising.
@@ -29,10 +42,10 @@ def is_founder() -> bool:
         return False
     if not authenticated:
         return False
-    founder_email = (current_app.config.get("FOUNDER_EMAIL") or "").strip().lower()
-    if not founder_email:
+    admin_email = _platform_admin_email()
+    if not admin_email:
         return False
-    return (current_user.email or "").strip().lower() == founder_email
+    return (current_user.email or "").strip().lower() == admin_email
 
 
 def require_founder(f):

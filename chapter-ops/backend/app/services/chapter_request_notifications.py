@@ -8,7 +8,6 @@ triggering route's transaction (caller wraps these in try/except).
 
 import logging
 
-from flask import current_app
 from sqlalchemy import func
 
 from app.extensions import db
@@ -20,6 +19,7 @@ from app.utils.email import (
     send_chapter_request_rejected_email,
     send_chapter_request_submitted_email,
 )
+from app.utils.platform_admin import _platform_admin_email
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +73,10 @@ def notify_approvers_of_new_request(req: ChapterRequest) -> None:
         )
         approver_emails = [(r[0], f"{r[1]} {r[2]}") for r in rows]
     elif req.approver_scope == "platform_admin":
-        founder_email = (current_app.config.get("FOUNDER_EMAIL") or "").strip()
-        if founder_email:
+        admin_email = _platform_admin_email()
+        if admin_email:
             founder = db.session.query(User).filter(
-                func.lower(User.email) == founder_email.lower()
+                func.lower(User.email) == admin_email
             ).first()
             if founder:
                 approver_emails = [(founder.email, founder.full_name)]

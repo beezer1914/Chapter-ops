@@ -62,3 +62,34 @@ class TestIsFounder:
         with client:
             client.get("/api/auth/user")
             assert is_founder() is True
+
+    def test_platform_admin_email_overrides_founder_email(self, app, client, db_session):
+        """When PLATFORM_ADMIN_EMAIL is set, it's used for identity — not FOUNDER_EMAIL."""
+        # Delivery address is different from login address
+        app.config["FOUNDER_EMAIL"] = "digest@example.com"
+        app.config["PLATFORM_ADMIN_EMAIL"] = "login@example.com"
+        make_user(email="login@example.com", password="Str0ng!Password1")
+        db_session.commit()
+
+        client.post("/api/auth/login", json={
+            "email": "login@example.com",
+            "password": "Str0ng!Password1",
+        })
+        with client:
+            client.get("/api/auth/user")
+            assert is_founder() is True
+
+    def test_founder_email_used_when_platform_admin_email_unset(self, app, client, db_session):
+        """With PLATFORM_ADMIN_EMAIL unset, FOUNDER_EMAIL remains the identity (back-compat)."""
+        app.config["PLATFORM_ADMIN_EMAIL"] = ""
+        app.config["FOUNDER_EMAIL"] = "single@example.com"
+        make_user(email="single@example.com", password="Str0ng!Password1")
+        db_session.commit()
+
+        client.post("/api/auth/login", json={
+            "email": "single@example.com",
+            "password": "Str0ng!Password1",
+        })
+        with client:
+            client.get("/api/auth/user")
+            assert is_founder() is True
