@@ -106,6 +106,7 @@ def create_app(config_class=None):
     from app.routes.workflows import workflows_bp
     from app.routes.stripe_connect import stripe_connect_bp
     from app.routes.stripe_connect_region import stripe_connect_region_bp
+    from app.routes.stripe_connect_org import stripe_connect_org_bp
     from app.routes.webhooks import webhooks_bp
     from app.routes.files import files_bp
     from app.routes.notifications import notifications_bp
@@ -140,6 +141,7 @@ def create_app(config_class=None):
     app.register_blueprint(workflows_bp)
     app.register_blueprint(stripe_connect_bp)
     app.register_blueprint(stripe_connect_region_bp)
+    app.register_blueprint(stripe_connect_org_bp)
     app.register_blueprint(webhooks_bp)
     app.register_blueprint(files_bp)
     app.register_blueprint(notifications_bp)
