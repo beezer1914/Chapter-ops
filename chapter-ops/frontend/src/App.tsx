@@ -31,6 +31,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import ConfirmEmailChange from "@/pages/ConfirmEmailChange";
 import StripeCallback from "@/pages/StripeCallback";
 import IHQDashboard from "@/pages/IHQDashboard";
+import PlatformDashboard from "@/pages/PlatformDashboard";
 import MyDues from "@/pages/MyDues";
 import TreasurerDues from "@/pages/TreasurerDues";
 import Analytics from "@/pages/Analytics";
@@ -256,6 +257,15 @@ export default function App() {
           element={
             <ProtectedRoute requireChapter={false}>
               <IHQDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/platform"
+          element={
+            <ProtectedRoute requireChapter={false} requirePlatformAdmin>
+              <PlatformDashboard />
             </ProtectedRoute>
           }
         />
