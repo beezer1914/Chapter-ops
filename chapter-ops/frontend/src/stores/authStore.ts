@@ -30,6 +30,22 @@ interface AuthState {
   clearError: () => void;
 }
 
+/**
+ * Reset every per-user Zustand store to its pristine state.
+ *
+ * Called on any auth identity transition — login, register, logout — so an
+ * in-memory cache from a prior session can never leak into a new one (the
+ * original report: a ZphiB region detail rendering under a PBS session).
+ */
+function resetPerUserStores() {
+  useTourStore.getState().clear();
+  useRegionStore.getState().reset();
+  useWorkflowStore.getState().reset();
+  useConfigStore.getState().reset();
+  useBrandingStore.getState().reset();
+  useNotificationStore.getState().reset();
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   memberships: [],
@@ -40,6 +56,11 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (data) => {
     set({ error: null });
+    // Clear any in-memory state from a prior session BEFORE the new user
+    // data arrives. Covers the case where someone logs in while already
+    // authenticated as another user (the frontend never explicitly logs
+    // them out; the backend rotates the session).
+    resetPerUserStores();
     try {
       const response = await api.post("/auth/login", data);
       // The backend rotates the session on login, invalidating the old CSRF
@@ -77,6 +98,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   register: async (data) => {
     set({ error: null });
+    // Same rationale as login: clear any prior-session cache before the new
+    // user is established.
+    resetPerUserStores();
     try {
       const response = await api.post("/auth/register", data);
       if (response.data.csrf_token) {
@@ -121,15 +145,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
         error: null,
       });
-      // Clear every per-user store so a re-login as a different user doesn't
-      // inherit the previous user's cached data (region selection, workflow
-      // template, chapter config/branding, notifications, tour state).
-      useTourStore.getState().clear();
-      useRegionStore.getState().reset();
-      useWorkflowStore.getState().reset();
-      useConfigStore.getState().reset();
-      useBrandingStore.getState().reset();
-      useNotificationStore.getState().reset();
+      resetPerUserStores();
     }
   },
 

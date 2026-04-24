@@ -4,8 +4,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 // the network call in these tests.
 vi.mock("@/lib/api", () => ({
   default: {
-    get: vi.fn(),
-    post: vi.fn().mockResolvedValue({ data: {} }),
+    get: vi.fn().mockResolvedValue({ data: { memberships: [], is_platform_admin: false, user: { active_chapter_id: null } } }),
+    post: vi.fn().mockResolvedValue({ data: { user: { id: "u1", active_chapter_id: null }, is_platform_admin: false } }),
   },
   setCsrfToken: vi.fn(),
 }));
@@ -117,5 +117,37 @@ describe("authStore.logout — cross-session cache cleanup", () => {
     const s = useNotificationStore.getState();
     expect(s.unreadCount).toBe(0);
     expect(s.isPolling).toBe(false);
+  });
+});
+
+describe("authStore.login — clears prior-session cache before new user loads", () => {
+  it("resets regionStore at start of login (covers re-login without explicit logout)", async () => {
+    // Simulate: user is already logged in as Someone Else, has a region
+    // selected, then logs in as a different user without logging out first.
+    useRegionStore.setState({
+      selectedRegion: {
+        region: {
+          id: "stale",
+          organization_id: "other-org",
+          name: "Unaffiliated",
+          abbreviation: null,
+          description: null,
+          active: true,
+          config: {},
+          created_at: "2026-01-01T00:00:00Z",
+        },
+        chapters: [],
+        members: [],
+        is_org_admin: false,
+        current_user_region_role: null,
+      },
+    });
+
+    await useAuthStore.getState().login({
+      email: "new@example.com",
+      password: "whatever",
+    });
+
+    expect(useRegionStore.getState().selectedRegion).toBeNull();
   });
 });
