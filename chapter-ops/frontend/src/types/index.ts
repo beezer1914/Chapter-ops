@@ -1742,3 +1742,4 @@ export interface UpdateIncidentStatusRequest {
 }
 
 export * from "./tour";
+export * from "./chapterRequest";
