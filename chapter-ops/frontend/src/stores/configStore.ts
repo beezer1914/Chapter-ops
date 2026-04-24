@@ -39,9 +39,10 @@ interface ConfigState {
   getCustomFields: () => CustomFieldDefinition[];
   getIntakeStages: () => IntakeStageConfig[];
   getIntakeDocTypes: () => IntakeDocTypeConfig[];
+  reset: () => void;
 }
 
-export const useConfigStore = create<ConfigState>((set, get) => ({
+const INITIAL_STATE = {
   orgConfig: {},
   chapterConfig: {},
   organizationId: null,
@@ -49,6 +50,10 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   organization: null,
   chapter: null,
   isLoaded: false,
+};
+
+export const useConfigStore = create<ConfigState>((set, get) => ({
+  ...INITIAL_STATE,
 
   loadConfig: async () => {
     try {
@@ -117,4 +122,6 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       { id: "other",            label: "Other" },
     ];
   },
+
+  reset: () => set(INITIAL_STATE),
 }));

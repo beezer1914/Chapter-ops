@@ -26,15 +26,20 @@ interface WorkflowState {
   loadInstanceDetail: (instanceId: string) => Promise<void>;
   clearSelected: () => void;
   clearError: () => void;
+  reset: () => void;
 }
 
-export const useWorkflowStore = create<WorkflowState>((set) => ({
+const INITIAL_STATE = {
   templates: [],
   selectedTemplate: null,
   instances: [],
   selectedInstance: null,
   loading: false,
   error: null,
+};
+
+export const useWorkflowStore = create<WorkflowState>((set) => ({
+  ...INITIAL_STATE,
 
   loadTemplates: async () => {
     set({ loading: true, error: null });
@@ -78,4 +83,5 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
 
   clearSelected: () => set({ selectedTemplate: null, selectedInstance: null }),
   clearError: () => set({ error: null }),
+  reset: () => set(INITIAL_STATE),
 }));

@@ -8,6 +8,10 @@ import type {
 } from "@/types";
 import { useConfigStore } from "@/stores/configStore";
 import { useTourStore } from "@/stores/tourStore";
+import { useRegionStore } from "@/stores/regionStore";
+import { useWorkflowStore } from "@/stores/workflowStore";
+import { useBrandingStore } from "@/stores/brandingStore";
+import { useNotificationStore } from "@/stores/notificationStore";
 
 interface AuthState {
   user: User | null;
@@ -117,7 +121,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
         error: null,
       });
+      // Clear every per-user store so a re-login as a different user doesn't
+      // inherit the previous user's cached data (region selection, workflow
+      // template, chapter config/branding, notifications, tour state).
       useTourStore.getState().clear();
+      useRegionStore.getState().reset();
+      useWorkflowStore.getState().reset();
+      useConfigStore.getState().reset();
+      useBrandingStore.getState().reset();
+      useNotificationStore.getState().reset();
     }
   },
 
@@ -153,6 +165,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       set((state) => ({
         user: state.user ? { ...state.user, active_chapter_id: chapterId } : null,
       }));
+      // Switching chapters can move the user across orgs. Drop per-chapter
+      // caches so the next page load fetches fresh data for the new tenant,
+      // then reload config (which reinitializes branding).
+      useRegionStore.getState().reset();
+      useWorkflowStore.getState().reset();
+      useConfigStore.getState().reset();
+      useBrandingStore.getState().reset();
+      useConfigStore.getState().loadConfig();
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { error?: string } } }).response?.data?.error ||

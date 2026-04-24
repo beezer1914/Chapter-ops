@@ -55,7 +55,16 @@ interface BrandingState {
 
   initializeBranding: (orgConfig: OrganizationConfig | undefined, chapterConfig: ChapterConfig | undefined) => void;
   applyBranding: () => void;
+  reset: () => void;
 }
+
+const INITIAL_BRANDING: ResolvedBranding = {
+  logo_url: null,
+  favicon_url: null,
+  colors: DEFAULT_COLORS,
+  typography: DEFAULT_TYPOGRAPHY,
+  custom_css: null,
+};
 
 // Convert a hex color to its RGB components so we can derive rgba() values.
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
@@ -69,13 +78,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 }
 
 export const useBrandingStore = create<BrandingState>((set, get) => ({
-  branding: {
-    logo_url: null,
-    favicon_url: null,
-    colors: DEFAULT_COLORS,
-    typography: DEFAULT_TYPOGRAPHY,
-    custom_css: null,
-  },
+  branding: INITIAL_BRANDING,
   colorScheme: "light",
   isInitialized: false,
 
@@ -168,6 +171,12 @@ export const useBrandingStore = create<BrandingState>((set, get) => ({
       updateFavicon(branding.favicon_url);
     }
   },
+
+  reset: () => set({
+    branding: INITIAL_BRANDING,
+    colorScheme: "light",
+    isInitialized: false,
+  }),
 }));
 
 /** Swap the CSS surface variables based on the chosen color scheme. */

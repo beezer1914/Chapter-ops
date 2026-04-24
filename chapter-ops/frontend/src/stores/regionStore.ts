@@ -14,15 +14,20 @@ interface RegionState {
   loadRegionDetail: (regionId: string) => Promise<void>;
   clearSelectedRegion: () => void;
   clearError: () => void;
+  reset: () => void;
 }
 
-export const useRegionStore = create<RegionState>((set) => ({
+const INITIAL_STATE = {
   regions: [],
   selectedRegion: null,
   isOrgAdmin: false,
   isRegionalDirector: false,
   loading: false,
   error: null,
+};
+
+export const useRegionStore = create<RegionState>((set) => ({
+  ...INITIAL_STATE,
 
   loadRegions: async () => {
     set({ loading: true, error: null });
@@ -51,4 +56,5 @@ export const useRegionStore = create<RegionState>((set) => ({
 
   clearSelectedRegion: () => set({ selectedRegion: null }),
   clearError: () => set({ error: null }),
+  reset: () => set(INITIAL_STATE),
 }));

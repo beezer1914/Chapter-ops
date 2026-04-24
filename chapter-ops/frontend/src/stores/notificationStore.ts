@@ -16,17 +16,22 @@ interface NotificationState {
   deleteNotification: (id: string) => Promise<void>;
   startPolling: () => void;
   stopPolling: () => void;
+  reset: () => void;
 }
 
 // Module-level variable for the polling interval
 let pollInterval: ReturnType<typeof setInterval> | null = null;
 
-export const useNotificationStore = create<NotificationState>((set, get) => ({
+const INITIAL_STATE = {
   notifications: [],
   unreadCount: 0,
   isLoading: false,
   isPolling: false,
   error: null,
+};
+
+export const useNotificationStore = create<NotificationState>((set, get) => ({
+  ...INITIAL_STATE,
 
   loadNotifications: async () => {
     set({ isLoading: true, error: null });
@@ -131,5 +136,14 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       pollInterval = null;
     }
     set({ isPolling: false });
+  },
+
+  reset: () => {
+    // Stop polling so a new user's session doesn't inherit the old timer.
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    set(INITIAL_STATE);
   },
 }));
