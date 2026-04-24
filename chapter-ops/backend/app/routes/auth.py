@@ -19,6 +19,7 @@ from app.models.workflow import WorkflowTemplate
 from app.models.auth_event import AuthEvent
 from app.services import notification_service, workflow_engine
 from app.utils.password import validate_password
+from app.utils.platform_admin import is_founder
 from app.utils.recaptcha import verify_recaptcha
 from app.utils.email import (
     send_password_reset_email,
@@ -89,6 +90,7 @@ def login():
     return jsonify({
         "success": True,
         "user": user.to_dict(),
+        "is_platform_admin": is_founder(),
         "csrf_token": generate_csrf(),
     }), 200
 
@@ -270,6 +272,7 @@ def register():
         return jsonify({
             "success": True,
             "user": user.to_dict(),
+            "is_platform_admin": is_founder(),
             "csrf_token": generate_csrf(),
         }), 201
 
@@ -299,6 +302,7 @@ def get_current_user():
 
     return jsonify({
         "user": current_user.to_dict(),
+        "is_platform_admin": is_founder(),
         "memberships": [m.to_dict() for m in memberships],
     }), 200
 

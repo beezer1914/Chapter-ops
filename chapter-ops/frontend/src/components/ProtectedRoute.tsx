@@ -7,10 +7,11 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   requireChapter?: boolean;
   module?: ModuleKey;
+  requirePlatformAdmin?: boolean;
 }
 
-export default function ProtectedRoute({ children, requireChapter = true, module }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuthStore();
+export default function ProtectedRoute({ children, requireChapter = true, module, requirePlatformAdmin }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, isPlatformAdmin, user } = useAuthStore();
   const canAccess = useModuleAccess();
 
   if (isLoading) {
@@ -30,6 +31,10 @@ export default function ProtectedRoute({ children, requireChapter = true, module
   }
 
   if (module && !canAccess(module)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (requirePlatformAdmin && !isPlatformAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 
