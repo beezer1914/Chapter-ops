@@ -417,3 +417,109 @@ def send_digest(subject: str, html_body: str) -> bool:
         logger.warning("FOUNDER_EMAIL not configured — digest not sent")
         return False
     return send_email(to=founder_email, subject=subject, html=html_body)
+
+
+# ---------------------------------------------------------------------------
+# Chapter request lifecycle emails
+# ---------------------------------------------------------------------------
+
+def send_chapter_request_submitted_email(
+    to: str,
+    approver_name: str,
+    requester_name: str,
+    requester_email: str,
+    chapter_name: str,
+    organization_name: str,
+    region_name: str,
+) -> bool:
+    """Notify an approver that a new chapter request is waiting."""
+    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
+    body = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>New chapter request</h2>
+        <p>Hi {_h(approver_name)},</p>
+        <p>{_h(requester_name)} ({_h(requester_email)}) has requested to create a new chapter:</p>
+        <ul style="line-height:1.8;">
+            <li><strong>Chapter:</strong> {_h(chapter_name)}</li>
+            <li><strong>Organization:</strong> {_h(organization_name)}</li>
+            <li><strong>Region:</strong> {_h(region_name)}</li>
+        </ul>
+        <p>
+            <a href="{frontend_url}/ihq"
+               style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+                Review in IHQ Dashboard
+            </a>
+        </p>
+        <p style="color:#6b7280;font-size:14px;">
+            Review the request and approve or reject it from the Pending Chapter Requests section.
+        </p>
+    </div>
+    """
+    return send_email(
+        to=to,
+        subject=f"New chapter request: {chapter_name} ({organization_name})",
+        html=body,
+    )
+
+
+def send_chapter_request_approved_email(
+    to: str,
+    requester_name: str,
+    chapter_name: str,
+) -> bool:
+    """Notify the requester that their chapter was approved."""
+    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
+    body = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Your chapter has been approved</h2>
+        <p>Hi {_h(requester_name)},</p>
+        <p>Great news — <strong>{_h(chapter_name)}</strong> has been approved and your chapter is now live on ChapterOps.</p>
+        <p>
+            <a href="{frontend_url}/dashboard"
+               style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+                Go to your dashboard
+            </a>
+        </p>
+        <p style="color:#6b7280;font-size:14px;">
+            Next steps: invite your officers, configure your fee types, and start tracking dues.
+        </p>
+    </div>
+    """
+    return send_email(
+        to=to,
+        subject="Your chapter has been approved — welcome to ChapterOps",
+        html=body,
+    )
+
+
+def send_chapter_request_rejected_email(
+    to: str,
+    requester_name: str,
+    chapter_name: str,
+    reason: str,
+) -> bool:
+    """Notify the requester that their chapter request was rejected."""
+    frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
+    body = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Your chapter request was not approved</h2>
+        <p>Hi {_h(requester_name)},</p>
+        <p>Your request to create <strong>{_h(chapter_name)}</strong> on ChapterOps was not approved.</p>
+        <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;margin:20px 0;">
+            <strong>Reason:</strong><br>
+            {_h(reason)}
+        </div>
+        <p>You can submit a new request anytime if the situation changes.</p>
+        <p>
+            <a href="{frontend_url}/onboarding"
+               style="display:inline-block;padding:12px 24px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+                Start a new request
+            </a>
+        </p>
+    </div>
+    """
+    return send_email(
+        to=to,
+        subject="Your chapter request was not approved",
+        html=body,
+    )

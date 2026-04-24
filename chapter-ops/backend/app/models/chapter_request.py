@@ -28,6 +28,7 @@ class ChapterRequest(BaseModel):
             "organization_id", "region_id", "name_normalized",
             unique=True,
             postgresql_where=db.text("status = 'pending'"),
+            sqlite_where=db.text("status = 'pending'"),
         ),
         db.Index("ix_chapter_request_requester_status", "requester_user_id", "status"),
         db.Index("ix_chapter_request_approver_status", "approver_scope", "status"),

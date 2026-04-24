@@ -325,3 +325,40 @@ def approve_chapter_request(request_id: str):
         "chapter": chapter.to_dict(),
         "request": req.to_dict(),
     }), 200
+
+
+@chapter_requests_bp.route("/api/chapter-requests/<request_id>/reject", methods=["POST"])
+@login_required
+def reject_chapter_request(request_id: str):
+    """Reject a pending chapter request with a required reason."""
+    data = request.get_json() or {}
+    reason = (data.get("reason") or "").strip()
+    if not reason:
+        return jsonify({"error": "Rejection reason is required."}), 400
+
+    req = (
+        db.session.query(ChapterRequest)
+        .filter_by(id=request_id)
+        .with_for_update()
+        .first()
+    )
+    if not req:
+        return jsonify({"error": "Request not found."}), 404
+    if req.status != "pending":
+        return jsonify({"error": f"Request is already {req.status}."}), 409
+    if not _caller_can_act_on(req):
+        return jsonify({"error": "You are not authorized to reject this request."}), 403
+
+    req.status = "rejected"
+    req.rejected_reason = reason
+    req.approved_by_user_id = current_user.id
+    req.acted_at = datetime.now(timezone.utc)
+    db.session.commit()
+
+    try:
+        from app.services.chapter_request_notifications import notify_requester_rejected
+        notify_requester_rejected(req)
+    except Exception:
+        logger.exception("Failed to send rejection notification for %s", req.id)
+
+    return jsonify({"success": True, "request": req.to_dict()}), 200
