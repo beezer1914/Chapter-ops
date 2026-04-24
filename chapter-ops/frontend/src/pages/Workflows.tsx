@@ -115,12 +115,18 @@ export default function Workflows() {
   }, [instanceParam, loadInstanceDetail, setSearchParams]);
 
   useEffect(() => {
+    // Clear any stale selection carried over from a prior chapter/org session.
+    // workflowStore is module-global, so selectedTemplate/selectedInstance
+    // survives unmount; without this clear, a user who selected a template
+    // under Org A and then re-logged under Org B (or switched active chapter)
+    // would see Org A's template detail on first render of this page.
+    clearSelected();
     if (activeTab === "templates") {
       loadTemplates();
     } else {
       loadInstances();
     }
-  }, [activeTab, loadTemplates, loadInstances]);
+  }, [activeTab, loadTemplates, loadInstances, clearSelected]);
 
   function handleTabSwitch(tab: "templates" | "activity") {
     clearSelected();
