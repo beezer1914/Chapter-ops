@@ -965,6 +965,19 @@ def register_commands(app):
         # Re-fetch demo users now that chapters are gone — needed for the
         # double-gated user deletion loop below.
         demo_users = User.query.filter(User.email.like(f"{DEMO_EMAIL_PREFIX}%")).all()
+        demo_user_ids = [u.id for u in demo_users]
+
+        # Delete UserTourState rows for demo users before the User delete.
+        # The DB has ondelete=CASCADE on user_tour_state.user_id, but the
+        # SQLAlchemy relationship on User lacks passive_deletes=True, so the
+        # ORM tries to SET NULL on the FK first — which fails because the
+        # column is NOT NULL. Pre-deleting the rows avoids the conflict.
+        if demo_user_ids:
+            from app.models.user_tour_state import UserTourState
+            UserTourState.query.filter(
+                UserTourState.user_id.in_(demo_user_ids)
+            ).delete(synchronize_session=False)
+            db.session.flush()
 
         db.session.delete(org)
 
