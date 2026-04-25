@@ -468,6 +468,7 @@ def register_commands(app):
         org = _seed_organization()
         users_by_slug = _seed_users()
         regions_by_name = _seed_regions(org)
+        _seed_region_memberships(users_by_slug, regions_by_name)
         chapters_by_slug = _seed_chapters(org, regions_by_name)
         _seed_chapter_memberships(users_by_slug, chapters_by_slug)
         _seed_org_membership(org, users_by_slug)
