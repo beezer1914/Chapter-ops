@@ -448,3 +448,55 @@ def _seed_financial_payments(chapters_by_slug, users_by_slug):
                 dues_service.apply_payment(chapter, m.user_id, ft["id"], amount)
 
     click.echo(f"  Payments: {payments_created} demo payments recorded")
+
+
+# ── CLI commands ──────────────────────────────────────────────────────────────
+
+
+def register_commands(app):
+    """Register seed-demo-org and teardown-demo-org with the Flask app."""
+
+    @app.cli.command("seed-demo-org")
+    def seed_demo_org():
+        """Seed the persistent DGLO demo organization (idempotent).
+
+        \b
+        Usage:
+            flask seed-demo-org
+        """
+        click.echo(f"Seeding {DEMO_ORG_NAME} ({DEMO_ORG_ABBREV})...")
+        org = _seed_organization()
+        users_by_slug = _seed_users()
+        regions_by_name = _seed_regions(org)
+        chapters_by_slug = _seed_chapters(org, regions_by_name)
+        _seed_chapter_memberships(users_by_slug, chapters_by_slug)
+        _seed_org_membership(org, users_by_slug)
+        _seed_periods_and_dues(chapters_by_slug)
+        _seed_financial_payments(chapters_by_slug, users_by_slug)
+
+        db.session.commit()
+
+        click.echo("")
+        click.echo("[OK] Demo organization seeded.")
+        click.echo("")
+        click.echo(f"  Organization:  {DEMO_ORG_NAME} ({DEMO_ORG_ABBREV})")
+        click.echo(f"  Regions:       {len(DEMO_REGIONS)}")
+        click.echo(f"  Chapters:      {len(DEMO_CHAPTERS)}")
+        click.echo(f"  Users:         {len(DEMO_USERS)}")
+        click.echo("")
+        click.echo("  Login URL:     https://chapterops.bluecolumnsystems.com/login")
+        click.echo(f"  Password:      {DEMO_PASSWORD}  (same for all demo users)")
+        click.echo("")
+        click.echo("  Quick-pick accounts:")
+        click.echo(f"    IHQ admin:               {email_for('ihq')}")
+        click.echo(f"    Eastern Reg. Director:   {email_for('east-rd')}")
+        click.echo(f"    Eastern Reg. Treasurer:  {email_for('east-rt')}")
+        click.echo(f"    Western Reg. Director:   {email_for('west-rd')}")
+        click.echo(f"    Western Reg. Treasurer:  {email_for('west-rt')}")
+        click.echo(f"    Collegiate president:    {email_for('alpha-pres')}")
+        click.echo(f"    Collegiate treasurer:    {email_for('alpha-treas')}")
+        click.echo(f"    Collegiate member:       {email_for('alpha-m1')}")
+        click.echo(f"    Graduate member:         {email_for('east-grad-m1')}")
+        click.echo("")
+        click.echo("  Note: Stripe is stubbed for all demo chapters — Pay Now buttons appear")
+        click.echo("  but actual checkout will fail at the Stripe API.")

@@ -315,6 +315,9 @@ def create_app(config_class=None):
             f"failed: {summary['failed']}, skipped: {summary['skipped']}"
         )
 
+    from app.cli import seed_demo
+    seed_demo.register_commands(app)
+
     # ── Health check ───────────────────────────────────────────────────
     @app.route("/health")
     def health():
