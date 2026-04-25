@@ -235,3 +235,41 @@ def _seed_region_memberships(users_by_slug, regions_by_name):
             skipped_count += 1
 
     _log_phase("RegionMemberships", created_count, skipped_count)
+
+
+def _seed_chapters(org, regions_by_name):
+    """Create or find every chapter with stubbed Stripe and seeded fee types."""
+    from app.models import Chapter
+
+    chapters_by_slug = {}
+    created_count = 0
+    skipped_count = 0
+
+    for cfg in DEMO_CHAPTERS:
+        region = regions_by_name[cfg["region"]]
+        chapter, created = _find_or_create(
+            Chapter,
+            lookup={"organization_id": org.id, "name": cfg["name"]},
+            defaults={
+                "region_id": region.id,
+                "chapter_type": cfg["chapter_type"],
+                "active": True,
+                "stripe_account_id": f"acct_demo_{cfg['slug']}",
+                "stripe_onboarding_complete": True,
+                "subscription_tier": "starter",
+                "config": {"fee_types": DEMO_FEE_TYPES},
+            },
+        )
+        if created:
+            created_count += 1
+        else:
+            # Ensure existing chapter has fee types (in case seed evolved)
+            cfg_dict = dict(chapter.config or {})
+            if not cfg_dict.get("fee_types"):
+                cfg_dict["fee_types"] = DEMO_FEE_TYPES
+                chapter.config = cfg_dict
+            skipped_count += 1
+        chapters_by_slug[cfg["slug"]] = chapter
+
+    _log_phase("Chapters", created_count, skipped_count)
+    return chapters_by_slug
