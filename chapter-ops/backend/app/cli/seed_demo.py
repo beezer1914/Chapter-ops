@@ -273,3 +273,76 @@ def _seed_chapters(org, regions_by_name):
 
     _log_phase("Chapters", created_count, skipped_count)
     return chapters_by_slug
+
+
+def _seed_chapter_memberships(users_by_slug, chapters_by_slug):
+    """
+    Create ChapterMembership rows.
+
+    Most users have a single chapter anchor from DEMO_USERS. Regional officers
+    and the IHQ admin also get a second chapter membership in their graduate
+    chapter via DUAL_ANCHORS.
+    """
+    from app.models import ChapterMembership
+
+    created_count = 0
+    skipped_count = 0
+
+    # First pass: primary anchor from DEMO_USERS
+    for slug, _first, _last, anchor in DEMO_USERS:
+        if anchor[0] != "chapter_role":
+            continue
+        _, chapter_slug, role = anchor
+        chapter = chapters_by_slug[chapter_slug]
+        user = users_by_slug[slug]
+        member_type = "graduate" if chapter.chapter_type == "graduate" else "collegiate"
+
+        _, created = _find_or_create(
+            ChapterMembership,
+            lookup={"user_id": user.id, "chapter_id": chapter.id},
+            defaults={
+                "role": role,
+                "financial_status": "not_financial",  # corrected later by apply_payment phase
+                "member_type": member_type,
+                "active": True,
+            },
+        )
+        if created:
+            created_count += 1
+        else:
+            skipped_count += 1
+
+    # Second pass: dual anchors (regional officers + IHQ admin → grad chapter)
+    for slug, (chapter_slug, role, member_type) in DUAL_ANCHORS.items():
+        chapter = chapters_by_slug[chapter_slug]
+        user = users_by_slug[slug]
+
+        _, created = _find_or_create(
+            ChapterMembership,
+            lookup={"user_id": user.id, "chapter_id": chapter.id},
+            defaults={
+                "role": role,
+                "financial_status": "not_financial",
+                "member_type": member_type,
+                "active": True,
+            },
+        )
+        if created:
+            created_count += 1
+        else:
+            skipped_count += 1
+
+    _log_phase("ChapterMemberships", created_count, skipped_count)
+
+
+def _seed_org_membership(org, users_by_slug):
+    """Mark the IHQ admin user as an org admin on DGLO."""
+    from app.models import OrganizationMembership
+
+    user = users_by_slug["ihq"]
+    _, created = _find_or_create(
+        OrganizationMembership,
+        lookup={"user_id": user.id, "organization_id": org.id},
+        defaults={"role": "admin", "active": True},
+    )
+    _log_phase("OrgMemberships", 1 if created else 0, 0 if created else 1)
