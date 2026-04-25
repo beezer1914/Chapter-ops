@@ -346,3 +346,47 @@ def _seed_org_membership(org, users_by_slug):
         defaults={"role": "admin", "active": True},
     )
     _log_phase("OrgMemberships", 1 if created else 0, 0 if created else 1)
+
+
+def _seed_periods_and_dues(chapters_by_slug):
+    """
+    Create one active 'Spring 2026' period per chapter and seed dues rows
+    for every member × fee type via the existing dues_service.
+    """
+    from app.models import ChapterPeriod
+    from app.services import dues_service
+
+    today = date.today()
+    period_start = today - timedelta(days=30)
+    period_end = today + timedelta(days=120)
+
+    created_periods = 0
+    skipped_periods = 0
+    total_dues_rows_created = 0
+
+    for chapter in chapters_by_slug.values():
+        period, created = _find_or_create(
+            ChapterPeriod,
+            lookup={"chapter_id": chapter.id, "name": "Spring 2026"},
+            defaults={
+                "period_type": "semester",
+                "start_date": period_start,
+                "end_date": period_end,
+                "is_active": True,
+            },
+        )
+        if created:
+            created_periods += 1
+        else:
+            skipped_periods += 1
+            # Make sure a re-seed leaves it active even if previous run set otherwise
+            period.is_active = True
+
+        # seed_period_dues is idempotent and returns the new row count
+        # Need to flush so the chapter members are visible to the query inside
+        db.session.flush()
+        new_rows = dues_service.seed_period_dues(chapter, period)
+        total_dues_rows_created += new_rows
+
+    _log_phase("ChapterPeriods", created_periods, skipped_periods)
+    click.echo(f"  ChapterPeriodDues: {total_dues_rows_created} new rows seeded")
