@@ -24,6 +24,37 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# ── Sentry error tracking ────────────────────────────────────────────────────
+# Initialized at module import (before create_app runs) so the Flask integration
+# captures errors during app startup too. Skipped entirely when SENTRY_DSN is
+# not set so local dev doesn't accidentally ship events.
+_SENTRY_DSN = os.environ.get("SENTRY_DSN")
+if _SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.flask import FlaskIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+    sentry_sdk.init(
+        dsn=_SENTRY_DSN,
+        integrations=[FlaskIntegration(), SqlalchemyIntegration()],
+        environment=os.environ.get("SENTRY_ENVIRONMENT", "production"),
+        release=os.environ.get("RENDER_GIT_COMMIT") or os.environ.get("SENTRY_RELEASE"),
+        # Don't capture request bodies, cookies, or user data — ChapterOps
+        # handles real PII (emails, dues, intake records). Override Sentry's
+        # default suggestion of True.
+        send_default_pii=False,
+        # Sample 5% of transactions for performance monitoring. Set to 0 to
+        # disable performance monitoring entirely if quota becomes a concern.
+        traces_sample_rate=0.05,
+        # Don't include local variables in stack traces — they often contain
+        # PII (User instances, ChapterMembership rows with member_type, etc.)
+        include_local_variables=False,
+    )
+    logger.info("Sentry error tracking initialized")
+else:
+    logger.info("Sentry not configured (SENTRY_DSN unset) — error tracking disabled")
+
+
 def create_app(config_class=None):
     """
     Application factory.

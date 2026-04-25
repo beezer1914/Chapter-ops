@@ -28,6 +28,9 @@ boto3==1.35.86
 # Scheduler (ops agent)
 APScheduler==3.10.4
 
+# Error tracking
+sentry-sdk[flask]==2.18.0
+
 # Utilities
 python-dotenv==1.0.1
 marshmallow==3.23.2
