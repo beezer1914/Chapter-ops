@@ -390,3 +390,61 @@ def _seed_periods_and_dues(chapters_by_slug):
 
     _log_phase("ChapterPeriods", created_periods, skipped_periods)
     click.echo(f"  ChapterPeriodDues: {total_dues_rows_created} new rows seeded")
+
+
+def _seed_financial_payments(chapters_by_slug, users_by_slug):
+    """
+    For ~70% of members in each chapter, record a manual payment for each fee type
+    so they appear as Financial. Uses dues_service.apply_payment to update the
+    dues rows; creates a Payment record for the audit trail.
+
+    Pattern: in each chapter, the first ceil(members * 0.7) members are marked paid.
+    """
+    import math
+    from app.models import ChapterMembership, Payment
+    from app.services import dues_service
+
+    payments_created = 0
+
+    for chapter in chapters_by_slug.values():
+        # Sort by user_id for deterministic ordering across re-runs
+        memberships = (
+            ChapterMembership.query
+            .filter_by(chapter_id=chapter.id, active=True)
+            .order_by(ChapterMembership.user_id)
+            .all()
+        )
+        n_paid = math.ceil(len(memberships) * 0.7)
+        paid_memberships = memberships[:n_paid]
+
+        for m in paid_memberships:
+            for ft in DEMO_FEE_TYPES:
+                amount = Decimal(str(ft["default_amount"]))
+
+                # Idempotency: one payment per (chapter, user, fee_type_id).
+                # Using fee_type_id + the "Demo seed:" notes prefix avoids
+                # double-recording on re-runs. notes is String(500) and queryable.
+                existing = Payment.query.filter_by(
+                    chapter_id=chapter.id,
+                    user_id=m.user_id,
+                    fee_type_id=ft["id"],
+                ).first()
+                if existing:
+                    continue
+
+                payment = Payment(
+                    chapter_id=chapter.id,
+                    user_id=m.user_id,
+                    amount=amount,
+                    payment_type="one-time",
+                    method="manual",
+                    fee_type_id=ft["id"],
+                    notes=f"Demo seed: {ft['label']}",
+                )
+                db.session.add(payment)
+                payments_created += 1
+
+                # Update dues row + recompute financial status
+                dues_service.apply_payment(chapter, m.user_id, ft["id"], amount)
+
+    click.echo(f"  Payments: {payments_created} demo payments recorded")
