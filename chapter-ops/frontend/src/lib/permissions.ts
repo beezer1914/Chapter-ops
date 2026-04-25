@@ -31,7 +31,7 @@ export const DEFAULT_PERMISSIONS: Record<ModuleKey, MemberRole> = {
   invites:        "secretary",
   intake:         "secretary",
   workflows:      "secretary",
-  invoices:       "treasurer",
+  invoices:       "member",
   donations:      "treasurer",
 };
 

@@ -344,16 +344,13 @@ def send_invoice(invoice_id):
 
     # Send in-app notification
     try:
-        from app.models import Notification
-        notif = Notification(
-            user_id=invoice.billed_user_id,
+        notification_service.create_notification(
             chapter_id=chapter.id,
+            notification_type="invoice",
             title="New Invoice",
             message=f"You have a new invoice: {invoice.description} — ${invoice.amount} due {invoice.due_date.strftime('%b %d, %Y')}",
-            notification_type="invoice",
+            recipient_id=invoice.billed_user_id,
         )
-        db.session.add(notif)
-        db.session.commit()
     except Exception as e:
         current_app.logger.error(f"Failed to send invoice notification: {e}")
 
@@ -387,6 +384,19 @@ def bulk_send_invoices():
         inv.sent_at = now
 
     db.session.commit()
+
+    # Notify each billed member
+    for inv in invoices:
+        try:
+            notification_service.create_notification(
+                chapter_id=chapter.id,
+                notification_type="invoice",
+                title="New Invoice",
+                message=f"You have a new invoice: {inv.description} — ${inv.amount} due {inv.due_date.strftime('%b %d, %Y')}",
+                recipient_id=inv.billed_user_id,
+            )
+        except Exception as e:
+            current_app.logger.error(f"Failed to send invoice notification for {inv.id}: {e}")
 
     return jsonify({
         "message": f"Sent {len(invoices)} invoices.",
