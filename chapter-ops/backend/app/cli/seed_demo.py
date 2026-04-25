@@ -347,6 +347,38 @@ def _seed_org_membership(org, users_by_slug):
     _log_phase("OrgMemberships", 1 if created else 0, 0 if created else 1)
 
 
+def _set_active_chapters(users_by_slug):
+    """
+    Set each demo user's active_chapter_id so they don't get bounced to the
+    onboarding wizard on first login. Defaults to the first ChapterMembership
+    for that user (deterministic via order of insertion).
+    """
+    from app.models import ChapterMembership
+
+    updated = 0
+    skipped = 0
+    for user in users_by_slug.values():
+        if user.active_chapter_id:
+            skipped += 1
+            continue
+        membership = (
+            ChapterMembership.query
+            .filter_by(user_id=user.id, active=True)
+            .order_by(ChapterMembership.created_at)
+            .first()
+        )
+        if membership:
+            user.active_chapter_id = membership.chapter_id
+            updated += 1
+        else:
+            # Org admin with no chapter membership at all — leave null and let
+            # them go through onboarding (shouldn't happen for our seed since
+            # the IHQ admin has a dual-anchor ChapterMembership in Eastern Grad)
+            skipped += 1
+
+    _log_phase("ActiveChapter", updated, skipped)
+
+
 def _seed_periods_and_dues(chapters_by_slug):
     """
     Create one active 'Spring 2026' period per chapter and seed dues rows
@@ -666,6 +698,7 @@ def register_commands(app):
         chapters_by_slug = _seed_chapters(org, regions_by_name)
         _seed_chapter_memberships(users_by_slug, chapters_by_slug)
         _seed_org_membership(org, users_by_slug)
+        _set_active_chapters(users_by_slug)
         _seed_periods_and_dues(chapters_by_slug)
         _seed_financial_payments(chapters_by_slug, users_by_slug)
 
