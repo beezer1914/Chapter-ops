@@ -12,7 +12,6 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 import click
-from flask import current_app
 
 from app.extensions import db
 
@@ -450,6 +449,201 @@ def _seed_financial_payments(chapters_by_slug, users_by_slug):
     click.echo(f"  Payments: {payments_created} demo payments recorded")
 
 
+# ── Teardown ──────────────────────────────────────────────────────────────────
+
+
+def _count_for_teardown(org):
+    """Return a dict of table name → row count that would be deleted."""
+    from app.models import (
+        Announcement,
+        Chapter,
+        ChapterMembership,
+        ChapterMilestone,
+        ChapterPeriod,
+        ChapterRequest,
+        ChapterTransferRequest,
+        Donation,
+        Document,
+        Event,
+        EventAttendance,
+        Expense,
+        Incident,
+        IncidentAttachment,
+        IncidentStatusEvent,
+        IntakeCandidate,
+        IntakeDocument,
+        InviteCode,
+        Invoice,
+        KnowledgeArticle,
+        OrganizationMembership,
+        Payment,
+        PaymentPlan,
+        Region,
+        RegionMembership,
+        User,
+        Notification,
+        WorkflowInstance,
+        WorkflowTemplate,
+    )
+    from app.models.chapter_period_dues import ChapterPeriodDues
+
+    chapter_ids = [c.id for c in Chapter.query.filter_by(organization_id=org.id).all()]
+    region_ids = [r.id for r in Region.query.filter_by(organization_id=org.id).all()]
+
+    counts = {
+        "Organizations": 1,
+        "Regions": len(region_ids),
+        "Chapters": len(chapter_ids),
+    }
+
+    if chapter_ids:
+        counts["ChapterMemberships"] = ChapterMembership.query.filter(
+            ChapterMembership.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["ChapterPeriods"] = ChapterPeriod.query.filter(
+            ChapterPeriod.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["ChapterPeriodDues"] = ChapterPeriodDues.query.filter(
+            ChapterPeriodDues.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["Payments"] = Payment.query.filter(
+            Payment.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["Notifications"] = Notification.query.filter(
+            Notification.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["PaymentPlans"] = PaymentPlan.query.filter(
+            PaymentPlan.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["InviteCodes"] = InviteCode.query.filter(
+            InviteCode.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["Announcements"] = Announcement.query.filter(
+            Announcement.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["EventAttendances"] = EventAttendance.query.filter(
+            EventAttendance.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["Events"] = Event.query.filter(
+            Event.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["Expenses"] = Expense.query.filter(
+            Expense.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["Donations"] = Donation.query.filter(
+            Donation.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["Documents"] = Document.query.filter(
+            Document.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["IntakeDocuments"] = IntakeDocument.query.filter(
+            IntakeDocument.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["IntakeCandidates"] = IntakeCandidate.query.filter(
+            IntakeCandidate.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["ChapterMilestones"] = ChapterMilestone.query.filter(
+            ChapterMilestone.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["WorkflowInstances"] = WorkflowInstance.query.filter(
+            WorkflowInstance.chapter_id.in_(chapter_ids)
+        ).count()
+        # ChapterTransferRequest uses from_chapter_id / to_chapter_id (no single chapter_id)
+        counts["ChapterTransferRequests"] = ChapterTransferRequest.query.filter(
+            db.or_(
+                ChapterTransferRequest.from_chapter_id.in_(chapter_ids),
+                ChapterTransferRequest.to_chapter_id.in_(chapter_ids),
+            )
+        ).count()
+        # Invoices can reference chapter_id or billed_chapter_id
+        counts["Invoices"] = Invoice.query.filter(
+            db.or_(
+                Invoice.chapter_id.in_(chapter_ids),
+                Invoice.billed_chapter_id.in_(chapter_ids),
+            )
+        ).count()
+        # Incidents reference chapter_id, region_id, and organization_id
+        incident_ids = [
+            i.id for i in Incident.query.filter(
+                Incident.chapter_id.in_(chapter_ids)
+            ).all()
+        ]
+        counts["Incidents"] = len(incident_ids)
+        counts["IncidentAttachments"] = IncidentAttachment.query.filter(
+            IncidentAttachment.incident_id.in_(incident_ids)
+        ).count() if incident_ids else 0
+        counts["IncidentStatusEvents"] = IncidentStatusEvent.query.filter(
+            IncidentStatusEvent.incident_id.in_(incident_ids)
+        ).count() if incident_ids else 0
+    else:
+        for key in [
+            "ChapterMemberships", "ChapterPeriods", "ChapterPeriodDues", "Payments",
+            "Notifications", "PaymentPlans", "InviteCodes", "Announcements",
+            "EventAttendances", "Events", "Expenses", "Donations", "Documents",
+            "IntakeDocuments", "IntakeCandidates", "ChapterMilestones",
+            "WorkflowInstances", "ChapterTransferRequests", "Invoices",
+            "Incidents", "IncidentAttachments", "IncidentStatusEvents",
+        ]:
+            counts[key] = 0
+
+    if region_ids:
+        counts["RegionMemberships"] = RegionMembership.query.filter(
+            RegionMembership.region_id.in_(region_ids)
+        ).count()
+        # ChapterRequests reference region_id
+        counts["ChapterRequests"] = ChapterRequest.query.filter(
+            ChapterRequest.region_id.in_(region_ids)
+        ).count()
+    else:
+        counts["RegionMemberships"] = 0
+        counts["ChapterRequests"] = 0
+
+    counts["OrgMemberships"] = OrganizationMembership.query.filter_by(
+        organization_id=org.id
+    ).count()
+
+    # KnowledgeArticles are scoped to org (org-wide) or chapter (chapter-specific)
+    counts["KnowledgeArticles"] = KnowledgeArticle.query.filter_by(
+        organization_id=org.id
+    ).count()
+
+    # WorkflowTemplates are org-scoped (chapter_id may be null for org-wide templates)
+    counts["WorkflowTemplates"] = WorkflowTemplate.query.filter_by(
+        organization_id=org.id
+    ).count()
+
+    counts["Users"] = User.query.filter(
+        User.email.like(f"{DEMO_EMAIL_PREFIX}%")
+    ).count()
+
+    return counts
+
+
+def _check_no_real_stripe_charges(org):
+    """
+    Refuse to teardown if any DGLO chapter has a real Stripe charge.
+
+    Raises click.ClickException if a non-null Stripe session/charge ID is found
+    on any Payment row for any DGLO chapter.
+    """
+    from app.models import Chapter, Payment
+
+    chapter_ids = [c.id for c in Chapter.query.filter_by(organization_id=org.id).all()]
+    if not chapter_ids:
+        return
+
+    suspect = Payment.query.filter(
+        Payment.chapter_id.in_(chapter_ids),
+        Payment.stripe_session_id.isnot(None),
+    ).first()
+    if suspect:
+        raise click.ClickException(
+            f"Refusing to teardown: Payment {suspect.id} on chapter "
+            f"{suspect.chapter_id} has stripe_session_id={suspect.stripe_session_id}. "
+            "The demo should never have real Stripe charges. Investigate manually."
+        )
+
+
 # ── CLI commands ──────────────────────────────────────────────────────────────
 
 
@@ -513,9 +707,36 @@ def register_commands(app):
             flask teardown-demo-org --confirm    # actually delete
         """
         from app.models import (
-            Chapter, ChapterMembership, ChapterPeriod, Organization,
-            OrganizationMembership, Payment, Region, RegionMembership,
-            User, Notification,
+            Announcement,
+            Chapter,
+            ChapterMembership,
+            ChapterMilestone,
+            ChapterPeriod,
+            ChapterRequest,
+            ChapterTransferRequest,
+            Donation,
+            Document,
+            Event,
+            EventAttendance,
+            Expense,
+            Incident,
+            IncidentAttachment,
+            IncidentStatusEvent,
+            IntakeCandidate,
+            IntakeDocument,
+            InviteCode,
+            Invoice,
+            KnowledgeArticle,
+            Organization,
+            OrganizationMembership,
+            Payment,
+            PaymentPlan,
+            Region,
+            RegionMembership,
+            User,
+            Notification,
+            WorkflowInstance,
+            WorkflowTemplate,
         )
         from app.models.chapter_period_dues import ChapterPeriodDues
 
@@ -532,7 +753,7 @@ def register_commands(app):
             click.echo("")
             click.echo(f"Would delete from {DEMO_ORG_ABBREV}:")
             for label, count in counts.items():
-                click.echo(f"  {label:20s} {count}")
+                click.echo(f"  {label:30s} {count}")
             return
 
         click.echo(f"Deleting demo data for {DEMO_ORG_ABBREV}...")
@@ -540,8 +761,77 @@ def register_commands(app):
         chapter_ids = [c.id for c in Chapter.query.filter_by(organization_id=org.id).all()]
         region_ids = [r.id for r in Region.query.filter_by(organization_id=org.id).all()]
 
-        # Delete in FK-safe order
+        # ── Delete in FK-safe order (children before parents) ────────────────
+
         if chapter_ids:
+            # Incident children first (cascade="all, delete-orphan" is ORM-level,
+            # won't fire with bulk .delete(); need explicit deletes)
+            incident_ids = [
+                i.id for i in Incident.query.filter(
+                    Incident.chapter_id.in_(chapter_ids)
+                ).all()
+            ]
+            if incident_ids:
+                IncidentAttachment.query.filter(
+                    IncidentAttachment.incident_id.in_(incident_ids)
+                ).delete(synchronize_session=False)
+                IncidentStatusEvent.query.filter(
+                    IncidentStatusEvent.incident_id.in_(incident_ids)
+                ).delete(synchronize_session=False)
+            Incident.query.filter(
+                Incident.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+
+            # Workflow: step instances cascade from WorkflowInstance (ORM cascade
+            # won't fire with bulk delete — but WorkflowStepInstance has no
+            # chapter_id of its own, so we must go through instance_ids)
+            instance_ids = [
+                i.id for i in WorkflowInstance.query.filter(
+                    WorkflowInstance.chapter_id.in_(chapter_ids)
+                ).all()
+            ]
+            if instance_ids:
+                from app.models import WorkflowStepInstance
+                WorkflowStepInstance.query.filter(
+                    WorkflowStepInstance.instance_id.in_(instance_ids)
+                ).delete(synchronize_session=False)
+            WorkflowInstance.query.filter(
+                WorkflowInstance.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+
+            # Intake: IntakeDocument references intake_candidate.id
+            IntakeDocument.query.filter(
+                IntakeDocument.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            IntakeCandidate.query.filter(
+                IntakeCandidate.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+
+            # EventAttendance references events.id — delete before Event
+            EventAttendance.query.filter(
+                EventAttendance.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            Event.query.filter(
+                Event.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+
+            # Invoice: can reference chapter_id (member invoice) or billed_chapter_id (regional)
+            Invoice.query.filter(
+                db.or_(
+                    Invoice.chapter_id.in_(chapter_ids),
+                    Invoice.billed_chapter_id.in_(chapter_ids),
+                )
+            ).delete(synchronize_session=False)
+
+            # ChapterTransferRequest references from_chapter_id and to_chapter_id
+            ChapterTransferRequest.query.filter(
+                db.or_(
+                    ChapterTransferRequest.from_chapter_id.in_(chapter_ids),
+                    ChapterTransferRequest.to_chapter_id.in_(chapter_ids),
+                )
+            ).delete(synchronize_session=False)
+
+            # Leaf tables scoped to chapter_id
             ChapterPeriodDues.query.filter(
                 ChapterPeriodDues.chapter_id.in_(chapter_ids)
             ).delete(synchronize_session=False)
@@ -551,8 +841,29 @@ def register_commands(app):
             Payment.query.filter(
                 Payment.chapter_id.in_(chapter_ids)
             ).delete(synchronize_session=False)
+            PaymentPlan.query.filter(
+                PaymentPlan.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
             Notification.query.filter(
                 Notification.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            InviteCode.query.filter(
+                InviteCode.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            Announcement.query.filter(
+                Announcement.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            Expense.query.filter(
+                Expense.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            Donation.query.filter(
+                Donation.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            Document.query.filter(
+                Document.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            ChapterMilestone.query.filter(
+                ChapterMilestone.chapter_id.in_(chapter_ids)
             ).delete(synchronize_session=False)
             ChapterMembership.query.filter(
                 ChapterMembership.chapter_id.in_(chapter_ids)
@@ -562,8 +873,46 @@ def register_commands(app):
             RegionMembership.query.filter(
                 RegionMembership.region_id.in_(region_ids)
             ).delete(synchronize_session=False)
+            # ChapterRequests reference region_id
+            ChapterRequest.query.filter(
+                ChapterRequest.region_id.in_(region_ids)
+            ).delete(synchronize_session=False)
+            # Invoices that reference region_id (regional head-tax invoices)
+            Invoice.query.filter(
+                Invoice.region_id.in_(region_ids)
+            ).delete(synchronize_session=False)
 
+        # Org-scoped tables (not chapter-specific)
         OrganizationMembership.query.filter_by(
+            organization_id=org.id
+        ).delete(synchronize_session=False)
+
+        # KnowledgeArticles are org-scoped (or chapter-scoped with same org)
+        KnowledgeArticle.query.filter_by(
+            organization_id=org.id
+        ).delete(synchronize_session=False)
+
+        # WorkflowTemplates are org-scoped; chapter-specific ones already have no instances
+        # (instances were deleted above), so WorkflowStep children cascade at DB level
+        # (cascade="all, delete-orphan" on steps relationship — but again ORM-level).
+        # Use explicit step deletion via template_ids to be safe.
+        template_ids = [
+            t.id for t in WorkflowTemplate.query.filter_by(
+                organization_id=org.id
+            ).all()
+        ]
+        if template_ids:
+            from app.models import WorkflowStep
+            WorkflowStep.query.filter(
+                WorkflowStep.template_id.in_(template_ids)
+            ).delete(synchronize_session=False)
+        WorkflowTemplate.query.filter_by(
+            organization_id=org.id
+        ).delete(synchronize_session=False)
+
+        # ChapterRequests that reference org directly (belt-and-suspenders — region
+        # filter above may have caught most, but org-wide ones with no region match)
+        ChapterRequest.query.filter_by(
             organization_id=org.id
         ).delete(synchronize_session=False)
 
@@ -603,89 +952,3 @@ def register_commands(app):
                 click.echo(f"  Removed {count} {label}")
         click.echo("")
         click.echo("Re-run `flask seed-demo-org` to recreate.")
-
-
-# ── Teardown ──────────────────────────────────────────────────────────────────
-
-
-def _count_for_teardown(org):
-    """Return a dict of table name → row count that would be deleted."""
-    from app.models import (
-        Chapter, ChapterMembership, ChapterPeriod, OrganizationMembership,
-        Payment, Region, RegionMembership, User, Notification,
-    )
-    from app.models.chapter_period_dues import ChapterPeriodDues
-
-    chapter_ids = [c.id for c in Chapter.query.filter_by(organization_id=org.id).all()]
-    region_ids = [r.id for r in Region.query.filter_by(organization_id=org.id).all()]
-
-    counts = {
-        "Organizations": 1,
-        "Regions": len(region_ids),
-        "Chapters": len(chapter_ids),
-    }
-
-    if chapter_ids:
-        counts["ChapterMemberships"] = ChapterMembership.query.filter(
-            ChapterMembership.chapter_id.in_(chapter_ids)
-        ).count()
-        counts["ChapterPeriods"] = ChapterPeriod.query.filter(
-            ChapterPeriod.chapter_id.in_(chapter_ids)
-        ).count()
-        counts["ChapterPeriodDues"] = ChapterPeriodDues.query.filter(
-            ChapterPeriodDues.chapter_id.in_(chapter_ids)
-        ).count()
-        counts["Payments"] = Payment.query.filter(
-            Payment.chapter_id.in_(chapter_ids)
-        ).count()
-        counts["Notifications"] = Notification.query.filter(
-            Notification.chapter_id.in_(chapter_ids)
-        ).count()
-    else:
-        counts["ChapterMemberships"] = 0
-        counts["ChapterPeriods"] = 0
-        counts["ChapterPeriodDues"] = 0
-        counts["Payments"] = 0
-        counts["Notifications"] = 0
-
-    if region_ids:
-        counts["RegionMemberships"] = RegionMembership.query.filter(
-            RegionMembership.region_id.in_(region_ids)
-        ).count()
-    else:
-        counts["RegionMemberships"] = 0
-
-    counts["OrgMemberships"] = OrganizationMembership.query.filter_by(
-        organization_id=org.id
-    ).count()
-
-    counts["Users"] = User.query.filter(
-        User.email.like(f"{DEMO_EMAIL_PREFIX}%")
-    ).count()
-
-    return counts
-
-
-def _check_no_real_stripe_charges(org):
-    """
-    Refuse to teardown if any DGLO chapter has a real Stripe charge.
-
-    Raises click.ClickException if a non-null Stripe session/charge ID is found
-    on any Payment row for any DGLO chapter.
-    """
-    from app.models import Chapter, Payment
-
-    chapter_ids = [c.id for c in Chapter.query.filter_by(organization_id=org.id).all()]
-    if not chapter_ids:
-        return
-
-    suspect = Payment.query.filter(
-        Payment.chapter_id.in_(chapter_ids),
-        Payment.stripe_session_id.isnot(None),
-    ).first()
-    if suspect:
-        raise click.ClickException(
-            f"Refusing to teardown: Payment {suspect.id} on chapter "
-            f"{suspect.chapter_id} has stripe_session_id={suspect.stripe_session_id}. "
-            "The demo should never have real Stripe charges. Investigate manually."
-        )
