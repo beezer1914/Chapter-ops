@@ -502,6 +502,108 @@ def register_commands(app):
         click.echo("  Note: Stripe is stubbed for all demo chapters — Pay Now buttons appear")
         click.echo("  but actual checkout will fail at the Stripe API.")
 
+    @app.cli.command("teardown-demo-org")
+    @click.option("--confirm", is_flag=True, help="Required to actually delete.")
+    def teardown_demo_org(confirm):
+        """Delete the DGLO demo organization and all its data.
+
+        \b
+        Usage:
+            flask teardown-demo-org              # dry run (prints counts, no changes)
+            flask teardown-demo-org --confirm    # actually delete
+        """
+        from app.models import (
+            Chapter, ChapterMembership, ChapterPeriod, Organization,
+            OrganizationMembership, Payment, Region, RegionMembership,
+            User, Notification,
+        )
+        from app.models.chapter_period_dues import ChapterPeriodDues
+
+        org = Organization.query.filter_by(abbreviation=DEMO_ORG_ABBREV).first()
+        if not org:
+            click.echo(f"No organization with abbreviation '{DEMO_ORG_ABBREV}' found. Nothing to do.")
+            return
+
+        _check_no_real_stripe_charges(org)
+        counts = _count_for_teardown(org)
+
+        if not confirm:
+            click.echo("DRY RUN — no changes made. Pass --confirm to actually delete.")
+            click.echo("")
+            click.echo(f"Would delete from {DEMO_ORG_ABBREV}:")
+            for label, count in counts.items():
+                click.echo(f"  {label:20s} {count}")
+            return
+
+        click.echo(f"Deleting demo data for {DEMO_ORG_ABBREV}...")
+
+        chapter_ids = [c.id for c in Chapter.query.filter_by(organization_id=org.id).all()]
+        region_ids = [r.id for r in Region.query.filter_by(organization_id=org.id).all()]
+
+        # Delete in FK-safe order
+        if chapter_ids:
+            ChapterPeriodDues.query.filter(
+                ChapterPeriodDues.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            ChapterPeriod.query.filter(
+                ChapterPeriod.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            Payment.query.filter(
+                Payment.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            Notification.query.filter(
+                Notification.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+            ChapterMembership.query.filter(
+                ChapterMembership.chapter_id.in_(chapter_ids)
+            ).delete(synchronize_session=False)
+
+        if region_ids:
+            RegionMembership.query.filter(
+                RegionMembership.region_id.in_(region_ids)
+            ).delete(synchronize_session=False)
+
+        OrganizationMembership.query.filter_by(
+            organization_id=org.id
+        ).delete(synchronize_session=False)
+
+        Chapter.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
+        Region.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
+
+        # Clear active_chapter_id on demo users so the User delete doesn't violate FK
+        demo_users = User.query.filter(User.email.like(f"{DEMO_EMAIL_PREFIX}%")).all()
+        for u in demo_users:
+            u.active_chapter_id = None
+        db.session.flush()
+
+        db.session.delete(org)
+
+        # Delete demo users — double-gated: must match prefix AND have no
+        # surviving memberships in any non-DGLO entity
+        deleted_users = 0
+        for u in demo_users:
+            db.session.refresh(u)
+            still_in_chapter = u.memberships.first()
+            still_in_region = u.region_memberships.first()
+            still_in_org = u.org_memberships.first()
+            if still_in_chapter or still_in_region or still_in_org:
+                click.echo(f"  Skipping {u.email} — still has non-DGLO memberships")
+                continue
+            db.session.delete(u)
+            deleted_users += 1
+
+        db.session.commit()
+
+        click.echo("")
+        click.echo("[OK] Demo organization torn down.")
+        for label, count in counts.items():
+            if label == "Users":
+                click.echo(f"  Removed {deleted_users} demo users")
+            else:
+                click.echo(f"  Removed {count} {label}")
+        click.echo("")
+        click.echo("Re-run `flask seed-demo-org` to recreate.")
+
 
 # ── Teardown ──────────────────────────────────────────────────────────────────
 
