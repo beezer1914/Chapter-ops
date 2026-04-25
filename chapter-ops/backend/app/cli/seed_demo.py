@@ -105,3 +105,26 @@ DUAL_ANCHORS = {
 def email_for(slug: str) -> str:
     """Build the plus-addressed email for a demo user slug."""
     return f"{DEMO_EMAIL_PREFIX}{slug}{DEMO_EMAIL_DOMAIN}"
+
+
+# ── Find-or-create helpers ────────────────────────────────────────────────────
+
+
+def _find_or_create(model, lookup: dict, defaults: dict | None = None):
+    """
+    Find an instance of `model` matching `lookup`, or create one with the
+    union of `lookup` and `defaults`.
+
+    Returns (instance, created) where `created` is True if a new row was inserted.
+    Does not commit — caller is responsible.
+    """
+    instance = model.query.filter_by(**lookup).first()
+    if instance:
+        return instance, False
+    instance = model(**lookup, **(defaults or {}))
+    db.session.add(instance)
+    return instance, True
+
+
+def _log_phase(phase: str, created: int, skipped: int) -> None:
+    click.echo(f"  {phase}: {created} created, {skipped} existed")
