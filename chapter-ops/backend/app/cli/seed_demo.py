@@ -180,3 +180,58 @@ def _seed_users():
 
     _log_phase("Users", created_count, skipped_count)
     return users_by_slug
+
+
+def _seed_regions(org):
+    """Create or find both demo regions. Returns dict[name -> Region]."""
+    from app.models import Region
+
+    regions_by_name = {}
+    created_count = 0
+    skipped_count = 0
+
+    for cfg in DEMO_REGIONS:
+        region, created = _find_or_create(
+            Region,
+            lookup={"organization_id": org.id, "name": cfg["name"]},
+            defaults={
+                "abbreviation": cfg["abbreviation"],
+                "active": True,
+                "config": {},
+            },
+        )
+        if created:
+            created_count += 1
+        else:
+            skipped_count += 1
+        regions_by_name[cfg["name"]] = region
+
+    _log_phase("Regions", created_count, skipped_count)
+    return regions_by_name
+
+
+def _seed_region_memberships(users_by_slug, regions_by_name):
+    """Create RegionMembership rows for users with region anchors."""
+    from app.models import RegionMembership
+
+    created_count = 0
+    skipped_count = 0
+
+    for slug, _first, _last, anchor in DEMO_USERS:
+        if anchor[0] != "region_role":
+            continue
+        _, region_name, role = anchor
+        region = regions_by_name[region_name]
+        user = users_by_slug[slug]
+
+        _, created = _find_or_create(
+            RegionMembership,
+            lookup={"user_id": user.id, "region_id": region.id},
+            defaults={"role": role, "active": True},
+        )
+        if created:
+            created_count += 1
+        else:
+            skipped_count += 1
+
+    _log_phase("RegionMemberships", created_count, skipped_count)
