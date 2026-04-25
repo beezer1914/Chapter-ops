@@ -121,6 +121,59 @@ def inbox():
     except Exception:
         pass
 
+    # ── 2b. Member invoices outstanding ───────────────────────────────────────
+    try:
+        from app.models.invoice import Invoice
+
+        my_invoices = Invoice.query.filter(
+            Invoice.chapter_id == chapter.id,
+            Invoice.billed_user_id == current_user.id,
+            Invoice.status.in_(["sent", "overdue"]),
+        ).all()
+
+        if my_invoices:
+            count = len(my_invoices)
+            total = sum(float(inv.amount) for inv in my_invoices)
+            overdue_count = sum(1 for inv in my_invoices if inv.due_date < today)
+            due_this_week = sum(
+                1 for inv in my_invoices
+                if today <= inv.due_date <= today + timedelta(days=7)
+            )
+
+            inv_word = "invoice" if count == 1 else "invoices"
+            if overdue_count > 0:
+                priority = "critical"
+                overdue_word = "overdue" if overdue_count == 1 else "overdue"
+                description = (
+                    f"You have {count} unpaid {inv_word} totaling ${total:.2f} "
+                    f"— {overdue_count} {overdue_word}."
+                )
+            elif due_this_week == count:
+                priority = "warning"
+                description = (
+                    f"You have {count} unpaid {inv_word} totaling ${total:.2f} "
+                    f"due this week."
+                )
+            else:
+                priority = "info"
+                description = (
+                    f"You have {count} unpaid {inv_word} totaling ${total:.2f}."
+                )
+
+            title = f"Unpaid {inv_word.capitalize()}"
+            items.append(_item(
+                f"invoices_unpaid_{current_user.id}",
+                "invoices_unpaid", priority,
+                title,
+                description,
+                "View invoices", "/invoices",
+                count=count,
+                total=total,
+                overdue_count=overdue_count,
+            ))
+    except Exception:
+        pass
+
     # ── 3. Payment plan ending soon ───────────────────────────────────────────
     try:
         from app.models.payment_plan import PaymentPlan
