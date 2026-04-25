@@ -95,6 +95,37 @@ ChapterOps roles are **per chapter** — a person can be a member in one chapter
 1. **Permissions are configurable per chapter.** A president can change which features a member-level user is allowed to see (via Settings → Permissions). The role hierarchy above is the **default** — actual access can be tightened or loosened.
 2. **Regional permissions are scoped, not global.** Being a regional officer in one region does not give you any access to chapters in a different region.
 
+### Who Can Change What — The Exact Rules Behind Member Edits
+
+These rules are enforced by the platform itself; a guide that contradicts them will mislead the reader.
+
+**Changing a member's role** (e.g., promoting someone from Member to Treasurer):
+- Only **Presidents** can change roles. Treasurers and Vice Presidents cannot.
+- A President **cannot change their own role** — someone else has to.
+- A President **cannot assign a role higher than their own.** In practice this means a President can promote anyone up to and including President.
+- The five assignable chapter roles are: Member, Secretary, Treasurer, Vice President, President. (There is also an internal "admin" tier reserved for system use — it is never assigned through the normal member-edit screen.)
+
+**Changing a member's financial status** (Financial / Not Financial / Exempt):
+- Only **Presidents** can change financial status.
+- Cannot be changed for yourself.
+- If a member's "member type" is set to **Life member**, their financial status is automatically **Exempt** and cannot be changed manually — life members are permanently exempt from dues.
+
+**Changing a member's "member type"** (Collegiate, Graduate, Life, etc.):
+- **Treasurer or higher** can change member type. Org Admins can also change it.
+- Cannot be changed for yourself.
+
+**Designating someone as an Intake Officer:**
+- Only **Presidents** can do this.
+- Cannot be done for yourself.
+- An Intake Officer designation grants access to the Intake / MIP pipeline without requiring the Secretary role. Use it when someone needs intake access but shouldn't be a chapter officer.
+
+**Suspending, unsuspending, or deactivating a member:**
+- Only **Presidents** can do these actions.
+- Cannot be done to yourself.
+- Suspension keeps the member on the roster but blocks chapter access. Deactivation removes them from the active roster (soft delete — their history is preserved).
+
+**Org Admin is separate from the chapter "admin" tier.** Org Admin lives at the organization level (it shows up in the IHQ Dashboard, not the chapter sidebar). Org Admins can edit member type across every chapter in their organization without needing to be a chapter Treasurer in each one. They cannot, however, change a chapter's day-to-day roles unless they are also a member of that chapter — chapter role changes are still President-gated within each chapter.
+
 ---
 
 ## 4. The Product Map — What Users See
