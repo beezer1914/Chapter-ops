@@ -501,3 +501,89 @@ def register_commands(app):
         click.echo("")
         click.echo("  Note: Stripe is stubbed for all demo chapters — Pay Now buttons appear")
         click.echo("  but actual checkout will fail at the Stripe API.")
+
+
+# ── Teardown ──────────────────────────────────────────────────────────────────
+
+
+def _count_for_teardown(org):
+    """Return a dict of table name → row count that would be deleted."""
+    from app.models import (
+        Chapter, ChapterMembership, ChapterPeriod, OrganizationMembership,
+        Payment, Region, RegionMembership, User, Notification,
+    )
+    from app.models.chapter_period_dues import ChapterPeriodDues
+
+    chapter_ids = [c.id for c in Chapter.query.filter_by(organization_id=org.id).all()]
+    region_ids = [r.id for r in Region.query.filter_by(organization_id=org.id).all()]
+
+    counts = {
+        "Organizations": 1,
+        "Regions": len(region_ids),
+        "Chapters": len(chapter_ids),
+    }
+
+    if chapter_ids:
+        counts["ChapterMemberships"] = ChapterMembership.query.filter(
+            ChapterMembership.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["ChapterPeriods"] = ChapterPeriod.query.filter(
+            ChapterPeriod.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["ChapterPeriodDues"] = ChapterPeriodDues.query.filter(
+            ChapterPeriodDues.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["Payments"] = Payment.query.filter(
+            Payment.chapter_id.in_(chapter_ids)
+        ).count()
+        counts["Notifications"] = Notification.query.filter(
+            Notification.chapter_id.in_(chapter_ids)
+        ).count()
+    else:
+        counts["ChapterMemberships"] = 0
+        counts["ChapterPeriods"] = 0
+        counts["ChapterPeriodDues"] = 0
+        counts["Payments"] = 0
+        counts["Notifications"] = 0
+
+    if region_ids:
+        counts["RegionMemberships"] = RegionMembership.query.filter(
+            RegionMembership.region_id.in_(region_ids)
+        ).count()
+    else:
+        counts["RegionMemberships"] = 0
+
+    counts["OrgMemberships"] = OrganizationMembership.query.filter_by(
+        organization_id=org.id
+    ).count()
+
+    counts["Users"] = User.query.filter(
+        User.email.like(f"{DEMO_EMAIL_PREFIX}%")
+    ).count()
+
+    return counts
+
+
+def _check_no_real_stripe_charges(org):
+    """
+    Refuse to teardown if any DGLO chapter has a real Stripe charge.
+
+    Raises click.ClickException if a non-null Stripe session/charge ID is found
+    on any Payment row for any DGLO chapter.
+    """
+    from app.models import Chapter, Payment
+
+    chapter_ids = [c.id for c in Chapter.query.filter_by(organization_id=org.id).all()]
+    if not chapter_ids:
+        return
+
+    suspect = Payment.query.filter(
+        Payment.chapter_id.in_(chapter_ids),
+        Payment.stripe_session_id.isnot(None),
+    ).first()
+    if suspect:
+        raise click.ClickException(
+            f"Refusing to teardown: Payment {suspect.id} on chapter "
+            f"{suspect.chapter_id} has stripe_session_id={suspect.stripe_session_id}. "
+            "The demo should never have real Stripe charges. Investigate manually."
+        )
