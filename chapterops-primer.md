@@ -277,6 +277,15 @@ When a member registers, ChapterOps automatically generates their dues rows. Whe
 ### Stripe Connect (per-chapter accounts)
 Money flows directly from the member's card to the chapter's own bank account — ChapterOps never holds it. Each chapter goes through a one-time Stripe setup (linking a bank account, providing the chapter EIN if available, basic identity info) the first time they want to accept card payments. Until Stripe is connected, dues can still be tracked manually (Zelle, Venmo, Cash App, cash).
 
+### Refunds (important limitation)
+**ChapterOps does not yet have an in-app refund flow.** A Treasurer cannot click a "Refund" button anywhere in the platform. To refund a member, the Treasurer must:
+1. Log into the chapter's **Stripe dashboard directly** (separate from ChapterOps) and issue the refund there.
+2. Come back to ChapterOps, open **Chapter Dues**, find the affected member's row for the relevant fee type, and **manually reduce the "amount paid" value** to match the post-refund total. This will recalculate their financial status correctly.
+
+If step 2 is skipped, the chapter's totals in ChapterOps will be wrong (they'll still show the refunded money as collected) and the member will still appear as **Financial** even though they've been refunded. Always do both steps.
+
+Guides should never describe a one-click refund flow inside ChapterOps — it doesn't exist.
+
 ### Invite-Only Registration
 There is no "Sign up" button in the public sense. Every new account requires an invite code from an existing officer. This is intentional — it prevents random sign-ups and keeps the chapter roster clean. The only exception is a founding president starting a brand-new chapter.
 
@@ -322,7 +331,7 @@ ChapterOps sends three kinds of notification:
 
 **Inclusive language:** Avoid "his/her" and "guys." Use "they" or "members." Don't assume the reader's gender, role, or chapter.
 
-**Don't promise features that aren't built.** If a guide reader asks about something you can't find in this primer (e.g., "How do I send an SMS to all members?"), say it isn't currently available rather than inventing a flow. ChapterOps does not yet have: SMS, mobile native apps (only PWA), Slack integration, or a public API.
+**Don't promise features that aren't built.** If a guide reader asks about something you can't find in this primer (e.g., "How do I send an SMS to all members?"), say it isn't currently available rather than inventing a flow. ChapterOps does not yet have: SMS, mobile native apps (only PWA), Slack integration, a public API, or an in-app refund flow (refunds must be done in the Stripe dashboard — see Section 6).
 
 ---
 
