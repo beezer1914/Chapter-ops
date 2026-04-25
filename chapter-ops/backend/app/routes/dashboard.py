@@ -270,7 +270,7 @@ def inbox():
 
             count = Invoice.query.filter(
                 Invoice.billed_chapter_id == chapter.id,
-                Invoice.status.in_(["unpaid", "partially_paid"]),
+                Invoice.status.in_(["sent", "overdue"]),
                 Invoice.due_date < today,
             ).count()
 

@@ -342,7 +342,9 @@ def send_invoice(invoice_id):
     invoice.sent_at = datetime.now(timezone.utc)
     db.session.commit()
 
-    # Send in-app notification
+    # Send in-app notification. Caught so a notification failure does not
+    # roll back the already-committed status change, but logged with full
+    # traceback so the failure is loud in Render logs.
     try:
         notification_service.create_notification(
             chapter_id=chapter.id,
@@ -351,8 +353,10 @@ def send_invoice(invoice_id):
             message=f"You have a new invoice: {invoice.description} — ${invoice.amount} due {invoice.due_date.strftime('%b %d, %Y')}",
             recipient_id=invoice.billed_user_id,
         )
-    except Exception as e:
-        current_app.logger.error(f"Failed to send invoice notification: {e}")
+    except Exception:
+        current_app.logger.exception(
+            f"Failed to create invoice notification for invoice {invoice.id}, recipient {invoice.billed_user_id}"
+        )
 
     return jsonify(invoice.to_dict()), 200
 
@@ -385,7 +389,8 @@ def bulk_send_invoices():
 
     db.session.commit()
 
-    # Notify each billed member
+    # Notify each billed member. Per-iteration try/except so one bad
+    # notification does not skip the rest; logged with full traceback.
     for inv in invoices:
         try:
             notification_service.create_notification(
@@ -395,8 +400,10 @@ def bulk_send_invoices():
                 message=f"You have a new invoice: {inv.description} — ${inv.amount} due {inv.due_date.strftime('%b %d, %Y')}",
                 recipient_id=inv.billed_user_id,
             )
-        except Exception as e:
-            current_app.logger.error(f"Failed to send invoice notification for {inv.id}: {e}")
+        except Exception:
+            current_app.logger.exception(
+                f"Failed to create invoice notification for invoice {inv.id}, recipient {inv.billed_user_id}"
+            )
 
     return jsonify({
         "message": f"Sent {len(invoices)} invoices.",
