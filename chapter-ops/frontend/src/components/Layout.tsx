@@ -349,7 +349,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ── Mobile bottom navigation bar ─────────────────────────── */}
-      <MobileBottomNav onMoreClick={() => setMobileMenuOpen(true)} />
+      {/* Hidden while the drawer is open — otherwise it stacks on top of the
+          drawer's user footer and hides the Sign Out button. */}
+      {!mobileMenuOpen && <MobileBottomNav onMoreClick={() => setMobileMenuOpen(true)} />}
     </div>
   );
 }
