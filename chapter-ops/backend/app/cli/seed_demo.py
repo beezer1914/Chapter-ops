@@ -949,14 +949,22 @@ def register_commands(app):
             organization_id=org.id
         ).delete(synchronize_session=False)
 
+        # Clear active_chapter_id on ANY user pointing to a DGLO chapter BEFORE
+        # the chapter delete — otherwise the FK constraint user.active_chapter_id
+        # → chapter.id will block the delete. Covers demo users + any non-demo
+        # user who happens to be active in a DGLO chapter.
+        if chapter_ids:
+            User.query.filter(User.active_chapter_id.in_(chapter_ids)).update(
+                {"active_chapter_id": None}, synchronize_session=False
+            )
+            db.session.flush()
+
         Chapter.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
         Region.query.filter_by(organization_id=org.id).delete(synchronize_session=False)
 
-        # Clear active_chapter_id on demo users so the User delete doesn't violate FK
+        # Re-fetch demo users now that chapters are gone — needed for the
+        # double-gated user deletion loop below.
         demo_users = User.query.filter(User.email.like(f"{DEMO_EMAIL_PREFIX}%")).all()
-        for u in demo_users:
-            u.active_chapter_id = None
-        db.session.flush()
 
         db.session.delete(org)
 
