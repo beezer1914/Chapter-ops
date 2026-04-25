@@ -128,3 +128,55 @@ def _find_or_create(model, lookup: dict, defaults: dict | None = None):
 
 def _log_phase(phase: str, created: int, skipped: int) -> None:
     click.echo(f"  {phase}: {created} created, {skipped} existed")
+
+
+# ── Seed phase functions ──────────────────────────────────────────────────────
+
+
+def _seed_organization():
+    """Create or find DGLO. Returns the Organization instance."""
+    from app.models import Organization
+
+    org, created = _find_or_create(
+        Organization,
+        lookup={"abbreviation": DEMO_ORG_ABBREV},
+        defaults={
+            "name": DEMO_ORG_NAME,
+            "org_type": "fraternity",
+            "council": "NPHC",
+            "active": True,
+            "plan": "beta",
+            "config": {},
+        },
+    )
+    _log_phase("Organization", 1 if created else 0, 0 if created else 1)
+    return org
+
+
+def _seed_users():
+    """Create or find every demo user. Returns dict[slug -> User]."""
+    from app.models import User
+
+    users_by_slug = {}
+    created_count = 0
+    skipped_count = 0
+
+    for slug, first_name, last_name, _anchor in DEMO_USERS:
+        user, created = _find_or_create(
+            User,
+            lookup={"email": email_for(slug)},
+            defaults={
+                "first_name": first_name,
+                "last_name": last_name,
+                "active": True,
+            },
+        )
+        if created:
+            user.set_password(DEMO_PASSWORD)
+            created_count += 1
+        else:
+            skipped_count += 1
+        users_by_slug[slug] = user
+
+    _log_phase("Users", created_count, skipped_count)
+    return users_by_slug
