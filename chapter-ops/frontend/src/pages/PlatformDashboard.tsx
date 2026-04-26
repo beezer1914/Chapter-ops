@@ -35,6 +35,39 @@ function SummaryTile({
   );
 }
 
+function TierMixCard({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: { tier: string; count: number }[];
+}) {
+  const max = Math.max(1, ...rows.map((r) => r.count));
+  return (
+    <div className="bg-surface-card-solid rounded-xl border border-[var(--color-border)] p-5">
+      <h3 className="text-sm font-heading font-bold text-content-primary mb-4">{title}</h3>
+      <div className="space-y-2.5">
+        {rows.map((r) => (
+          <div key={r.tier} className="flex items-center gap-3">
+            <span className="text-xs text-content-secondary capitalize w-24 shrink-0">
+              {r.tier}
+            </span>
+            <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-brand-primary-main transition-all"
+                style={{ width: `${(r.count / max) * 100}%` }}
+              />
+            </div>
+            <span className="text-sm font-semibold text-content-primary tabular-nums w-8 text-right">
+              {r.count}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function PlatformDashboard() {
   const [data, setData] = useState<PlatformDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,6 +130,23 @@ export default function PlatformDashboard() {
                   label="Dues YTD"
                   value={formatDollars(data.summary.dues_ytd)}
                   icon={DollarSign}
+                />
+              </div>
+            </section>
+
+            {/* Tier mix */}
+            <section>
+              <h2 className="text-lg font-heading font-bold text-content-primary mb-4">
+                Tier Mix
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TierMixCard
+                  title="Organizations by Plan"
+                  rows={data.tier_breakdown.organizations}
+                />
+                <TierMixCard
+                  title="Chapters by Tier"
+                  rows={data.tier_breakdown.chapters}
                 />
               </div>
             </section>
