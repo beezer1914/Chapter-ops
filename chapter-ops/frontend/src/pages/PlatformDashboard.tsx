@@ -68,6 +68,44 @@ function TierMixCard({
   );
 }
 
+function TopChaptersTable({
+  rows,
+}: {
+  rows: { id: string; name: string; organization_name: string; dues_ytd: string }[];
+}) {
+  if (rows.length === 0) {
+    return (
+      <div className="bg-surface-card-solid rounded-xl border border-[var(--color-border)] p-10 text-center text-content-muted text-sm">
+        No chapters with recorded dues yet.
+      </div>
+    );
+  }
+  return (
+    <div className="bg-surface-card-solid rounded-xl border border-[var(--color-border)] overflow-x-auto">
+      <table className="w-full text-sm min-w-[640px]">
+        <thead>
+          <tr className="border-b border-[var(--color-border)] text-content-muted text-xs uppercase tracking-wider">
+            <th className="px-5 py-3 text-left font-semibold">Chapter</th>
+            <th className="px-5 py-3 text-left font-semibold">Organization</th>
+            <th className="px-5 py-3 text-right font-semibold">Dues YTD</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {rows.map((r) => (
+            <tr key={r.id} className="hover:bg-white/[0.02] transition-colors">
+              <td className="px-5 py-3.5 font-medium text-content-primary">{r.name}</td>
+              <td className="px-5 py-3.5 text-content-secondary">{r.organization_name}</td>
+              <td className="px-5 py-3.5 text-right text-content-primary tabular-nums font-semibold">
+                ${parseFloat(r.dues_ytd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function PlatformDashboard() {
   const [data, setData] = useState<PlatformDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -149,6 +187,14 @@ export default function PlatformDashboard() {
                   rows={data.tier_breakdown.chapters}
                 />
               </div>
+            </section>
+
+            {/* Top chapters by dues */}
+            <section>
+              <h2 className="text-lg font-heading font-bold text-content-primary mb-4">
+                Top Chapters by Dues YTD
+              </h2>
+              <TopChaptersTable rows={data.top_chapters_by_dues} />
             </section>
           </>
         )}
