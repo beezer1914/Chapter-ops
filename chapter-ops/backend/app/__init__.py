@@ -13,7 +13,7 @@ from flask import Flask, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.config import LocalConfig, ProductionConfig, TestingConfig
-from app.extensions import db, bcrypt, login_manager, cache, limiter, cors, csrf, migrate
+from app.extensions import db, bcrypt, login_manager, cache, limiter, cors, csrf, migrate, compress
 from app.middleware import init_tenant_middleware
 
 # Logging
@@ -98,6 +98,7 @@ def create_app(config_class=None):
     cache.init_app(app)
     limiter.init_app(app)
     csrf.init_app(app)
+    compress.init_app(app)
 
     login_manager.init_app(app)
     login_manager.login_view = None  # API-only, no redirect

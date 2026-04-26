@@ -13,6 +13,7 @@ from flask_limiter.util import get_remote_address
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
+from flask_compress import Compress
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -22,3 +23,4 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["200 per minute"]
 cors = CORS()
 csrf = CSRFProtect()
 migrate = Migrate()
+compress = Compress()
