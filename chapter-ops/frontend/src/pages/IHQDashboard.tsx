@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import { fetchIHQDashboard, broadcastAnnouncement, suspendChapter, unsuspendChapter } from "@/services/ihqService";
 import { fetchIncidentStats } from "@/services/incidentService";
 import PendingChapterRequestsSection from "@/components/PendingChapterRequestsSection";
+import { formatDollars } from "@/lib/format";
 import type { IHQDashboardData, IHQChapterStat, IncidentStats } from "@/types";
 import {
   Building2,
@@ -23,12 +24,6 @@ import {
 } from "lucide-react";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-
-function formatDollars(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-  return `$${n.toFixed(0)}`;
-}
 
 function rateColor(rate: number): string {
   if (rate >= 75) return "text-emerald-400";
