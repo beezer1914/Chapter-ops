@@ -195,6 +195,10 @@ def create_app(config_class=None):
     app.register_blueprint(tours_bp)
     app.register_blueprint(chapter_requests_bp)
 
+    from app.routes.platform import platform_bp
+    app.register_blueprint(platform_bp)
+    csrf.exempt(platform_bp)
+
     # Stripe webhooks come from Stripe's servers — exempt the entire blueprint.
     csrf.exempt(webhooks_bp)
 
