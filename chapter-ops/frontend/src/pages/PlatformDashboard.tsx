@@ -1,11 +1,56 @@
+import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import PendingChapterRequestsSection from "@/components/PendingChapterRequestsSection";
+import { fetchPlatformDashboard } from "@/services/platformService";
+import { formatDollars } from "@/lib/format";
+import type { PlatformDashboardData } from "@/types/platform";
+import { Building2, Users, Map, DollarSign } from "lucide-react";
+
+function SummaryTile({
+  label,
+  value,
+  delta,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  delta?: string;
+  icon: typeof Building2;
+}) {
+  return (
+    <div className="bg-surface-card-solid rounded-xl border border-[var(--color-border)] p-5">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-content-muted">
+          {label}
+        </span>
+        <Icon className="w-4 h-4 text-content-muted" />
+      </div>
+      <div className="text-3xl font-heading font-black text-content-primary tabular-nums">
+        {value}
+      </div>
+      {delta !== undefined && (
+        <div className="text-xs text-content-muted mt-1.5">{delta}</div>
+      )}
+    </div>
+  );
+}
 
 export default function PlatformDashboard() {
+  const [data, setData] = useState<PlatformDashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchPlatformDashboard()
+      .then(setData)
+      .catch(() => setError("Failed to load platform dashboard."))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        <div className="mb-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 space-y-8">
+        <div>
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-content-muted mb-2">
             Platform Admin
           </div>
@@ -13,11 +58,50 @@ export default function PlatformDashboard() {
             Platform Dashboard
           </h1>
           <p className="text-content-secondary mt-2 max-w-2xl">
-            Cross-org actions requiring platform admin attention. New IHQ claims,
-            unaffiliated-org chapter requests, and other concerns that don't
-            belong to any single organization live here.
+            Cross-org metrics and actions for Blue Column Systems staff.
           </p>
         </div>
+
+        {error && (
+          <div className="p-3 bg-red-900/20 border border-red-900/30 text-red-400 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <p className="text-content-muted text-sm">Loading platform metrics…</p>
+        ) : data && (
+          <>
+            {/* Summary tiles */}
+            <section>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <SummaryTile
+                  label="Organizations"
+                  value={data.summary.organizations.total.toString()}
+                  delta={`+${data.summary.organizations.new_30d} last 30d`}
+                  icon={Building2}
+                />
+                <SummaryTile
+                  label="Chapters"
+                  value={data.summary.chapters.total.toString()}
+                  delta={`+${data.summary.chapters.new_30d} last 30d`}
+                  icon={Map}
+                />
+                <SummaryTile
+                  label="Members"
+                  value={data.summary.members.total.toLocaleString()}
+                  delta={`+${data.summary.members.new_30d} last 30d`}
+                  icon={Users}
+                />
+                <SummaryTile
+                  label="Dues YTD"
+                  value={formatDollars(data.summary.dues_ytd)}
+                  icon={DollarSign}
+                />
+              </div>
+            </section>
+          </>
+        )}
 
         <PendingChapterRequestsSection
           title="Chapter Requests — Unaffiliated Orgs"
