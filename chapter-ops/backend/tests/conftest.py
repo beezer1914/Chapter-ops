@@ -84,12 +84,14 @@ def make_organization(
     name="Phi Beta Sigma Fraternity, Inc.",
     abbreviation="PBS",
     org_type="fraternity",
+    is_demo=False,
 ):
     """Create and persist an Organization."""
     org = Organization(
         name=name,
         abbreviation=abbreviation,
         org_type=org_type,
+        is_demo=is_demo,
     )
     _db.session.add(org)
     _db.session.flush()

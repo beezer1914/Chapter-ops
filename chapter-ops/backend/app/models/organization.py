@@ -24,6 +24,15 @@ class Organization(BaseModel):
     website: Mapped[str | None] = mapped_column(db.String(300), nullable=True)
     active: Mapped[bool] = mapped_column(db.Boolean, default=True, nullable=False)
 
+    # True for fictional demo organizations seeded for prospect demos
+    # (e.g., DGLO). Excluded from platform-wide metrics.
+    is_demo: Mapped[bool] = mapped_column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default=db.text("false"),
+    )
+
     # Subscription plan: "beta" | "starter" | "pro" | "elite" | "organization"
     # "beta" = Chapter Pro features at $0 during beta period
     plan: Mapped[str] = mapped_column(db.String(20), nullable=False, default="beta")
@@ -59,6 +68,7 @@ class Organization(BaseModel):
             "logo_url": self.logo_url,
             "website": self.website,
             "active": self.active,
+            "is_demo": self.is_demo,
             "plan": self.plan,
             "stripe_onboarding_complete": self.stripe_onboarding_complete,
             "config": self.config,
