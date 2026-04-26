@@ -26,6 +26,42 @@ platform_bp = Blueprint("platform", __name__, url_prefix="/api/platform")
 
 ORG_PLAN_TIERS = ["beta", "starter", "pro", "elite", "organization"]
 CHAPTER_TIERS = ["starter", "pro", "elite", "organization"]
+TOP_CHAPTERS_LIMIT = 5
+
+
+def _top_chapters_block():
+    """Return up to 5 chapters ranked by current-year dues, excluding demo orgs."""
+    current_year = datetime.now(timezone.utc).year
+
+    rows = (
+        db.session.query(
+            Chapter.id,
+            Chapter.name,
+            Organization.name.label("organization_name"),
+            func.coalesce(func.sum(Payment.amount), Decimal("0")).label("dues_ytd"),
+        )
+        .join(Organization, Chapter.organization_id == Organization.id)
+        .join(Payment, Payment.chapter_id == Chapter.id)
+        .filter(
+            Organization.is_demo.is_(False),
+            Chapter.active.is_(True),
+            extract("year", Payment.created_at) == current_year,
+        )
+        .group_by(Chapter.id, Chapter.name, Organization.name)
+        .order_by(func.sum(Payment.amount).desc())
+        .limit(TOP_CHAPTERS_LIMIT)
+        .all()
+    )
+
+    return [
+        {
+            "id": r.id,
+            "name": r.name,
+            "organization_name": r.organization_name,
+            "dues_ytd": f"{Decimal(r.dues_ytd):.2f}",
+        }
+        for r in rows
+    ]
 
 
 def _tier_breakdown_block():
@@ -142,5 +178,5 @@ def get_dashboard():
     return jsonify({
         "summary": _summary_block(),
         "tier_breakdown": _tier_breakdown_block(),
-        "top_chapters_by_dues": [],
+        "top_chapters_by_dues": _top_chapters_block(),
     })

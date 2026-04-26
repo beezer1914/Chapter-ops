@@ -185,3 +185,75 @@ class TestPlatformDashboardTierBreakdown:
         body = client.get("/api/platform/dashboard").get_json()
         breakdown = {row["tier"]: row["count"] for row in body["tier_breakdown"]["chapters"]}
         assert breakdown["starter"] == 1
+
+
+class TestPlatformDashboardTopChapters:
+    def test_returns_empty_when_no_payments(self, app, client, db_session):
+        _make_founder_session(app, client, db_session)
+        org = make_organization(name="Real", abbreviation="REAL")
+        make_chapter(org, name="No Payments Chapter")
+        db_session.commit()
+
+        body = client.get("/api/platform/dashboard").get_json()
+        assert body["top_chapters_by_dues"] == []
+
+    def test_orders_by_dues_desc_and_caps_at_5(self, app, client, db_session):
+        _make_founder_session(app, client, db_session)
+        org = make_organization(name="Real", abbreviation="REAL")
+        u = make_user(email="payer@example.com")
+        db_session.commit()
+
+        chapters_with_dues = []
+        prev_region = None
+        for i in range(7):
+            ch = make_chapter(org, name=f"Chapter {i}", region=prev_region)
+            prev_region = ch.region
+            db_session.add(Payment(
+                chapter_id=ch.id, user_id=u.id,
+                amount=Decimal(str(100 + i * 50)),  # 100, 150, 200, ..., 400
+                method="manual",
+            ))
+            chapters_with_dues.append((ch.id, ch.name, 100 + i * 50))
+        db_session.commit()
+
+        body = client.get("/api/platform/dashboard").get_json()
+        top = body["top_chapters_by_dues"]
+        assert len(top) == 5
+        # First entry should be the highest-dues chapter
+        assert top[0]["dues_ytd"] == "400.00"
+        # Returned in descending order
+        amounts = [Decimal(c["dues_ytd"]) for c in top]
+        assert amounts == sorted(amounts, reverse=True)
+
+    def test_excludes_demo_chapters(self, app, client, db_session):
+        _make_founder_session(app, client, db_session)
+        real = make_organization(name="Real", abbreviation="REAL")
+        demo = make_organization(name="Demo", abbreviation="DGLO", is_demo=True)
+        cr = make_chapter(real, name="Real Chapter")
+        cd = make_chapter(demo, name="Demo Chapter")
+        u = make_user(email="payer@example.com")
+        db_session.commit()
+        db_session.add(Payment(chapter_id=cr.id, user_id=u.id, amount=Decimal("100"), method="manual"))
+        db_session.add(Payment(chapter_id=cd.id, user_id=u.id, amount=Decimal("999"), method="manual"))
+        db_session.commit()
+
+        body = client.get("/api/platform/dashboard").get_json()
+        top = body["top_chapters_by_dues"]
+        assert len(top) == 1
+        assert top[0]["name"] == "Real Chapter"
+        assert top[0]["dues_ytd"] == "100.00"
+
+    def test_returns_org_name_alongside_chapter(self, app, client, db_session):
+        _make_founder_session(app, client, db_session)
+        org = make_organization(name="Phi Beta Sigma Fraternity, Inc.", abbreviation="PBS")
+        ch = make_chapter(org, name="Sigma Delta Sigma")
+        u = make_user(email="payer@example.com")
+        db_session.commit()
+        db_session.add(Payment(chapter_id=ch.id, user_id=u.id, amount=Decimal("250"), method="manual"))
+        db_session.commit()
+
+        body = client.get("/api/platform/dashboard").get_json()
+        top = body["top_chapters_by_dues"][0]
+        assert top["name"] == "Sigma Delta Sigma"
+        assert top["organization_name"] == "Phi Beta Sigma Fraternity, Inc."
+        assert "id" in top
