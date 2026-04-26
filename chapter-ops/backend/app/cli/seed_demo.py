@@ -133,7 +133,11 @@ def _log_phase(phase: str, created: int, skipped: int) -> None:
 
 
 def _seed_organization():
-    """Create or find DGLO. Returns the Organization instance."""
+    """Create or find DGLO. Returns the Organization instance.
+
+    Sets is_demo=True so the org is excluded from platform-wide metrics.
+    On re-seed, repairs the flag if it was somehow set to False on a prior run.
+    """
     from app.models import Organization
 
     org, created = _find_or_create(
@@ -146,8 +150,13 @@ def _seed_organization():
             "active": True,
             "plan": "beta",
             "config": {},
+            "is_demo": True,
         },
     )
+    # Belt-and-suspenders: ensure existing rows from older seeds (before is_demo
+    # existed) are flipped to True. This is idempotent.
+    if not created and not org.is_demo:
+        org.is_demo = True
     _log_phase("Organization", 1 if created else 0, 0 if created else 1)
     return org
 
