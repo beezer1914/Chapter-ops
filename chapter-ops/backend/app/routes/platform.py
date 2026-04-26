@@ -153,6 +153,7 @@ def _summary_block():
         .join(Organization, Chapter.organization_id == Organization.id)
         .filter(
             Organization.is_demo.is_(False),
+            Chapter.active.is_(True),
             extract("year", Payment.created_at) == current_year,
         )
         .scalar()
