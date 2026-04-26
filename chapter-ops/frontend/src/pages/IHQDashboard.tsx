@@ -303,8 +303,8 @@ export default function IHQDashboard() {
                 <h2 className="text-lg font-heading font-bold text-content-primary mb-4">
                   Region Rollup
                 </h2>
-                <div className="bg-surface-card-solid rounded-xl border border-[var(--color-border)] overflow-hidden">
-                  <table className="w-full text-sm">
+                <div className="bg-surface-card-solid rounded-xl border border-[var(--color-border)] overflow-x-auto">
+                  <table className="w-full text-sm min-w-[640px]">
                     <thead>
                       <tr className="border-b border-[var(--color-border)] text-content-muted text-xs uppercase tracking-wider">
                         <th className="px-5 py-3 text-left font-semibold">Region</th>
