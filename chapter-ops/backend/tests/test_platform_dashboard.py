@@ -132,3 +132,56 @@ class TestPlatformDashboardSummary:
         body = client.get("/api/platform/dashboard").get_json()
         assert body["summary"]["organizations"]["total"] == 2
         assert body["summary"]["organizations"]["new_30d"] == 1
+
+
+ORG_PLAN_TIERS = ["beta", "starter", "pro", "elite", "organization"]
+CHAPTER_TIERS = ["starter", "pro", "elite", "organization"]
+
+
+class TestPlatformDashboardTierBreakdown:
+    def test_org_breakdown_returns_all_tiers_with_zero_for_missing(self, app, client, db_session):
+        _make_founder_session(app, client, db_session)
+        # Only one beta org; all other tiers should appear with count 0
+        make_organization(name="Beta", abbreviation="BETA")  # plan defaults to "beta"
+        db_session.commit()
+
+        body = client.get("/api/platform/dashboard").get_json()
+        breakdown = {row["tier"]: row["count"] for row in body["tier_breakdown"]["organizations"]}
+        assert breakdown == {"beta": 1, "starter": 0, "pro": 0, "elite": 0, "organization": 0}
+
+    def test_org_breakdown_excludes_demo_org(self, app, client, db_session):
+        _make_founder_session(app, client, db_session)
+        make_organization(name="Real", abbreviation="REAL")  # beta
+        demo = make_organization(name="Demo", abbreviation="DGLO", is_demo=True)
+        demo.plan = "pro"
+        db_session.commit()
+
+        body = client.get("/api/platform/dashboard").get_json()
+        breakdown = {row["tier"]: row["count"] for row in body["tier_breakdown"]["organizations"]}
+        assert breakdown["beta"] == 1
+        assert breakdown["pro"] == 0  # demo org's pro tier doesn't count
+
+    def test_chapter_breakdown_returns_all_4_tiers(self, app, client, db_session):
+        _make_founder_session(app, client, db_session)
+        org = make_organization(name="Real", abbreviation="REAL")
+        c1 = make_chapter(org, name="C1")
+        c2 = make_chapter(org, name="C2", region=c1.region)
+        c1.subscription_tier = "pro"
+        c2.subscription_tier = "starter"
+        db_session.commit()
+
+        body = client.get("/api/platform/dashboard").get_json()
+        breakdown = {row["tier"]: row["count"] for row in body["tier_breakdown"]["chapters"]}
+        assert breakdown == {"starter": 1, "pro": 1, "elite": 0, "organization": 0}
+
+    def test_chapter_breakdown_excludes_demo_chapters(self, app, client, db_session):
+        _make_founder_session(app, client, db_session)
+        real = make_organization(name="Real", abbreviation="REAL")
+        demo = make_organization(name="Demo", abbreviation="DGLO", is_demo=True)
+        make_chapter(real, name="Real Chapter")  # subscription_tier defaults to "starter"
+        make_chapter(demo, name="Demo Chapter")
+        db_session.commit()
+
+        body = client.get("/api/platform/dashboard").get_json()
+        breakdown = {row["tier"]: row["count"] for row in body["tier_breakdown"]["chapters"]}
+        assert breakdown["starter"] == 1

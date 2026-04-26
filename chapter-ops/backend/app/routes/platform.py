@@ -24,6 +24,43 @@ from app.utils.platform_admin import require_founder
 
 platform_bp = Blueprint("platform", __name__, url_prefix="/api/platform")
 
+ORG_PLAN_TIERS = ["beta", "starter", "pro", "elite", "organization"]
+CHAPTER_TIERS = ["starter", "pro", "elite", "organization"]
+
+
+def _tier_breakdown_block():
+    """Return tier counts for orgs and chapters. Always includes all tiers
+    (zero-fills missing ones) so the UI doesn't have to."""
+    org_rows = (
+        db.session.query(Organization.plan, func.count(Organization.id))
+        .filter(Organization.is_demo.is_(False), Organization.active.is_(True))
+        .group_by(Organization.plan)
+        .all()
+    )
+    org_counts = dict(org_rows)
+    org_breakdown = [
+        {"tier": tier, "count": int(org_counts.get(tier, 0))}
+        for tier in ORG_PLAN_TIERS
+    ]
+
+    chapter_rows = (
+        db.session.query(Chapter.subscription_tier, func.count(Chapter.id))
+        .join(Organization, Chapter.organization_id == Organization.id)
+        .filter(
+            Organization.is_demo.is_(False),
+            Chapter.active.is_(True),
+        )
+        .group_by(Chapter.subscription_tier)
+        .all()
+    )
+    chapter_counts = dict(chapter_rows)
+    chapter_breakdown = [
+        {"tier": tier, "count": int(chapter_counts.get(tier, 0))}
+        for tier in CHAPTER_TIERS
+    ]
+
+    return {"organizations": org_breakdown, "chapters": chapter_breakdown}
+
 
 def _summary_block():
     """Compute the summary tile values."""
@@ -104,6 +141,6 @@ def get_dashboard():
     """
     return jsonify({
         "summary": _summary_block(),
-        "tier_breakdown": {"organizations": [], "chapters": []},
+        "tier_breakdown": _tier_breakdown_block(),
         "top_chapters_by_dues": [],
     })
