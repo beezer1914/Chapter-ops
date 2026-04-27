@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from cryptography.fernet import Fernet
 
 _backend_dir = Path(__file__).resolve().parent.parent
 load_dotenv(_backend_dir / ".env", override=True)
@@ -179,3 +180,6 @@ class TestingConfig(BaseConfig):
     WTF_CSRF_ENABLED = False
     CACHE_TYPE = "SimpleCache"
     RATELIMIT_ENABLED = False
+    # Fernet key for TOTP secret encryption — generate a fresh one per test run
+    # if not provided via the environment (avoids hard-coding a key in source).
+    MFA_SECRET_KEY = os.environ.get("MFA_SECRET_KEY", Fernet.generate_key().decode())
