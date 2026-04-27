@@ -68,3 +68,45 @@ def generate_qr_data_uri(otpauth_uri: str) -> str:
     img.save(buf, format="PNG")
     encoded = base64.b64encode(buf.getvalue()).decode()
     return f"data:image/png;base64,{encoded}"
+
+
+# ── Backup codes ───────────────────────────────────────────────────────────
+
+# Base32 alphabet minus ambiguous characters (no 0, O, 1, I, L)
+BACKUP_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+BACKUP_CODE_COUNT = 10
+
+
+def generate_backup_codes() -> list[str]:
+    """Generate 10 fresh backup codes in XXXX-XXXX format."""
+    codes = []
+    for _ in range(BACKUP_CODE_COUNT):
+        chars = "".join(secrets.choice(BACKUP_CODE_ALPHABET) for _ in range(8))
+        codes.append(f"{chars[:4]}-{chars[4:]}")
+    return codes
+
+
+def hash_backup_codes(codes: list[str]) -> list[str]:
+    """Hash each code with bcrypt. Returns list of hash strings (same order as input)."""
+    from app.extensions import bcrypt
+    return [bcrypt.generate_password_hash(c.upper()).decode("utf-8") for c in codes]
+
+
+def consume_backup_code(hashes: list, submitted_code: str) -> tuple[list, bool]:
+    """
+    Try to consume `submitted_code` against the list of hashes.
+
+    Returns (updated_hashes, matched_bool). If matched, the matching slot in
+    the returned list is set to None. If not matched, the returned list is
+    unchanged. Comparison is case-insensitive (codes are normalized to upper).
+    """
+    from app.extensions import bcrypt
+    normalized = submitted_code.strip().upper()
+    new_hashes = list(hashes)
+    for i, h in enumerate(new_hashes):
+        if h is None:
+            continue
+        if bcrypt.check_password_hash(h, normalized):
+            new_hashes[i] = None
+            return new_hashes, True
+    return new_hashes, False
