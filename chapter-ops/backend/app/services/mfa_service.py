@@ -17,6 +17,8 @@ import qrcode
 from cryptography.fernet import Fernet, InvalidToken
 from flask import current_app
 
+from app.extensions import db
+
 logger = logging.getLogger(__name__)
 
 
@@ -110,3 +112,132 @@ def consume_backup_code(hashes: list, submitted_code: str) -> tuple[list, bool]:
             new_hashes[i] = None
             return new_hashes, True
     return new_hashes, False
+
+
+# ── TOTP verification ──────────────────────────────────────────────────────
+
+
+def verify_totp(secret: str, submitted_code: str) -> bool:
+    """Verify a 6-digit TOTP code against the secret. Allows ±30 sec drift."""
+    if not submitted_code or not submitted_code.isdigit() or len(submitted_code) != 6:
+        return False
+    return pyotp.TOTP(secret).verify(submitted_code, valid_window=1)
+
+
+# ── Role-based enforcement ────────────────────────────────────────────────
+
+
+def user_role_requires_mfa(user) -> bool:
+    """True if `user` holds any role that mandates MFA enrollment.
+
+    Always returns False when MFA_ENFORCEMENT_ENABLED is unset/false. This is
+    the master kill-switch for the rollout.
+    """
+    if not current_app.config.get("MFA_ENFORCEMENT_ENABLED", False):
+        return False
+
+    from app.models import (
+        ChapterMembership, RegionMembership, OrganizationMembership,
+    )
+    from app.utils.platform_admin import is_founder_email
+
+    # Treasurer+ in any active chapter
+    if ChapterMembership.query.filter(
+        ChapterMembership.user_id == user.id,
+        ChapterMembership.active.is_(True),
+        ChapterMembership.role.in_(["treasurer", "vice_president", "president", "admin"]),
+    ).first() is not None:
+        return True
+
+    # Any active regional officer (anything other than plain "member")
+    if RegionMembership.query.filter(
+        RegionMembership.user_id == user.id,
+        RegionMembership.active.is_(True),
+        RegionMembership.role != "member",
+    ).first() is not None:
+        return True
+
+    # Org admin
+    if OrganizationMembership.query.filter(
+        OrganizationMembership.user_id == user.id,
+        OrganizationMembership.active.is_(True),
+        OrganizationMembership.role == "admin",
+    ).first() is not None:
+        return True
+
+    # Platform admin
+    return is_founder_email(user.email)
+
+
+# ── Admin reset authorization ─────────────────────────────────────────────
+
+
+def can_reset_mfa(actor, target) -> bool:
+    """True if `actor` is permitted to reset `target`'s MFA.
+
+    Rules:
+      - Actor MUST themselves be MFA-enrolled (downgrade-attack guard).
+      - Platform Admin (founder) can reset anyone.
+      - Org Admin can reset any user with at least one membership in their org.
+      - President can reset Treasurer/VP/Secretary in their own chapter.
+    """
+    from app.models import (
+        ChapterMembership, OrganizationMembership, UserMFA, Chapter,
+    )
+    from app.utils.platform_admin import is_founder_email
+
+    # Downgrade-attack guard: actor must have active MFA
+    actor_mfa = UserMFA.query.filter_by(user_id=actor.id, enabled=True).first()
+    if actor_mfa is None:
+        return False
+
+    # Platform admin escape hatch
+    if is_founder_email(actor.email):
+        return True
+
+    # Org admin can reset anyone in their org
+    actor_org_admin_org_ids = [
+        om.organization_id for om in OrganizationMembership.query.filter_by(
+            user_id=actor.id, role="admin", active=True
+        ).all()
+    ]
+    if actor_org_admin_org_ids:
+        # Target must have at least one membership in one of these orgs
+        target_chapter_orgs = (
+            db.session.query(Chapter.organization_id)
+            .join(ChapterMembership, ChapterMembership.chapter_id == Chapter.id)
+            .filter(ChapterMembership.user_id == target.id, ChapterMembership.active.is_(True))
+            .distinct()
+            .all()
+        )
+        for (org_id,) in target_chapter_orgs:
+            if org_id in actor_org_admin_org_ids:
+                return True
+        # Also check if target is themselves an org admin in actor's org
+        target_org_ids = [
+            om.organization_id for om in OrganizationMembership.query.filter_by(
+                user_id=target.id, active=True
+            ).all()
+        ]
+        for org_id in target_org_ids:
+            if org_id in actor_org_admin_org_ids:
+                return True
+        return False
+
+    # President in same chapter, target is treasurer/vp/secretary
+    actor_president_chapter_ids = [
+        cm.chapter_id for cm in ChapterMembership.query.filter_by(
+            user_id=actor.id, role="president", active=True
+        ).all()
+    ]
+    if actor_president_chapter_ids:
+        target_membership = ChapterMembership.query.filter(
+            ChapterMembership.user_id == target.id,
+            ChapterMembership.chapter_id.in_(actor_president_chapter_ids),
+            ChapterMembership.active.is_(True),
+            ChapterMembership.role.in_(["treasurer", "vice_president", "secretary"]),
+        ).first()
+        if target_membership is not None:
+            return True
+
+    return False
