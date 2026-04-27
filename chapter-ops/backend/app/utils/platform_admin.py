@@ -26,6 +26,21 @@ def _platform_admin_email() -> str:
     return (current_app.config.get("FOUNDER_EMAIL") or "").strip().lower()
 
 
+def is_founder_email(email: str | None) -> bool:
+    """Return True if the given email matches the platform admin identity.
+
+    Same semantics as is_founder() but operates on an arbitrary email rather
+    than current_user — used by MFA enforcement to check whether a user (not
+    necessarily logged in yet) holds platform-admin privileges.
+    """
+    if not email:
+        return False
+    admin_email = _platform_admin_email()
+    if not admin_email:
+        return False
+    return email.strip().lower() == admin_email
+
+
 def is_founder() -> bool:
     """Return True if the current user's email matches the platform admin identity.
 
