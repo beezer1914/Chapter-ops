@@ -83,7 +83,8 @@ export default function PendingChapterRequestsSection({ title, scope, emptyMessa
             {pendingRequests.length} request{pendingRequests.length === 1 ? "" : "s"} awaiting review
           </h2>
         </div>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[800px]">
           <thead>
             <tr className="text-[10px] font-semibold uppercase tracking-[0.2em] text-content-muted border-b border-[var(--color-border)]">
               <th className="text-left px-4 py-2">Requester</th>
@@ -142,6 +143,7 @@ export default function PendingChapterRequestsSection({ title, scope, emptyMessa
             ))}
           </tbody>
         </table>
+        </div>
       </section>
 
       {/* ── Reject Chapter Request Modal ── */}
