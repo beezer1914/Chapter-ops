@@ -51,6 +51,23 @@ def inbox():
     today = now.date()
     items = []
 
+    # ── 0. MFA enrollment required ───────────────────────────────────────────
+    try:
+        from app.models import UserMFA
+        from app.services.mfa_service import user_role_requires_mfa
+        if user_role_requires_mfa(current_user):
+            mfa_record = UserMFA.query.filter_by(user_id=current_user.id, enabled=True).first()
+            if mfa_record is None:
+                items.append(_item(
+                    f"mfa_required_{current_user.id}",
+                    "mfa_required", "critical",
+                    "Two-factor authentication required",
+                    "Your role requires MFA. Set it up to keep your account secure.",
+                    "Set up MFA", "/mfa/enroll",
+                ))
+    except Exception:
+        pass
+
     # ── 1. Dues outstanding ───────────────────────────────────────────────────
     if membership and membership.financial_status == "not_financial":
         items.append(_item(
