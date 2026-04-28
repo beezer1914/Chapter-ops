@@ -26,10 +26,13 @@ from app.utils.decorators import region_role_required, _is_org_admin
 from app.services.dashboard_aggregations import (
     compute_chapter_kpis, compute_region_kpis,
 )
-from app.utils.region_permissions import can_view_region_dashboard
+from app.utils.region_permissions import (
+    REGIONAL_OFFICER_ROLES, can_view_region_dashboard,
+)
 
 logger = logging.getLogger(__name__)
 
+# Mirrors Invoice.status enum; keep in sync with Invoice model
 REGIONAL_INVOICE_STATUSES = ("draft", "sent", "paid", "overdue", "cancelled")
 
 regions_bp = Blueprint("regions", __name__, url_prefix="/api/regions")
@@ -235,10 +238,7 @@ def region_dashboard(region_id: str):
         .filter(
             RegionMembership.region_id == region.id,
             RegionMembership.active == True,
-            RegionMembership.role.in_([
-                "regional_director", "regional_1st_vice", "regional_2nd_vice",
-                "regional_secretary", "regional_treasurer",
-            ]),
+            RegionMembership.role.in_(list(REGIONAL_OFFICER_ROLES)),
         )
         .limit(5)
         .all()

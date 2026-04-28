@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 
 from app.extensions import db
 from app.models import (
@@ -102,3 +103,46 @@ def test_empty_region_returns_zero_kpis(client, db_session):
     assert data["kpis"]["financial_rate"] == 0.0
     assert data["chapters"] == []
     assert data["officer_summary"] == []
+
+
+def test_endpoint_handles_bad_chapter_gracefully(client, db_session, org_region_chapter):
+    org, region, chapter = org_region_chapter
+    user = make_user(email="ar@x.com")
+    db_session.add(OrganizationMembership(
+        user_id=user.id, organization_id=org.id, role="admin", active=True,
+    )); db_session.flush()
+    _login(client, user)
+
+    def boom(chapter_id):
+        raise RuntimeError("synthetic chapter failure")
+
+    with patch(
+        "app.routes.regions.compute_chapter_kpis",
+        side_effect=boom,
+    ):
+        resp = client.get(f"/api/regions/{region.id}/dashboard")
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert len(data["chapters"]) == 1
+    bad_row = data["chapters"][0]
+    assert bad_row["id"] == chapter.id
+    assert bad_row["member_count"] is None
+    assert bad_row["financial_rate"] is None
+    assert bad_row["dues_ytd"] is None
+
+
+def test_endpoint_404_when_region_inactive(client, db_session):
+    org = Organization(name="O", abbreviation="O", org_type="fraternity")
+    db_session.add(org); db_session.flush()
+    region = Region(organization_id=org.id, name="Inactive", active=False)
+    db_session.add(region); db_session.flush()
+
+    user = make_user(email="ai@x.com")
+    db_session.add(OrganizationMembership(
+        user_id=user.id, organization_id=org.id, role="admin", active=True,
+    )); db_session.flush()
+    _login(client, user)
+
+    resp = client.get(f"/api/regions/{region.id}/dashboard")
+    assert resp.status_code == 404
