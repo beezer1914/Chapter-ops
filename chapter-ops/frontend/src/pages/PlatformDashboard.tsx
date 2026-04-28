@@ -1,3 +1,6 @@
+// TODO(MFA Pass 2): per-user Reset MFA action when a user-list view exists on
+// this dashboard. For now, platform admins can reset MFA via the Members page
+// of any chapter, or POST /api/auth/mfa/reset/<user_id> directly.
 import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import PendingChapterRequestsSection from "@/components/PendingChapterRequestsSection";
