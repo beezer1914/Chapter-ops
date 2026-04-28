@@ -13,6 +13,11 @@ import { useWorkflowStore } from "@/stores/workflowStore";
 import { useBrandingStore } from "@/stores/brandingStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 
+export type LoginResult =
+  | { kind: "success" }
+  | { kind: "requires_mfa"; mfa_token: string }
+  | { kind: "requires_enrollment"; enrollment_token: string };
+
 interface AuthState {
   user: User | null;
   memberships: ChapterMembership[];
@@ -22,12 +27,17 @@ interface AuthState {
   error: string | null;
 
   // Actions
-  login: (data: LoginRequest) => Promise<void>;
+  login: (data: LoginRequest) => Promise<LoginResult>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   initializeAuth: () => Promise<void>;
   switchChapter: (chapterId: string) => Promise<void>;
   clearError: () => void;
+  setSessionFromMFAVerify: (response: {
+    user: User;
+    is_platform_admin?: boolean;
+    csrf_token?: string;
+  }) => Promise<void>;
 }
 
 /**
@@ -63,6 +73,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     resetPerUserStores();
     try {
       const response = await api.post("/auth/login", data);
+
+      if (response.data.requires_mfa) {
+        return { kind: "requires_mfa", mfa_token: response.data.mfa_token };
+      }
+      if (response.data.requires_enrollment) {
+        return {
+          kind: "requires_enrollment",
+          enrollment_token: response.data.enrollment_token,
+        };
+      }
+
       // The backend rotates the session on login, invalidating the old CSRF
       // token. It returns a fresh token in the response so subsequent
       // mutations don't have to round-trip through the 400/refresh/retry path.
@@ -87,12 +108,36 @@ export const useAuthStore = create<AuthState>((set) => ({
       } catch {
         // Non-critical: memberships can be fetched later
       }
+      return { kind: "success" };
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { error?: string } } }).response?.data?.error ||
         "Login failed. Please try again.";
       set({ error: message });
       throw err;
+    }
+  },
+
+  setSessionFromMFAVerify: async (response) => {
+    if (response.csrf_token) {
+      setCsrfToken(response.csrf_token);
+    }
+    set({
+      user: response.user,
+      isPlatformAdmin: response.is_platform_admin ?? false,
+      isAuthenticated: true,
+    });
+    try {
+      const userResponse = await api.get("/auth/user");
+      set({
+        memberships: userResponse.data.memberships,
+        isPlatformAdmin: userResponse.data.is_platform_admin ?? false,
+      });
+      if (userResponse.data.user.active_chapter_id) {
+        useConfigStore.getState().loadConfig();
+      }
+    } catch {
+      // Non-critical: memberships can be fetched later
     }
   },
 
