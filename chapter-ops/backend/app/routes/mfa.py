@@ -105,7 +105,14 @@ def enroll_verify():
 
 
 @mfa_bp.route("/verify", methods=["POST"])
-@limiter.limit("5 per 15 minutes", key_func=lambda: request.json.get("mfa_token", "") if request.is_json else request.remote_addr)
+@limiter.limit(
+    "5 per 15 minutes",
+    key_func=lambda: (
+        (request.json or {}).get("mfa_token") or request.remote_addr
+        if request.is_json
+        else request.remote_addr
+    ),
+)
 def verify():
     """Verify a TOTP or backup code using a short-lived mfa_token.
 

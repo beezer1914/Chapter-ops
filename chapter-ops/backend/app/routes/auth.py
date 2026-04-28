@@ -83,36 +83,35 @@ def login():
     # ── MFA branch ─────────────────────────────────────────────────────
     from app.models import UserMFA
     from app.services.mfa_service import user_role_requires_mfa
-    from app.utils.mfa_token import create_mfa_token, create_enrollment_token
+    from app.utils.mfa_token import create_mfa_token
 
     mfa_record = UserMFA.query.filter_by(user_id=user.id, enabled=True).first()
     if mfa_record is not None:
-        # User has MFA enabled — challenge them
+        # User has MFA enabled — challenge them. No session yet.
         return jsonify({
             "requires_mfa": True,
             "mfa_token": create_mfa_token(user_id=user.id),
         }), 200
 
-    if user_role_requires_mfa(user):
-        # Required role with no MFA — force enrollment
-        return jsonify({
-            "requires_enrollment": True,
-            "enrollment_token": create_enrollment_token(user_id=user.id),
-        }), 200
-
-    # Regenerate session to prevent session fixation
+    # Either no enforcement needed, or a required-role user without MFA.
+    # In both cases we establish the session normally; the
+    # required-role-without-MFA path adds requires_enrollment: True so the
+    # frontend can route them to the wizard. This avoids needing a separate
+    # bearer-token path on the enroll endpoints — they remain @login_required.
     session.clear()
     login_user(user, remember=data.get("remember", False))
     _log_auth_event("login_success", user_id=user.id)
 
-    # Issue a fresh CSRF token bound to the new session so the client can
-    # make state-changing requests without a 400/retry handshake.
-    return jsonify({
+    body: dict = {
         "success": True,
         "user": user.to_dict(),
         "is_platform_admin": is_founder(),
         "csrf_token": generate_csrf(),
-    }), 200
+    }
+    if user_role_requires_mfa(user):
+        body["requires_enrollment"] = True
+
+    return jsonify(body), 200
 
 
 @auth_bp.route("/register", methods=["POST"])

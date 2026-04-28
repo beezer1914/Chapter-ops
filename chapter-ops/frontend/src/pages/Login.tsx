@@ -37,14 +37,12 @@ export default function Login() {
     try {
       const recaptcha_token = await executeRecaptcha("login");
       const result = await login({ email, password, recaptcha_token });
-      if (result.kind === "requires_enrollment") {
-        navigate("/mfa/enroll", {
-          state: { enrollment_token: result.enrollment_token },
-        });
-        return;
-      }
       if (result.kind === "requires_mfa") {
         setMfaToken(result.mfa_token);
+        return;
+      }
+      if (result.requires_enrollment) {
+        navigate("/mfa/enroll");
         return;
       }
       redirectAfterAuth(useAuthStore.getState().user);

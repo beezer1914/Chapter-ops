@@ -55,6 +55,9 @@ class TestLoginMFABranch:
         assert body.get("user") is None
 
     def test_required_role_unenrolled_gets_requires_enrollment(self, app, client, db_session):
+        """A required-role user without MFA gets a session AND the
+        requires_enrollment flag, so the @login_required enroll endpoints work
+        when the frontend redirects them to the wizard."""
         app.config["MFA_ENFORCEMENT_ENABLED"] = True
         u = make_user(email="t@example.com", password="Str0ng!Password1")
         org = make_organization()
@@ -67,8 +70,11 @@ class TestLoginMFABranch:
         })
         assert resp.status_code == 200
         body = resp.get_json()
+        assert body.get("success") is True
         assert body.get("requires_enrollment") is True
-        assert "enrollment_token" in body
+        # Session IS established so the user can hit /api/auth/mfa/enroll/*
+        assert body.get("user") is not None
+        assert body.get("csrf_token")
 
     def test_required_role_unenrolled_with_enforcement_off_logs_in(self, app, client, db_session):
         """With kill switch off, unenrolled treasurers can still log in."""

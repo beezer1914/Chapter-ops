@@ -143,6 +143,7 @@ class ProductionConfig(BaseConfig):
             "DATABASE_URL",
             "REDIS_URL",
             "FRONTEND_URL",
+            "MFA_SECRET_KEY",
         ]
         missing = [var for var in required if not os.environ.get(var)]
         if missing:

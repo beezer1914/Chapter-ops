@@ -14,9 +14,8 @@ import { useBrandingStore } from "@/stores/brandingStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 
 export type LoginResult =
-  | { kind: "success" }
-  | { kind: "requires_mfa"; mfa_token: string }
-  | { kind: "requires_enrollment"; enrollment_token: string };
+  | { kind: "success"; requires_enrollment?: boolean }
+  | { kind: "requires_mfa"; mfa_token: string };
 
 interface AuthState {
   user: User | null;
@@ -77,12 +76,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (response.data.requires_mfa) {
         return { kind: "requires_mfa", mfa_token: response.data.mfa_token };
       }
-      if (response.data.requires_enrollment) {
-        return {
-          kind: "requires_enrollment",
-          enrollment_token: response.data.enrollment_token,
-        };
-      }
 
       // The backend rotates the session on login, invalidating the old CSRF
       // token. It returns a fresh token in the response so subsequent
@@ -108,7 +101,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       } catch {
         // Non-critical: memberships can be fetched later
       }
-      return { kind: "success" };
+      return {
+        kind: "success",
+        requires_enrollment: !!response.data.requires_enrollment,
+      };
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { error?: string } } }).response?.data?.error ||
