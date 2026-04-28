@@ -80,6 +80,26 @@ def login():
         _log_auth_event("login_failure", user_id=user.id)
         return jsonify({"error": "This account has been deactivated."}), 403
 
+    # ── MFA branch ─────────────────────────────────────────────────────
+    from app.models import UserMFA
+    from app.services.mfa_service import user_role_requires_mfa
+    from app.utils.mfa_token import create_mfa_token, create_enrollment_token
+
+    mfa_record = UserMFA.query.filter_by(user_id=user.id, enabled=True).first()
+    if mfa_record is not None:
+        # User has MFA enabled — challenge them
+        return jsonify({
+            "requires_mfa": True,
+            "mfa_token": create_mfa_token(user_id=user.id),
+        }), 200
+
+    if user_role_requires_mfa(user):
+        # Required role with no MFA — force enrollment
+        return jsonify({
+            "requires_enrollment": True,
+            "enrollment_token": create_enrollment_token(user_id=user.id),
+        }), 200
+
     # Regenerate session to prevent session fixation
     session.clear()
     login_user(user, remember=data.get("remember", False))

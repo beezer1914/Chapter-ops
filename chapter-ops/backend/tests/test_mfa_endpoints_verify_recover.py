@@ -74,31 +74,35 @@ class TestMFAVerify:
 
 class TestRegenerateBackupCodes:
     def test_returns_10_new_codes_and_replaces_old(self, app, client, db_session):
+        import pyotp
         u = make_user(email="r@example.com", password="Str0ng!Password1")
         db_session.commit()
-        _, original_codes = _enroll(db_session, u)
-        # Login + verify MFA so session has MFA flag
-        # Simulate by directly logging in (since the test client doesn't
-        # carry the MFA-verified marker, we use the regenerate endpoint's
-        # auth as the standard logged-in flow)
-        _login(client, "r@example.com")
-        # Need to verify MFA in the session — for test purposes we'll
-        # rely on the endpoint accepting any MFA-enrolled logged-in user
-        # (see note in implementation).
+        secret, original_codes = _enroll(db_session, u)
+        # Login -> get mfa_token -> verify TOTP -> session established
+        login_resp = _login(client, "r@example.com")
+        token = login_resp.get_json()["mfa_token"]
+        code = pyotp.TOTP(secret).now()
+        verify_resp = client.post("/api/auth/mfa/verify", json={"mfa_token": token, "code": code})
+        assert verify_resp.status_code == 200
+        # Now session has MFA-verified user
         resp = client.post("/api/auth/mfa/backup-codes/regenerate")
         assert resp.status_code == 200
         body = resp.get_json()
         assert len(body["backup_codes"]) == 10
-        # Old codes no longer valid
         assert original_codes[0] not in body["backup_codes"]
 
 
 class TestDisableMFA:
     def test_disable_succeeds_for_opt_in_member(self, app, client, db_session):
+        import pyotp
         u = make_user(email="d@example.com", password="Str0ng!Password1")
         db_session.commit()
-        _enroll(db_session, u)
-        _login(client, "d@example.com")
+        secret, _ = _enroll(db_session, u)
+        login_resp = _login(client, "d@example.com")
+        token = login_resp.get_json()["mfa_token"]
+        code = pyotp.TOTP(secret).now()
+        verify_resp = client.post("/api/auth/mfa/verify", json={"mfa_token": token, "code": code})
+        assert verify_resp.status_code == 200
         resp = client.post("/api/auth/mfa/disable")
         assert resp.status_code == 200
         record = UserMFA.query.filter_by(user_id=u.id).first()

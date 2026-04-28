@@ -13,16 +13,26 @@ def _login(client, email, password="Str0ng!Password1"):
     return client.post("/api/auth/login", json={"email": email, "password": password})
 
 
+def _login_with_mfa(client, email, secret, password="Str0ng!Password1"):
+    import pyotp
+    login_resp = client.post("/api/auth/login", json={"email": email, "password": password})
+    token = login_resp.get_json()["mfa_token"]
+    code = pyotp.TOTP(secret).now()
+    return client.post("/api/auth/mfa/verify", json={"mfa_token": token, "code": code})
+
+
 def _enroll(db_session, user, enabled=True):
     secret = generate_secret()
+    codes = generate_backup_codes()
     record = UserMFA(
         user_id=user.id,
         secret=encrypt_secret(secret),
         enabled=enabled,
-        backup_codes_hashed=hash_backup_codes(generate_backup_codes()),
+        backup_codes_hashed=hash_backup_codes(codes),
     )
     db_session.add(record)
     db_session.commit()
+    return secret, codes
 
 
 class TestAdminReset:
@@ -33,10 +43,10 @@ class TestAdminReset:
         treas = make_user(email="t@example.com", password="Str0ng!Password1")
         make_membership(pres, ch, role="president")
         make_membership(treas, ch, role="treasurer")
-        _enroll(db_session, pres)
+        pres_secret, _ = _enroll(db_session, pres)
         _enroll(db_session, treas)
 
-        _login(client, "p@example.com")
+        _login_with_mfa(client, "p@example.com", pres_secret)
         resp = client.post(
             f"/api/auth/mfa/reset/{treas.id}",
             json={"reason": "Lost phone"},
@@ -55,10 +65,10 @@ class TestAdminReset:
         treas = make_user(email="t2@example.com", password="Str0ng!Password1")
         make_membership(sec, ch, role="secretary")
         make_membership(treas, ch, role="treasurer")
-        _enroll(db_session, sec)
+        sec_secret, _ = _enroll(db_session, sec)
         _enroll(db_session, treas)
 
-        _login(client, "s@example.com")
+        _login_with_mfa(client, "s@example.com", sec_secret)
         resp = client.post(
             f"/api/auth/mfa/reset/{treas.id}",
             json={"reason": "I want to"},
@@ -73,7 +83,7 @@ class TestAdminReset:
         treas = make_user(email="t3@example.com", password="Str0ng!Password1")
         make_membership(pres, ch, role="president")
         make_membership(treas, ch, role="treasurer")
-        # NOT enrolling pres
+        # NOT enrolling pres — _login works as before (no MFA challenge)
         _enroll(db_session, treas)
 
         _login(client, "p2@example.com")
