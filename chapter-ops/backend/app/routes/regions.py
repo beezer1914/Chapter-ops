@@ -62,7 +62,7 @@ def list_regions():
                 org_id = chapter.organization_id if chapter else None
 
     if not org_id:
-        return jsonify({"regions": [], "is_org_admin": False}), 200
+        return jsonify({"regions": [], "is_org_admin": False, "regions_with_dashboard_access": []}), 200
 
     is_admin = _is_org_admin(current_user, org_id)
 
@@ -77,7 +77,7 @@ def list_regions():
     ).first() is not None
 
     if not is_admin and not is_org_member:
-        return jsonify({"regions": [], "is_org_admin": False}), 200
+        return jsonify({"regions": [], "is_org_admin": False, "regions_with_dashboard_access": []}), 200
 
     # All org members see all active regions (read-only access is enforced per route)
     regions = Region.query.filter_by(
@@ -95,6 +95,10 @@ def list_regions():
         RegionMembership.active == True,
     ).first() is not None
 
+    regions_with_dashboard_access = [
+        r.id for r in regions if can_view_region_dashboard(current_user, r)
+    ]
+
     result = []
     for r in regions:
         data = r.to_dict()
@@ -106,6 +110,7 @@ def list_regions():
         "regions": result,
         "is_org_admin": is_admin,
         "is_regional_director": is_regional_director,
+        "regions_with_dashboard_access": regions_with_dashboard_access,
     }), 200
 
 

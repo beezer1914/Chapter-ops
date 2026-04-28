@@ -1,7 +1,7 @@
 """Tests for region management routes — /api/regions/*."""
 
 from app.extensions import db
-from app.models import RegionMembership
+from app.models import Chapter, ChapterMembership, Organization, Region, RegionMembership
 from tests.conftest import (
     make_user,
     make_organization,
@@ -124,6 +124,34 @@ class TestListRegions:
     def test_unauthenticated_returns_401(self, client):
         resp = client.get("/api/regions")
         assert resp.status_code == 401
+
+    def test_list_regions_returns_dashboard_access_array(self, client, db_session):
+        org = Organization(name="O", abbreviation="O", org_type="fraternity")
+        db_session.add(org); db_session.flush()
+        r1 = Region(organization_id=org.id, name="South", active=True)
+        r2 = Region(organization_id=org.id, name="North", active=True)
+        db_session.add_all([r1, r2]); db_session.flush()
+
+        user = make_user(email="director@x.com")
+        db_session.add(RegionMembership(
+            user_id=user.id, region_id=r1.id, role="regional_director", active=True,
+        ))
+        # Make user an org member via a chapter so list_regions returns regions
+        chapter = Chapter(
+            organization_id=org.id, region_id=r1.id, name="A",
+            chapter_type="undergraduate", active=True,
+        ); db_session.add(chapter); db_session.flush()
+        db_session.add(ChapterMembership(
+            user_id=user.id, chapter_id=chapter.id, role="member", active=True,
+        )); db_session.flush()
+
+        with client.session_transaction() as sess:
+            sess["_user_id"] = user.id
+
+        resp = client.get(f"/api/regions?organization_id={org.id}")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["regions_with_dashboard_access"] == [r1.id]
 
 
 class TestGetRegionDetail:
