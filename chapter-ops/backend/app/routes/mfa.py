@@ -230,3 +230,57 @@ def disable_mfa():
     db.session.commit()
 
     return jsonify({"success": True}), 200
+
+
+# ── Admin reset ────────────────────────────────────────────────────────────
+
+
+@mfa_bp.route("/reset/<target_user_id>", methods=["POST"])
+@login_required
+@limiter.limit("10 per hour")
+def admin_reset(target_user_id):
+    """Reset another user's MFA. Authorization via can_reset_mfa()."""
+    target = User.query.get(target_user_id)
+    if not target:
+        return jsonify({"error": "User not found."}), 404
+
+    if not mfa_service.can_reset_mfa(actor=current_user, target=target):
+        return jsonify({"error": "You don't have permission to reset this user's MFA."}), 403
+
+    data = request.get_json() or {}
+    reason = (data.get("reason") or "").strip() or None
+
+    # Determine actor's snapshot role for audit
+    from app.utils.platform_admin import is_founder_email
+    from app.models import OrganizationMembership, ChapterMembership, MFAResetEvent
+    if is_founder_email(current_user.email):
+        actor_role = "platform_admin"
+    elif OrganizationMembership.query.filter_by(
+        user_id=current_user.id, role="admin", active=True
+    ).first():
+        actor_role = "org_admin"
+    else:
+        actor_role = "president"
+
+    record = UserMFA.query.filter_by(user_id=target.id).first()
+    if record:
+        record.last_reset_at = datetime.now(timezone.utc)
+        db.session.delete(record)
+
+    db.session.add(MFAResetEvent(
+        target_user_id=target.id,
+        actor_user_id=current_user.id,
+        actor_role_at_reset=actor_role,
+        reason=reason,
+    ))
+
+    from app.models import AuthEvent
+    db.session.add(AuthEvent(
+        user_id=target.id,
+        ip_address=request.remote_addr or "unknown",
+        event_type="mfa_reset",
+        user_agent=(request.headers.get("User-Agent") or "")[:512] or None,
+    ))
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
