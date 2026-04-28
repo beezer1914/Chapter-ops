@@ -23,6 +23,11 @@ stripe==11.4.1
 # Communications
 resend==2.10.0
 
+# MFA
+cryptography==46.0.7
+pyotp==2.9.0
+qrcode[pil]==7.4.2
+
 # Storage
 boto3==1.35.86
 

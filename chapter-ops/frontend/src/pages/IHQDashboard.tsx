@@ -1,3 +1,7 @@
+// TODO(MFA Pass 2): per-officer Reset MFA action. The chapter-health rows here
+// are chapter-grain, not user-grain — adding reset would require a roster
+// drilldown. Org admins can reset officers via the chapter's Members page in
+// the meantime.
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";

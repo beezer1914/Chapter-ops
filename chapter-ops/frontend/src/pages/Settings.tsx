@@ -10,16 +10,18 @@ import ChapterConfigTab from "./settings/ChapterConfigTab";
 import StripeConnectSection from "./settings/StripeConnectSection";
 import BrandingTab from "./settings/BrandingTab";
 import AccessControlTab from "./settings/AccessControlTab";
+import SecurityTab from "./settings/SecurityTab";
 
 const ROLE_HIERARCHY: Record<MemberRole, number> = {
   member: 0, secretary: 1, treasurer: 2, vice_president: 3, president: 4, admin: 5,
   regional_director: 5, regional_1st_vice: 4,
 };
 
-type Tab = "profile" | "organization" | "chapter" | "payments" | "branding" | "access";
+type Tab = "profile" | "security" | "organization" | "chapter" | "payments" | "branding" | "access";
 
 const TAB_LABELS: Record<Tab, string> = {
   profile: "Profile",
+  security: "Security",
   organization: "Organization",
   chapter: "Chapter",
   payments: "Payments",
@@ -45,10 +47,10 @@ export default function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Profile tab is always visible; officer tabs only for secretary+; access tab only for president+
+  // Profile + Security are always visible; officer tabs only for secretary+; access tab only for president+
   const visibleTabs: Tab[] = isOfficer
-    ? ["profile", "organization", "chapter", "payments", "branding", ...(isPresident ? ["access" as Tab] : [])]
-    : ["profile"];
+    ? ["profile", "security", "organization", "chapter", "payments", "branding", ...(isPresident ? ["access" as Tab] : [])]
+    : ["profile", "security"];
 
   return (
     <Layout>
@@ -95,6 +97,11 @@ export default function Settings() {
         {tab === "profile" ? (
           <ProfileTab
             currentRole={currentRole}
+            setError={setError}
+            setSuccess={setSuccess}
+          />
+        ) : tab === "security" ? (
+          <SecurityTab
             setError={setError}
             setSuccess={setSuccess}
           />

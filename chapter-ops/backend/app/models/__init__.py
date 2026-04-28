@@ -41,6 +41,8 @@ from app.models.chapter_period_dues import ChapterPeriodDues
 from app.models.committee import Committee
 from app.models.incident import Incident, IncidentAttachment, IncidentStatusEvent
 from app.models.user_tour_state import UserTourState  # noqa: F401
+from app.models.user_mfa import UserMFA
+from app.models.mfa_reset_event import MFAResetEvent
 
 __all__ = [
     "BaseModel",
@@ -82,4 +84,6 @@ __all__ = [
     "IncidentAttachment",
     "IncidentStatusEvent",
     "UserTourState",
+    "UserMFA",
+    "MFAResetEvent",
 ]

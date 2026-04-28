@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { executeRecaptcha, preloadRecaptcha } from "@/lib/recaptcha";
+import { verifyMFA } from "@/services/mfaService";
+import type { User } from "@/types";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,9 +12,23 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [useBackupCode, setUseBackupCode] = useState(false);
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+
   useEffect(() => {
     preloadRecaptcha();
   }, []);
+
+  const redirectAfterAuth = (user: User | null | undefined) => {
+    if (user?.active_chapter_id) {
+      navigate("/dashboard");
+    } else {
+      navigate("/onboarding");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,19 +36,125 @@ export default function Login() {
     setSubmitting(true);
     try {
       const recaptcha_token = await executeRecaptcha("login");
-      await login({ email, password, recaptcha_token });
-      const user = useAuthStore.getState().user;
-      if (user?.active_chapter_id) {
-        navigate("/dashboard");
-      } else {
-        navigate("/onboarding");
+      const result = await login({ email, password, recaptcha_token });
+      if (result.kind === "requires_mfa") {
+        setMfaToken(result.mfa_token);
+        return;
       }
+      if (result.requires_enrollment) {
+        navigate("/mfa/enroll");
+        return;
+      }
+      redirectAfterAuth(useAuthStore.getState().user);
     } catch {
       // Error is handled by the store
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleVerifyMfa = async () => {
+    if (!mfaToken) return;
+    setMfaError(null);
+    setVerifying(true);
+    try {
+      const payload = useBackupCode
+        ? { mfa_token: mfaToken, backup_code: mfaCode }
+        : { mfa_token: mfaToken, code: mfaCode };
+      const response = await verifyMFA(payload);
+      await useAuthStore.getState().setSessionFromMFAVerify({
+        user: response.user as User,
+        is_platform_admin: response.is_platform_admin,
+        csrf_token: response.csrf_token,
+      });
+      redirectAfterAuth(useAuthStore.getState().user);
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { error?: string } } };
+      setMfaError(
+        err.response?.data?.error ??
+          (useBackupCode ? "Invalid backup code." : "Invalid code.")
+      );
+      setMfaCode("");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  if (mfaToken) {
+    return (
+      <div className="min-h-screen flex items-center justify-center font-body bg-[var(--color-bg-page)] px-4">
+        <div className="w-full max-w-md bg-surface-card-solid rounded-2xl shadow-xl shadow-black/20 p-10">
+          <h1 className="text-2xl font-heading font-bold text-content-primary mb-1">
+            Two-factor authentication
+          </h1>
+          <p className="text-sm text-content-muted mb-6">
+            {useBackupCode
+              ? "Enter one of your backup codes."
+              : "Enter the 6-digit code from your authenticator app."}
+          </p>
+
+          {mfaError && (
+            <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
+              {mfaError}
+            </div>
+          )}
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleVerifyMfa();
+            }}
+            className="space-y-4"
+          >
+            {!useBackupCode ? (
+              <input
+                type="text"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                placeholder="000000"
+                autoFocus
+                className="w-full text-center text-2xl tracking-widest font-mono border border-[var(--color-border)] px-3 py-3 rounded-xl bg-[var(--color-bg-input)]"
+              />
+            ) : (
+              <input
+                type="text"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.toUpperCase())}
+                placeholder="XXXX-XXXX"
+                autoFocus
+                className="w-full text-center text-lg tracking-widest font-mono border border-[var(--color-border)] px-3 py-3 rounded-xl bg-[var(--color-bg-input)]"
+              />
+            )}
+
+            <button
+              type="submit"
+              disabled={verifying || mfaCode.length === 0}
+              className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-brand-primary-main to-brand-primary-dark hover:shadow-lg disabled:opacity-50"
+            >
+              {verifying ? "Verifying…" : "Verify"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setUseBackupCode(!useBackupCode);
+                setMfaCode("");
+                setMfaError(null);
+              }}
+              className="w-full text-sm text-content-muted hover:text-brand-primary-main"
+            >
+              {useBackupCode
+                ? "Back to authenticator code"
+                : "Use a backup code instead"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex font-body bg-[var(--color-bg-page)]">

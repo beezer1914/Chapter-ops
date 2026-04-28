@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from cryptography.fernet import Fernet
 
 _backend_dir = Path(__file__).resolve().parent.parent
 load_dotenv(_backend_dir / ".env", override=True)
@@ -100,6 +101,16 @@ class BaseConfig:
     STATUSPAGE_PAGE_ID = os.environ.get("STATUSPAGE_PAGE_ID", "")
     BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:5000")
 
+    # MFA — Fernet key for at-rest TOTP secret encryption. Required in production.
+    # TestingConfig overrides with an ephemeral key.
+    MFA_SECRET_KEY = os.environ.get("MFA_SECRET_KEY", "")
+    # Feature flag for MFA enforcement on officer roles. When False (default),
+    # users in required roles can log in without MFA — the system still tracks
+    # opt-in enrollment but does not force it.
+    MFA_ENFORCEMENT_ENABLED = os.environ.get(
+        "MFA_ENFORCEMENT_ENABLED", "false"
+    ).lower() in ("true", "1", "yes")
+
 
 class LocalConfig(BaseConfig):
     """Local development configuration."""
@@ -142,6 +153,7 @@ class ProductionConfig(BaseConfig):
             "DATABASE_URL",
             "REDIS_URL",
             "FRONTEND_URL",
+            "MFA_SECRET_KEY",
         ]
         missing = [var for var in required if not os.environ.get(var)]
         if missing:
@@ -179,3 +191,6 @@ class TestingConfig(BaseConfig):
     WTF_CSRF_ENABLED = False
     CACHE_TYPE = "SimpleCache"
     RATELIMIT_ENABLED = False
+    # Fernet key for TOTP secret encryption — generate a fresh one per test run
+    # if not provided via the environment (avoids hard-coding a key in source).
+    MFA_SECRET_KEY = os.environ.get("MFA_SECRET_KEY", Fernet.generate_key().decode())
