@@ -8,7 +8,7 @@ Used by the dashboard endpoint, the regions list endpoint (to populate
 from app.extensions import db
 from app.models import RegionMembership
 from app.utils.decorators import _is_org_admin
-from app.utils.platform_admin import is_founder
+from app.utils.platform_admin import is_founder_email
 
 
 REGIONAL_OFFICER_ROLES = frozenset({
@@ -25,7 +25,7 @@ def can_view_region_dashboard(user, region) -> bool:
     if user is None or not getattr(user, "is_authenticated", False):
         return False
 
-    if is_founder():
+    if is_founder_email(user.email):
         return True
 
     if _is_org_admin(user, region.organization_id):

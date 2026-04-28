@@ -61,3 +61,19 @@ def test_unaffiliated_user_denied(app, db_session, org_and_region):
     with app.test_request_context():
         user = make_user(email="random@example.com")
         assert can_view_region_dashboard(user, region) is False
+
+
+def test_platform_admin_grants_access(app, db_session, org_and_region, monkeypatch):
+    _, region = org_and_region
+    monkeypatch.setitem(app.config, "PLATFORM_ADMIN_EMAIL", "platform-admin@example.com")
+    user = make_user(email="platform-admin@example.com")
+    with app.test_request_context():
+        assert can_view_region_dashboard(user, region) is True
+
+
+def test_platform_admin_email_mismatch_denied(app, db_session, org_and_region, monkeypatch):
+    _, region = org_and_region
+    monkeypatch.setitem(app.config, "PLATFORM_ADMIN_EMAIL", "platform-admin@example.com")
+    user = make_user(email="someone-else@example.com")
+    with app.test_request_context():
+        assert can_view_region_dashboard(user, region) is False
