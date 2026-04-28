@@ -123,15 +123,17 @@ Each chapter's KPI computation in the dashboard endpoint is wrapped in a try blo
 
 Use `logger.exception(...)`, never `logger.error(f"...{e}")`. The latter pattern previously hid an invoice-notification field-name bug for an unknown period because it captured neither the stack trace nor the original exception type.
 
-### User-context payload
+### Regions list payload
 
-The existing `GET /api/auth/user` endpoint (which hydrates `currentUser` in the frontend `authStore`) gains a new field on its response:
+The existing `GET /api/regions` endpoint (which already returns `regions / is_org_admin / is_regional_director` and hydrates `regionStore` on page load) gains a new field on its response:
 
 ```ts
 regions_with_dashboard_access: string[]  // region IDs
 ```
 
-Populated by iterating the user's regions and calling `can_view_region_dashboard` for each. For typical users this will be empty or length-1.
+This matches the existing pattern: regional state already lives on `regionStore`, and the regions list endpoint already exposes role flags. `regions_with_dashboard_access` is populated by iterating the org's regions and calling `can_view_region_dashboard` for each. For typical users this is empty or length-1.
+
+The existing `is_regional_director` boolean stays — it is still used to gate Incidents access in `Layout.tsx`. Only the new feature uses the new field.
 
 ## Frontend
 
@@ -228,6 +230,19 @@ This design leaves explicit slots for the next backlog items so they integrate w
 
 - The Regional Director interview (scheduling in progress) — content may shift after that conversation. The MVP is a defensible starting point, not a final answer. Cards are easy to add or remove; the API contract has slack room.
 - No data model changes required. All needed columns/relationships already exist.
+
+## Rip-and-Replace: Existing `RegionDashboard.tsx`
+
+Discovery during plan-writing surfaced a pre-existing `RegionDashboard.tsx` page at the route `/region-dashboard`, fed by `GET /api/regions/my-dashboard`. It is a stub-quality multi-region overview (only `total_regions / total_chapters / total_members` cards) gated to `regional_director` only via the sidebar in `Layout.tsx`. The new per-region dashboard is strictly better in depth and audience coverage.
+
+This work removes:
+
+- Frontend: `frontend/src/pages/RegionDashboard.tsx`
+- Frontend: the `/region-dashboard` route registration in `App.tsx` (and any associated lazy-import)
+- Frontend: the conditional sidebar entry for `isRegionalDirector` in `Layout.tsx` (replaced by the new gate based on `regions_with_dashboard_access`)
+- Backend: the `GET /api/regions/my-dashboard` route handler `my_region_dashboard()` in `routes/regions.py`
+- Backend: any test file or test cases targeting `/my-dashboard`
+- Frontend types: `RegionDashboardData` in `types/index.ts`, if not used elsewhere
 
 ## Open Questions
 
