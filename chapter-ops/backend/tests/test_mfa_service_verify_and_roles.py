@@ -15,6 +15,18 @@ from app.models import UserMFA
 from app.extensions import db
 
 
+@pytest.fixture(autouse=True)
+def _restore_mfa_enforcement(app):
+    """Snapshot MFA_ENFORCEMENT_ENABLED before each test and restore after.
+
+    Tests in this module flip the flag freely; without restoration the leak
+    pollutes every later test that exercises the login endpoint.
+    """
+    original = app.config.get("MFA_ENFORCEMENT_ENABLED", False)
+    yield
+    app.config["MFA_ENFORCEMENT_ENABLED"] = original
+
+
 class TestVerifyTOTP:
     def test_correct_code_returns_true(self, app):
         with app.app_context():
