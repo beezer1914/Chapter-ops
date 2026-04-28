@@ -3,7 +3,13 @@ import type {
   MFAEnrollStartResponse,
   MFAEnrollVerifyResponse,
   MFARegenerateResponse,
+  MFAStatus,
 } from "@/types/mfa";
+
+export async function fetchMFAStatus(): Promise<MFAStatus> {
+  const { data } = await api.get<MFAStatus>("/auth/mfa/status");
+  return data;
+}
 
 export async function enrollStart(): Promise<MFAEnrollStartResponse> {
   const { data } = await api.post<MFAEnrollStartResponse>("/auth/mfa/enroll/start");

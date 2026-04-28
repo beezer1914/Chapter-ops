@@ -21,3 +21,10 @@ export interface LoginRequiresEnrollment {
   requires_enrollment: true;
   enrollment_token: string;
 }
+
+export interface MFAStatus {
+  enabled: boolean;
+  enrolled_at: string | null;
+  last_used_at: string | null;
+  role_requires: boolean;
+}

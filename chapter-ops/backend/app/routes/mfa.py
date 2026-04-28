@@ -284,3 +284,19 @@ def admin_reset(target_user_id):
     db.session.commit()
 
     return jsonify({"success": True}), 200
+
+
+# ── Status (for Settings UI) ───────────────────────────────────────────────
+
+
+@mfa_bp.route("/status", methods=["GET"])
+@login_required
+def get_mfa_status():
+    """Return the current user's MFA status."""
+    record = UserMFA.query.filter_by(user_id=current_user.id).first()
+    return jsonify({
+        "enabled": bool(record and record.enabled),
+        "enrolled_at": record.enrolled_at.isoformat() if record and record.enrolled_at else None,
+        "last_used_at": record.last_used_at.isoformat() if record and record.last_used_at else None,
+        "role_requires": mfa_service.user_role_requires_mfa(current_user),
+    }), 200
