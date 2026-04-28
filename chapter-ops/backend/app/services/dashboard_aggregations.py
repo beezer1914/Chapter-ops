@@ -9,10 +9,10 @@ from datetime import datetime, timezone
 from sqlalchemy import func
 
 from app.extensions import db
-from app.models import Chapter, ChapterMembership, Payment, Region
+from app.models import Chapter, ChapterMembership, Payment
 
 
-def _year_start():
+def year_start():
     return datetime(datetime.now(timezone.utc).year, 1, 1, tzinfo=timezone.utc)
 
 
@@ -32,7 +32,7 @@ def compute_chapter_kpis(chapter_id: str) -> dict:
     dues = float(
         db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
             Payment.chapter_id == chapter_id,
-            Payment.created_at >= _year_start(),
+            Payment.created_at >= year_start(),
         ).scalar() or 0
     )
 
@@ -76,7 +76,7 @@ def compute_region_kpis(region_id: str) -> dict:
     dues = float(
         db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
             Payment.chapter_id.in_(chapter_ids),
-            Payment.created_at >= _year_start(),
+            Payment.created_at >= year_start(),
         ).scalar() or 0
     )
 

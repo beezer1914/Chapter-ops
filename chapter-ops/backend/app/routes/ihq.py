@@ -20,7 +20,7 @@ from app.models import (
     Payment,
     Announcement,
 )
-from app.services.dashboard_aggregations import compute_chapter_kpis, compute_region_kpis
+from app.services.dashboard_aggregations import compute_chapter_kpis, compute_region_kpis, year_start
 from app.utils.decorators import _is_org_admin
 
 ihq_bp = Blueprint("ihq", __name__, url_prefix="/api/ihq")
@@ -93,11 +93,10 @@ def get_dashboard():
 
     total_regions = Region.query.filter_by(organization_id=org_id, active=True).count()
 
-    year_start = datetime(datetime.now(timezone.utc).year, 1, 1, tzinfo=timezone.utc)
     dues_ytd = float(
         db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
             Payment.chapter_id.in_(chapter_ids),
-            Payment.created_at >= year_start,
+            Payment.created_at >= year_start(),
         ).scalar() or 0
     )
 
