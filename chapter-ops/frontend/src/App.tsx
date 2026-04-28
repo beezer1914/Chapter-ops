@@ -36,6 +36,7 @@ import MyDues from "@/pages/MyDues";
 import TreasurerDues from "@/pages/TreasurerDues";
 import Analytics from "@/pages/Analytics";
 import Incidents from "@/pages/Incidents";
+import MFAEnroll from "@/pages/MFAEnroll";
 import { TourProvider } from "@/tours/TourProvider";
 
 export default function App() {
@@ -78,6 +79,15 @@ export default function App() {
           element={
             <ProtectedRoute requireChapter={false}>
               <Onboarding />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mfa/enroll"
+          element={
+            <ProtectedRoute requireChapter={false}>
+              <MFAEnroll />
             </ProtectedRoute>
           }
         />
