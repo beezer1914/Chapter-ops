@@ -46,9 +46,19 @@ def role_required(minimum_role: str):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            from app.utils.platform_admin import is_founder
+
             chapter = g.get("current_chapter")
             if not chapter:
                 return jsonify({"error": "No chapter selected."}), 400
+
+            # Platform admin and org admin bypass chapter-role checks — their
+            # authority is scoped above the chapter (e.g., a treasurer who is
+            # also the org admin still needs to manage members).
+            if is_founder():
+                return f(*args, **kwargs)
+            if _is_org_admin(current_user, chapter.organization_id):
+                return f(*args, **kwargs)
 
             membership = current_user.get_membership(chapter.id)
             if not membership:
