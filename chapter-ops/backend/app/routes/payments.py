@@ -19,6 +19,7 @@ from app.services import notification_service
 from app.utils.decorators import chapter_required, role_required
 from app.utils.pagination import paginate
 from app.utils.permissions import enforce_module_access
+from app.utils.polymorphic import user_to_chapter_payment_kwargs
 
 payments_bp = Blueprint("payments", __name__, url_prefix="/api/payments")
 
@@ -184,6 +185,9 @@ def create_payment():
         fee_type_id=fee_type_id or None,
         notes=data.get("notes", "").strip() or None,
         plan_id=plan_id,
+        **user_to_chapter_payment_kwargs(
+            user_id=data["user_id"], chapter_id=chapter.id,
+        ),
     )
     db.session.add(payment)
     db.session.flush()  # Get payment.id before commit

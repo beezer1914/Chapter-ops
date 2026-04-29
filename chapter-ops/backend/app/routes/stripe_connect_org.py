@@ -11,6 +11,7 @@ from flask import Blueprint, current_app, g, jsonify, request, session
 from flask_login import login_required
 
 from app.extensions import db
+from app.utils.audit import record_audit
 from app.utils.decorators import org_admin_required
 
 stripe_connect_org_bp = Blueprint(
@@ -81,6 +82,12 @@ def stripe_callback(org_id):
 
     org.stripe_account_id = stripe_account_id
     org.stripe_onboarding_complete = True
+    record_audit(
+        event_type="stripe_connect.organization.connect",
+        target_type="organization",
+        target_id=org.id,
+        details={"stripe_account_id": stripe_account_id},
+    )
     db.session.commit()
 
     return jsonify({
@@ -133,6 +140,13 @@ def disconnect_stripe(org_id):
 
     deauthorize_account(org.stripe_account_id)
 
+    previous_account_id = org.stripe_account_id
+    record_audit(
+        event_type="stripe_connect.organization.disconnect",
+        target_type="organization",
+        target_id=org.id,
+        details={"stripe_account_id": previous_account_id},
+    )
     org.stripe_account_id = None
     org.stripe_onboarding_complete = False
     db.session.commit()
