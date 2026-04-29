@@ -34,6 +34,7 @@ from app.models.intake import IntakeCandidate, IntakeDocument
 from app.models.expense import Expense
 from app.models.milestone import ChapterMilestone
 from app.models.auth_event import AuthEvent
+from app.models.audit_event import AuditEvent
 from app.models.agent_run import AgentRun
 from app.models.agent_approval import AgentApproval
 from app.models.chapter_period import ChapterPeriod
@@ -75,6 +76,7 @@ __all__ = [
     "Expense",
     "ChapterMilestone",
     "AuthEvent",
+    "AuditEvent",
     "AgentRun",
     "AgentApproval",
     "ChapterPeriod",

@@ -13,6 +13,7 @@ from flask import Blueprint, current_app, g, jsonify, request, session
 from flask_login import current_user, login_required
 
 from app.extensions import db
+from app.utils.audit import record_audit
 from app.utils.decorators import chapter_required, role_required
 
 stripe_connect_bp = Blueprint("stripe_connect", __name__, url_prefix="/api/stripe")
@@ -89,6 +90,12 @@ def stripe_callback():
 
     chapter.stripe_account_id = stripe_account_id
     chapter.stripe_onboarding_complete = True
+    record_audit(
+        event_type="stripe_connect.chapter.connect",
+        target_type="chapter",
+        target_id=chapter.id,
+        details={"stripe_account_id": stripe_account_id},
+    )
     db.session.commit()
 
     return jsonify({
@@ -152,6 +159,13 @@ def disconnect_stripe():
 
     deauthorize_account(chapter.stripe_account_id)
 
+    previous_account_id = chapter.stripe_account_id
+    record_audit(
+        event_type="stripe_connect.chapter.disconnect",
+        target_type="chapter",
+        target_id=chapter.id,
+        details={"stripe_account_id": previous_account_id},
+    )
     chapter.stripe_account_id = None
     chapter.stripe_onboarding_complete = False
     db.session.commit()

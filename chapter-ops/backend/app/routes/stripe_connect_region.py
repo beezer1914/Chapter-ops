@@ -12,6 +12,7 @@ from flask import Blueprint, current_app, g, jsonify, request, session
 from flask_login import login_required
 
 from app.extensions import db
+from app.utils.audit import record_audit
 from app.utils.decorators import region_role_required
 
 stripe_connect_region_bp = Blueprint(
@@ -80,6 +81,12 @@ def stripe_callback(region_id):
 
     region.stripe_account_id = stripe_account_id
     region.stripe_onboarding_complete = True
+    record_audit(
+        event_type="stripe_connect.region.connect",
+        target_type="region",
+        target_id=region.id,
+        details={"stripe_account_id": stripe_account_id},
+    )
     db.session.commit()
 
     return jsonify({
@@ -130,6 +137,13 @@ def disconnect_stripe(region_id):
 
     deauthorize_account(region.stripe_account_id)
 
+    previous_account_id = region.stripe_account_id
+    record_audit(
+        event_type="stripe_connect.region.disconnect",
+        target_type="region",
+        target_id=region.id,
+        details={"stripe_account_id": previous_account_id},
+    )
     region.stripe_account_id = None
     region.stripe_onboarding_complete = False
     db.session.commit()
