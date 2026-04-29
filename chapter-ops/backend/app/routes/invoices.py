@@ -583,6 +583,7 @@ def create_regional_invoice(region_id):
         due_date=due,
         notes=data.get("notes"),
         created_by_id=current_user.id,
+        **region_to_chapter_invoice_kwargs(region_id=region.id, chapter_id=chapter.id),
     )
     db.session.add(invoice)
     db.session.commit()
@@ -658,6 +659,7 @@ def bulk_create_regional_invoices(region_id):
                 due_date=due,
                 notes=data.get("notes"),
                 created_by_id=current_user.id,
+                **region_to_chapter_invoice_kwargs(region_id=region.id, chapter_id=ch.id),
             )
             db.session.add(inv)
             created.append(inv)
