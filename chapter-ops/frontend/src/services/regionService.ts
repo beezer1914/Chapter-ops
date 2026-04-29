@@ -10,6 +10,7 @@ import type {
   Region,
   OrgDirectoryResult,
   OrgDirectoryMemberDetail,
+  RegionDashboardPayload,
 } from "@/types";
 
 export async function fetchRegions(): Promise<{
@@ -100,4 +101,13 @@ export async function fetchDirectoryMemberDetail(
     params: { chapter_id: chapterId },
   });
   return response.data.member;
+}
+
+export async function fetchRegionDashboard(
+  regionId: string,
+): Promise<RegionDashboardPayload> {
+  const res = await api.get<RegionDashboardPayload>(
+    `/regions/${regionId}/dashboard`,
+  );
+  return res.data;
 }

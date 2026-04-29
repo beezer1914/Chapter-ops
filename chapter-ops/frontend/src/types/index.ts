@@ -1234,6 +1234,53 @@ export interface RegionDashboardData {
   total_members: number;
 }
 
+export interface RegionDashboardKpis {
+  chapter_count: number;
+  chapter_count_active: number;
+  chapter_count_suspended: number;
+  member_count: number;
+  financial_rate: number;
+  dues_ytd: string;
+  invoices_outstanding_total: string;
+}
+
+export interface RegionDashboardInvoiceSnapshot {
+  draft: number;
+  sent: number;
+  paid: number;
+  overdue: number;
+  cancelled: number;
+  outstanding_total: string;
+}
+
+export interface RegionDashboardOfficer {
+  user_id: string;
+  full_name: string;
+  role:
+    | "regional_director"
+    | "regional_1st_vice"
+    | "regional_2nd_vice"
+    | "regional_secretary"
+    | "regional_treasurer";
+}
+
+export interface RegionDashboardAgentFinding {
+  severity: "info" | "warning" | "critical";
+  check: string;
+  summary: string;
+  detail?: string;
+  chapter_id?: string;
+}
+
+export interface RegionDashboardPayload {
+  region: { id: string; name: string; abbreviation: string | null; description: string | null };
+  kpis: RegionDashboardKpis;
+  chapters: import("@/components/ChapterHealthTable").ChapterHealthRow[];
+  invoice_snapshot: RegionDashboardInvoiceSnapshot;
+  officer_summary: RegionDashboardOfficer[];
+  agent_findings: RegionDashboardAgentFinding[];
+}
+
 // ============================================================================
 // Knowledge Base
 // ============================================================================
