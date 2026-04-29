@@ -14,6 +14,7 @@ from decimal import Decimal
 import click
 
 from app.extensions import db
+from app.utils.polymorphic import user_to_chapter_payment_kwargs
 
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -480,6 +481,9 @@ def _seed_financial_payments(chapters_by_slug, users_by_slug):
                     method="manual",
                     fee_type_id=ft["id"],
                     notes=f"Demo seed: {ft['label']}",
+                    **user_to_chapter_payment_kwargs(
+                        user_id=m.user_id, chapter_id=chapter.id,
+                    ),
                 )
                 db.session.add(payment)
                 payments_created += 1
