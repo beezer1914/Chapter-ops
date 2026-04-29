@@ -11,15 +11,21 @@
 **Related spec:** [docs/superpowers/specs/2026-04-24-payment-flows-expansion-design.md](../specs/2026-04-24-payment-flows-expansion-design.md)
 **Related plan:** [docs/superpowers/plans/2026-04-24-payment-flows-deploy-1.md](2026-04-24-payment-flows-deploy-1.md)
 
-**Current Alembic head:** `c6e9b3f7a0d2` (Stripe Connect fields on Org/Region)
+**Current Alembic state:** TWO heads exist in production —
+- `c6e9b3f7a0d2` (Deploy 1: Stripe Connect fields on Org/Region, 2026-04-24)
+- `cbdffd5a4544` (MFA reset event audit, shipped 2026-04-27)
+
+Both branched from a common ancestor when the MFA work landed in parallel with Deploy 1. Task 1's migration doubles as a merge by revising both heads simultaneously.
 
 **New Alembic chain shipped by this deploy:**
 
 ```
-c6e9b3f7a0d2  (Deploy 1 head)
-   └── d2a4c6e8b0f1  backfill polymorphic columns
-         └── d3b5d7f9a1c2  tighten chapter.stripe_account_id to partial unique
-               └── d4c6e8a0b2d3  add CHECK constraints on *_type columns   (new head)
+c6e9b3f7a0d2  ──┐  (Deploy 1 head)
+                ├─→ d2a4c6e8b0f1  backfill polymorphic columns + merge
+cbdffd5a4544  ──┘   (MFA head)            │
+                                          └── d3b5d7f9a1c2  tighten chapter.stripe_account_id to partial unique
+                                                └── d4c6e8a0b2d3  add CHECK constraints on *_type columns
+                                                      └── d5e0a7c2f4b6  audit_event table   (new head)
 ```
 
 **Bundled scope from Deploy 1 final review:**
@@ -48,15 +54,18 @@ c6e9b3f7a0d2  (Deploy 1 head)
 - [ ] **Step 1: Create the migration file**
 
 ```python
-"""backfill polymorphic columns on invoice and payment
+"""backfill polymorphic columns on invoice and payment (also merges MFA chain)
 
 Populates issuer_type/issuer_id/target_type/target_id on invoice and
 payer_type/payer_id/receiver_type/receiver_id on payment from the
 existing legacy columns. Idempotent — only updates rows where the
 polymorphic column is NULL.
 
+Also merges the MFA reset audit chain (cbdffd5a4544) with the Deploy 1
+chain (c6e9b3f7a0d2) by listing both as parents.
+
 Revision ID: d2a4c6e8b0f1
-Revises: c6e9b3f7a0d2
+Revises: c6e9b3f7a0d2, cbdffd5a4544
 Create Date: 2026-04-29 09:00:00.000000
 
 """
@@ -64,7 +73,7 @@ from alembic import op
 
 
 revision = 'd2a4c6e8b0f1'
-down_revision = 'c6e9b3f7a0d2'
+down_revision = ('c6e9b3f7a0d2', 'cbdffd5a4544')
 branch_labels = None
 depends_on = None
 
