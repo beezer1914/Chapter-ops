@@ -63,6 +63,9 @@ def upgrade():
 
 
 def downgrade():
+    # Safe ONLY while legacy columns (scope/chapter_id/billed_user_id/...) remain
+    # authoritative. After Deploy 5 drops them, this downgrade destroys data that
+    # cannot be reconstructed. Revisit before Deploy 5 lands.
     op.execute("""
         UPDATE invoice
         SET issuer_type = NULL,
