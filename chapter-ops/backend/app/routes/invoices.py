@@ -19,6 +19,10 @@ from app.models import (
 from app.services import notification_service
 from app.utils.decorators import chapter_required, role_required, region_role_required
 from app.utils.permissions import enforce_module_access
+from app.utils.polymorphic import (
+    chapter_to_user_invoice_kwargs,
+    region_to_chapter_invoice_kwargs,  # imported now; used in Task 6
+)
 
 invoices_bp = Blueprint("invoices", __name__, url_prefix="/api/invoices")
 
@@ -147,6 +151,9 @@ def create_invoice():
         due_date=due,
         notes=data.get("notes"),
         created_by_id=current_user.id,
+        **chapter_to_user_invoice_kwargs(
+            chapter_id=chapter.id, user_id=data["billed_user_id"],
+        ),
     )
     db.session.add(invoice)
     db.session.commit()
@@ -226,6 +233,9 @@ def bulk_create_invoices():
                 due_date=due,
                 notes=data.get("notes"),
                 created_by_id=current_user.id,
+                **chapter_to_user_invoice_kwargs(
+                    chapter_id=chapter.id, user_id=m.user_id,
+                ),
             )
             db.session.add(inv)
             created.append(inv)
