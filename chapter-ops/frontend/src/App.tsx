@@ -12,7 +12,6 @@ import Invites from "@/pages/Invites";
 import Payments from "@/pages/Payments";
 import Donations from "@/pages/Donations";
 import Regions from "@/pages/Regions";
-import RegionDashboard from "@/pages/RegionDashboard";
 import Workflows from "@/pages/Workflows";
 import Settings from "@/pages/Settings";
 import Events from "@/pages/Events";
@@ -171,14 +170,6 @@ export default function App() {
           element={
             <ProtectedRoute requireChapter={false} module="regions">
               <Regions />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/region-dashboard"
-          element={
-            <ProtectedRoute requireChapter={false}>
-              <RegionDashboard />
             </ProtectedRoute>
           }
         />

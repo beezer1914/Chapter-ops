@@ -1210,30 +1210,6 @@ export interface UpdateDocumentRequest {
 // Region Dashboard types
 // ============================================================================
 
-export interface RegionDashboardChapter {
-  id: string;
-  name: string;
-  abbreviation: string | null;
-  member_count: number;
-}
-
-export interface RegionDashboardRegion {
-  id: string;
-  name: string;
-  abbreviation: string | null;
-  description: string | null;
-  chapter_count: number;
-  total_members: number;
-  chapters: RegionDashboardChapter[];
-}
-
-export interface RegionDashboardData {
-  regions: RegionDashboardRegion[];
-  total_regions: number;
-  total_chapters: number;
-  total_members: number;
-}
-
 export interface RegionDashboardKpis {
   chapter_count: number;
   chapter_count_active: number;
