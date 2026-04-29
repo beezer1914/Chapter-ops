@@ -40,11 +40,13 @@ const mockClearSelectedRegion = vi.fn();
 const mockClearError = vi.fn();
 
 let mockSelectedRegion: unknown = null;
+let mockRegionsWithDashboardAccess: string[] = [];
 
 vi.mock("@/stores/regionStore", () => ({
   useRegionStore: vi.fn(() => ({
     regions: [],
     selectedRegion: mockSelectedRegion,
+    regionsWithDashboardAccess: mockRegionsWithDashboardAccess,
     isOrgAdmin: false,
     isRegionalDirector: false,
     loading: false,
@@ -70,6 +72,7 @@ function renderRegions() {
 beforeEach(() => {
   vi.clearAllMocks();
   mockSelectedRegion = null;
+  mockRegionsWithDashboardAccess = [];
   // Provide a default resolved value so any test that renders RegionDetailView
   // (which fetches the dashboard on mount) doesn't throw "Cannot read properties
   // of undefined (reading 'then')" after vi.clearAllMocks() clears the impl.
@@ -138,6 +141,7 @@ describe("RegionDetailView — tab integration", () => {
       agent_findings: [],
     });
 
+    mockRegionsWithDashboardAccess = ["r1"];
     mockSelectedRegion = {
       region: { id: "r1", name: "Southern", abbreviation: null, description: null, active: true, config: {}, created_at: null, organization_id: "org1" },
       chapters: [],
@@ -157,5 +161,43 @@ describe("RegionDetailView — tab integration", () => {
     await waitFor(() => {
       expect(screen.getByTestId("region-dashboard-tab")).toBeInTheDocument();
     });
+  });
+});
+
+describe("RegionDetailView — member without dashboard access", () => {
+  it("shows manage sections directly without tabs when user has no dashboard access", async () => {
+    const dashboardMock = vi.mocked(regionService.fetchRegionDashboard);
+
+    // regionsWithDashboardAccess is empty — regular member, no dashboard access
+    mockRegionsWithDashboardAccess = [];
+    mockSelectedRegion = {
+      region: { id: "r2", name: "Northern Region", abbreviation: "NR", description: null, active: true, config: {}, created_at: null, organization_id: "org1" },
+      chapters: [],
+      members: [
+        {
+          id: "mem1",
+          user_id: "u1",
+          region_id: "r2",
+          role: "member" as const,
+          joined_at: null,
+          user: { id: "u1", email: "member@test.com", first_name: "Test", last_name: "User", profile_picture_url: null },
+        },
+      ],
+      is_org_admin: false,
+      current_user_region_role: "member",
+    };
+
+    renderRegions();
+
+    // The manage sections should be rendered directly — RegionalOfficersSection heading is always visible
+    await waitFor(() => {
+      expect(screen.getByText(/Regional Officers/i)).toBeInTheDocument();
+    });
+
+    // No "Dashboard" tab button should be present
+    expect(screen.queryByRole("button", { name: /^Dashboard$/i })).toBeNull();
+
+    // fetchRegionDashboard must NOT have been called
+    expect(dashboardMock).not.toHaveBeenCalled();
   });
 });
