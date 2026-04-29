@@ -5,9 +5,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { fetchIHQDashboard, broadcastAnnouncement, suspendChapter, unsuspendChapter } from "@/services/ihqService";
+import {
+  fetchIHQDashboard,
+  broadcastAnnouncement,
+  suspendChapter,
+  unsuspendChapter,
+} from "@/services/ihqService";
 import { fetchIncidentStats } from "@/services/incidentService";
 import PendingChapterRequestsSection from "@/components/PendingChapterRequestsSection";
+import ChapterHealthTable from "@/components/ChapterHealthTable";
 import { formatDollars } from "@/lib/format";
 import type { IHQDashboardData, IHQChapterStat, IncidentStats } from "@/types";
 import {
@@ -18,10 +24,7 @@ import {
   Map,
   Megaphone,
   X,
-  Search,
   AlertTriangle,
-  ChevronUp,
-  ChevronDown,
   Globe,
   ShieldOff,
   ShieldCheck,
@@ -57,9 +60,6 @@ function RateBar({ rate }: { rate: number }) {
   );
 }
 
-type SortKey = "name" | "member_count" | "financial_rate" | "dues_ytd";
-type SortDir = "asc" | "desc";
-
 // ── Main page ──────────────────────────────────────────────────────────────
 
 export default function IHQDashboard() {
@@ -69,10 +69,7 @@ export default function IHQDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   // Chapter table state
-  const [search, setSearch] = useState("");
   const [regionFilter, setRegionFilter] = useState("all");
-  const [sortKey, setSortKey] = useState<SortKey>("name");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   // Broadcast modal state
   const [broadcastOpen, setBroadcastOpen] = useState(false);
@@ -101,47 +98,12 @@ export default function IHQDashboard() {
       });
   }, []);
 
-  // Filtered + sorted chapters
+  // Region-filtered chapters (search + sort are delegated to ChapterHealthTable)
   const filteredChapters = useMemo<IHQChapterStat[]>(() => {
     if (!data) return [];
-    let list = data.chapters;
-
-    if (regionFilter !== "all") {
-      list = list.filter((c) => c.region_id === regionFilter);
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          (c.designation?.toLowerCase() ?? "").includes(q) ||
-          (c.city?.toLowerCase() ?? "").includes(q) ||
-          (c.state?.toLowerCase() ?? "").includes(q)
-      );
-    }
-
-    list = [...list].sort((a, b) => {
-      let av: string | number = a[sortKey] ?? 0;
-      let bv: string | number = b[sortKey] ?? 0;
-      if (typeof av === "string") av = av.toLowerCase();
-      if (typeof bv === "string") bv = bv.toLowerCase();
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return list;
-  }, [data, regionFilter, search, sortKey, sortDir]);
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  }
-
+    if (regionFilter === "all") return data.chapters;
+    return data.chapters.filter((c) => c.region_id === regionFilter);
+  }, [data, regionFilter]);
 
   async function handleBroadcast(e: React.FormEvent) {
     e.preventDefault();
@@ -368,196 +330,36 @@ export default function IHQDashboard() {
                       ))}
                     </select>
                   )}
-                  {/* Search */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-content-muted" />
-                    <input
-                      type="text"
-                      placeholder="Search chapters..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="pl-8 pr-4 py-2 text-sm rounded-lg border border-[var(--color-border)] text-content-primary bg-surface-input focus:outline-none focus:border-brand-primary-main w-52"
-                    />
-                  </div>
                 </div>
               </div>
 
-              <div className="bg-surface-card-solid rounded-xl border border-[var(--color-border)] overflow-hidden">
-                {/* Desktop table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[var(--color-border)] text-content-muted text-xs uppercase tracking-wider">
-                        <SortableTh col="name" current={sortKey} dir={sortDir} onSort={toggleSort}>
-                          Chapter
-                        </SortableTh>
-                        <th className="px-5 py-3 text-left font-semibold">Region</th>
-                        <SortableTh col="member_count" current={sortKey} dir={sortDir} onSort={toggleSort} right>
-                          Members
-                        </SortableTh>
-                        <SortableTh col="financial_rate" current={sortKey} dir={sortDir} onSort={toggleSort} right>
-                          Financial Rate
-                        </SortableTh>
-                        <SortableTh col="dues_ytd" current={sortKey} dir={sortDir} onSort={toggleSort} right>
-                          Dues YTD
-                        </SortableTh>
-                        <th className="px-5 py-3 text-left font-semibold">Tier</th>
-                        <th className="px-5 py-3 text-right font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {filteredChapters.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="px-5 py-10 text-center text-content-muted text-sm">
-                            No chapters match your filters.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredChapters.map((c) => (
-                          <tr
-                            key={c.id}
-                            className={`transition-colors group ${c.suspended ? "bg-orange-900/5 hover:bg-orange-900/10" : c.deletion_scheduled_at ? "opacity-60 hover:bg-white/[0.02]" : "hover:bg-white/[0.02]"}`}
-                          >
-                            <td className="px-5 py-3.5">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium text-content-primary">{c.name}</span>
-                                  {c.designation && (
-                                    <span className="text-xs text-content-muted">{c.designation}</span>
-                                  )}
-                                  {c.suspended && (
-                                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-orange-400 bg-orange-900/30 px-1.5 py-0.5 rounded-full">
-                                      <ShieldOff className="w-2.5 h-2.5" /> Suspended
-                                    </span>
-                                  )}
-                                  {c.deletion_scheduled_at && (
-                                    <span className="inline-flex items-center gap-0.5 text-xs text-red-400">
-                                      <AlertTriangle className="w-3 h-3" />
-                                      Closing
-                                    </span>
-                                  )}
-                                </div>
-                                {c.suspended && c.suspension_reason && (
-                                  <p className="text-xs text-orange-400/70 mt-0.5">Reason: {c.suspension_reason}</p>
-                                )}
-                                {(c.city || c.state) && (
-                                  <p className="text-xs text-content-muted mt-0.5">
-                                    {[c.city, c.state].filter(Boolean).join(", ")}
-                                  </p>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-5 py-3.5 text-content-secondary text-xs">
-                              {c.region_name ?? <span className="text-content-muted italic">None</span>}
-                            </td>
-                            <td className="px-5 py-3.5 text-right text-content-secondary tabular-nums">
-                              {c.member_count.toLocaleString()}
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <div className="flex justify-end">
-                                <RateBar rate={c.financial_rate} />
-                              </div>
-                            </td>
-                            <td className="px-5 py-3.5 text-right text-content-secondary tabular-nums">
-                              {formatDollars(c.dues_ytd)}
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <TierBadge tier={c.subscription_tier} />
-                            </td>
-                            <td className="px-5 py-3.5 text-right">
-                              <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {c.suspended ? (
-                                  <button
-                                    onClick={() => handleChapterUnsuspend(c)}
-                                    className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/30 px-2.5 py-1 rounded-lg transition-colors border border-emerald-800/30"
-                                    title="Lift Suspension"
-                                  >
-                                    <ShieldCheck className="w-3.5 h-3.5" /> Restore
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => { setSuspendingChapter(c); setChapterSuspendReason(""); }}
-                                    className="inline-flex items-center gap-1 text-xs font-medium text-orange-400 bg-orange-900/20 hover:bg-orange-900/30 px-2.5 py-1 rounded-lg transition-colors border border-orange-800/30"
-                                    title="Suspend Chapter"
-                                  >
-                                    <ShieldOff className="w-3.5 h-3.5" /> Suspend
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile card list */}
-                <div className="md:hidden divide-y divide-white/5">
-                  {filteredChapters.length === 0 ? (
-                    <p className="px-5 py-10 text-center text-content-muted text-sm">
-                      No chapters match your filters.
-                    </p>
+              <ChapterHealthTable
+                chapters={filteredChapters.map((c) => ({
+                  ...c,
+                  chapter_type: c.chapter_type as "undergraduate" | "graduate",
+                  dues_ytd: c.dues_ytd.toFixed(2),
+                }))}
+                showRegionColumn={true}
+                actions={(c) => (
+                  c.suspended ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); const original = filteredChapters.find((x) => x.id === c.id); if (original) handleChapterUnsuspend(original); }}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/30 px-2.5 py-1 rounded-lg transition-colors border border-emerald-800/30"
+                      title="Lift Suspension"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" /> Restore
+                    </button>
                   ) : (
-                    filteredChapters.map((c) => (
-                      <div key={c.id} className={`px-4 py-4 ${c.suspended ? "bg-orange-900/5" : ""}`}>
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold text-content-primary text-sm">{c.name}</span>
-                              {c.designation && (
-                                <span className="text-xs text-content-muted">{c.designation}</span>
-                              )}
-                              {c.suspended && (
-                                <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-orange-400 bg-orange-900/30 px-1.5 py-0.5 rounded-full">
-                                  <ShieldOff className="w-2.5 h-2.5" /> Suspended
-                                </span>
-                              )}
-                              {c.deletion_scheduled_at && (
-                                <span className="inline-flex items-center gap-0.5 text-xs text-red-400">
-                                  <AlertTriangle className="w-3 h-3" /> Closing
-                                </span>
-                              )}
-                            </div>
-                            {c.suspended && c.suspension_reason && (
-                              <p className="text-xs text-orange-400/70 mt-0.5">Reason: {c.suspension_reason}</p>
-                            )}
-                            {(c.city || c.state) && (
-                              <p className="text-xs text-content-muted">{[c.city, c.state].filter(Boolean).join(", ")}</p>
-                            )}
-                          </div>
-                          <TierBadge tier={c.subscription_tier} />
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-content-muted">
-                          <span>{c.member_count} members</span>
-                          <span>{formatDollars(c.dues_ytd)} YTD</span>
-                          <span className={rateColor(c.financial_rate)}>{c.financial_rate.toFixed(0)}% financial</span>
-                        </div>
-                        {c.region_name && (
-                          <p className="text-xs text-content-muted mt-1">{c.region_name}</p>
-                        )}
-                        <div className="mt-3 flex gap-2">
-                          {c.suspended ? (
-                            <button
-                              onClick={() => handleChapterUnsuspend(c)}
-                              className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/30 px-2.5 py-1.5 rounded-lg transition-colors border border-emerald-800/30"
-                            >
-                              <ShieldCheck className="w-3.5 h-3.5" /> Restore Chapter
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => { setSuspendingChapter(c); setChapterSuspendReason(""); }}
-                              className="inline-flex items-center gap-1 text-xs font-medium text-orange-400 bg-orange-900/20 hover:bg-orange-900/30 px-2.5 py-1.5 rounded-lg transition-colors border border-orange-800/30"
-                            >
-                              <ShieldOff className="w-3.5 h-3.5" /> Suspend Chapter
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); const original = filteredChapters.find((x) => x.id === c.id); if (original) { setSuspendingChapter(original); setChapterSuspendReason(""); } }}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-orange-400 bg-orange-900/20 hover:bg-orange-900/30 px-2.5 py-1 rounded-lg transition-colors border border-orange-800/30"
+                      title="Suspend Chapter"
+                    >
+                      <ShieldOff className="w-3.5 h-3.5" /> Suspend
+                    </button>
+                  )
+                )}
+              />
             </section>
           </>
         )}
@@ -671,6 +473,7 @@ export default function IHQDashboard() {
           </div>
         </div>
       )}
+
       {/* ── Chapter Suspend Modal ── */}
       {suspendingChapter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -756,52 +559,5 @@ function KpiCard({
       {sub && <p className="text-xs text-content-muted mt-0.5">{sub}</p>}
       <p className="text-xs text-content-muted font-medium uppercase tracking-wide mt-1">{label}</p>
     </div>
-  );
-}
-
-const TIER_STYLES: Record<string, string> = {
-  starter:      "bg-zinc-800/60 text-zinc-400",
-  pro:          "bg-blue-900/30 text-blue-400",
-  elite:        "bg-amber-900/30 text-amber-400",
-  organization: "bg-purple-900/30 text-purple-400",
-  beta:         "bg-emerald-900/30 text-emerald-400",
-};
-
-function TierBadge({ tier }: { tier: string }) {
-  return (
-    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wide ${TIER_STYLES[tier] ?? TIER_STYLES.starter}`}>
-      {tier}
-    </span>
-  );
-}
-
-function SortableTh({
-  col,
-  current,
-  dir,
-  onSort,
-  children,
-  right,
-}: {
-  col: SortKey;
-  current: SortKey;
-  dir: SortDir;
-  onSort: (k: SortKey) => void;
-  children: React.ReactNode;
-  right?: boolean;
-}) {
-  return (
-    <th
-      className={`px-5 py-3 font-semibold text-xs uppercase tracking-wider cursor-pointer hover:text-content-primary transition-colors select-none ${right ? "text-right" : "text-left"}`}
-      onClick={() => onSort(col)}
-    >
-      <span className={`inline-flex items-center gap-1 ${right ? "flex-row-reverse" : ""}`}>
-        {children}
-        {current === col
-          ? (dir === "asc" ? <ChevronUp className="w-3 h-3 text-brand-primary-light" /> : <ChevronDown className="w-3 h-3 text-brand-primary-light" />)
-          : <ChevronUp className="w-3 h-3 opacity-20" />
-        }
-      </span>
-    </th>
   );
 }

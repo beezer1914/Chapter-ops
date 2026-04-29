@@ -5,7 +5,7 @@ Org-admin-only endpoints providing cross-chapter, cross-region visibility.
 These are tenant-exempt — no chapter context needed, scoped at organization level.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
@@ -20,6 +20,7 @@ from app.models import (
     Payment,
     Announcement,
 )
+from app.services.dashboard_aggregations import compute_chapter_kpis, compute_region_kpis, year_start
 from app.utils.decorators import _is_org_admin
 
 ihq_bp = Blueprint("ihq", __name__, url_prefix="/api/ihq")
@@ -92,11 +93,10 @@ def get_dashboard():
 
     total_regions = Region.query.filter_by(organization_id=org_id, active=True).count()
 
-    year_start = datetime(datetime.now(timezone.utc).year, 1, 1, tzinfo=timezone.utc)
     dues_ytd = float(
         db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
             Payment.chapter_id.in_(chapter_ids),
-            Payment.created_at >= year_start,
+            Payment.created_at >= year_start(),
         ).scalar() or 0
     )
 
@@ -104,71 +104,23 @@ def get_dashboard():
     regions = Region.query.filter_by(organization_id=org_id, active=True).order_by(Region.name).all()
     region_stats = []
     for region in regions:
-        r_chapter_ids = [c.id for c in region.chapters.filter_by(active=True).all()]
-        if not r_chapter_ids:
-            region_stats.append({
-                "id": region.id,
-                "name": region.name,
-                "abbreviation": region.abbreviation,
-                "chapter_count": 0,
-                "member_count": 0,
-                "financial_rate": 0.0,
-                "dues_ytd": 0.0,
-            })
-            continue
-
-        r_total = db.session.query(func.count(ChapterMembership.id)).filter(
-            ChapterMembership.chapter_id.in_(r_chapter_ids),
-            ChapterMembership.active == True,
-        ).scalar() or 0
-
-        r_financial = db.session.query(func.count(ChapterMembership.id)).filter(
-            ChapterMembership.chapter_id.in_(r_chapter_ids),
-            ChapterMembership.active == True,
-            ChapterMembership.financial_status == "financial",
-        ).scalar() or 0
-
-        r_dues = float(
-            db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
-                Payment.chapter_id.in_(r_chapter_ids),
-                Payment.created_at >= year_start,
-            ).scalar() or 0
-        )
-
+        kpis = compute_region_kpis(region.id)
         region_stats.append({
             "id": region.id,
             "name": region.name,
             "abbreviation": region.abbreviation,
-            "chapter_count": len(r_chapter_ids),
-            "member_count": r_total,
-            "financial_rate": round((r_financial / r_total * 100) if r_total else 0, 1),
-            "dues_ytd": r_dues,
+            "chapter_count": kpis["chapter_count"],
+            "member_count": kpis["member_count"],
+            "financial_rate": kpis["financial_rate"],
+            "dues_ytd": kpis["dues_ytd"],
         })
 
     # ── Chapter health ────────────────────────────────────────────────────────
     region_by_id = {r.id: r for r in regions}
     chapter_stats = []
     for chapter in sorted(active_chapters, key=lambda c: c.name):
-        c_total = db.session.query(func.count(ChapterMembership.id)).filter(
-            ChapterMembership.chapter_id == chapter.id,
-            ChapterMembership.active == True,
-        ).scalar() or 0
-
-        c_financial = db.session.query(func.count(ChapterMembership.id)).filter(
-            ChapterMembership.chapter_id == chapter.id,
-            ChapterMembership.active == True,
-            ChapterMembership.financial_status == "financial",
-        ).scalar() or 0
-
-        c_dues = float(
-            db.session.query(func.coalesce(func.sum(Payment.amount), 0)).filter(
-                Payment.chapter_id == chapter.id,
-                Payment.created_at >= year_start,
-            ).scalar() or 0
-        )
-
+        kpis = compute_chapter_kpis(chapter.id)
         region = region_by_id.get(chapter.region_id) if chapter.region_id else None
-
         chapter_stats.append({
             "id": chapter.id,
             "name": chapter.name,
@@ -178,9 +130,9 @@ def get_dashboard():
             "chapter_type": chapter.chapter_type,
             "city": chapter.city,
             "state": chapter.state,
-            "member_count": c_total,
-            "financial_rate": round((c_financial / c_total * 100) if c_total else 0, 1),
-            "dues_ytd": c_dues,
+            "member_count": kpis["member_count"],
+            "financial_rate": kpis["financial_rate"],
+            "dues_ytd": kpis["dues_ytd"],
             "subscription_tier": chapter.subscription_tier,
             "suspended": chapter.suspended,
             "suspension_reason": chapter.suspension_reason,

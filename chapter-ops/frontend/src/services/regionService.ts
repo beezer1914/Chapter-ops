@@ -10,14 +10,18 @@ import type {
   Region,
   OrgDirectoryResult,
   OrgDirectoryMemberDetail,
+  RegionDashboardPayload,
 } from "@/types";
 
-export async function fetchRegions(): Promise<{
+export interface FetchRegionsResponse {
   regions: RegionWithStats[];
   is_org_admin: boolean;
   is_regional_director: boolean;
-}> {
-  const response = await api.get("/regions");
+  regions_with_dashboard_access: string[];
+}
+
+export async function fetchRegions(): Promise<FetchRegionsResponse> {
+  const response = await api.get<FetchRegionsResponse>("/regions");
   return response.data;
 }
 
@@ -100,4 +104,13 @@ export async function fetchDirectoryMemberDetail(
     params: { chapter_id: chapterId },
   });
   return response.data.member;
+}
+
+export async function fetchRegionDashboard(
+  regionId: string,
+): Promise<RegionDashboardPayload> {
+  const res = await api.get<RegionDashboardPayload>(
+    `/regions/${regionId}/dashboard`,
+  );
+  return res.data;
 }

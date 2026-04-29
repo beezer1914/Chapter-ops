@@ -5,11 +5,15 @@ Cross-chapter routes for managing regions and regional officers.
 Tenant-exempt — these operate outside the chapter tenant boundary.
 """
 
+import logging
+from decimal import Decimal
+
 from flask import Blueprint, jsonify, request, g
 from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import (
+    Invoice,
     Organization,
     OrganizationMembership,
     Region,
@@ -19,6 +23,17 @@ from app.models import (
     User,
 )
 from app.utils.decorators import region_role_required, _is_org_admin
+from app.services.dashboard_aggregations import (
+    compute_chapter_kpis, compute_region_kpis,
+)
+from app.utils.region_permissions import (
+    REGIONAL_OFFICER_ROLES, can_view_region_dashboard,
+)
+
+logger = logging.getLogger(__name__)
+
+# Mirrors Invoice.status enum; keep in sync with Invoice model
+REGIONAL_INVOICE_STATUSES = ("draft", "sent", "paid", "overdue", "cancelled")
 
 regions_bp = Blueprint("regions", __name__, url_prefix="/api/regions")
 
@@ -47,7 +62,7 @@ def list_regions():
                 org_id = chapter.organization_id if chapter else None
 
     if not org_id:
-        return jsonify({"regions": [], "is_org_admin": False}), 200
+        return jsonify({"regions": [], "is_org_admin": False, "is_regional_director": False, "regions_with_dashboard_access": []}), 200
 
     is_admin = _is_org_admin(current_user, org_id)
 
@@ -62,7 +77,7 @@ def list_regions():
     ).first() is not None
 
     if not is_admin and not is_org_member:
-        return jsonify({"regions": [], "is_org_admin": False}), 200
+        return jsonify({"regions": [], "is_org_admin": False, "is_regional_director": False, "regions_with_dashboard_access": []}), 200
 
     # All org members see all active regions (read-only access is enforced per route)
     regions = Region.query.filter_by(
@@ -80,6 +95,10 @@ def list_regions():
         RegionMembership.active == True,
     ).first() is not None
 
+    regions_with_dashboard_access = [
+        r.id for r in regions if can_view_region_dashboard(current_user, r)
+    ]
+
     result = []
     for r in regions:
         data = r.to_dict()
@@ -91,6 +110,7 @@ def list_regions():
         "regions": result,
         "is_org_admin": is_admin,
         "is_regional_director": is_regional_director,
+        "regions_with_dashboard_access": regions_with_dashboard_access,
     }), 200
 
 
@@ -143,6 +163,121 @@ def get_region(region_id):
         "members": members_data,
         "is_org_admin": g.is_org_admin,
         "current_user_region_role": current_user_role,
+    }), 200
+
+
+# ── Per-region dashboard ─────────────────────────────────────────────────
+
+
+@regions_bp.route("/<region_id>/dashboard", methods=["GET"])
+@login_required
+def region_dashboard(region_id: str):
+    """Per-region dashboard payload for regional officers and admins."""
+    region = db.session.get(Region, region_id)
+    if region is None or not region.active:
+        return jsonify({"error": "Region not found."}), 404
+
+    if not can_view_region_dashboard(current_user, region):
+        return jsonify({"error": "You do not have access to this region."}), 403
+
+    region_kpis = compute_region_kpis(region.id)
+
+    chapters = Chapter.query.filter_by(
+        region_id=region.id, active=True,
+    ).order_by(Chapter.name).all()
+
+    chapter_rows = []
+    for chapter in chapters:
+        try:
+            kpis = compute_chapter_kpis(chapter.id)
+            chapter_rows.append({
+                "id": chapter.id,
+                "name": chapter.name,
+                "designation": chapter.designation,
+                "chapter_type": chapter.chapter_type,
+                "city": chapter.city,
+                "state": chapter.state,
+                "member_count": kpis["member_count"],
+                "financial_rate": kpis["financial_rate"],
+                "dues_ytd": f"{kpis['dues_ytd']:.2f}",
+                "subscription_tier": chapter.subscription_tier,
+                "suspended": chapter.suspended,
+                "deletion_scheduled_at": (
+                    chapter.deletion_scheduled_at.isoformat()
+                    if chapter.deletion_scheduled_at else None
+                ),
+            })
+        except Exception:
+            logger.exception("Failed to compute KPIs for chapter %s", chapter.id)
+            chapter_rows.append({
+                "id": chapter.id,
+                "name": chapter.name,
+                "designation": chapter.designation,
+                "chapter_type": chapter.chapter_type,
+                "city": chapter.city,
+                "state": chapter.state,
+                "member_count": None,
+                "financial_rate": None,
+                "dues_ytd": None,
+                "subscription_tier": chapter.subscription_tier,
+                "suspended": chapter.suspended,
+                "deletion_scheduled_at": (
+                    chapter.deletion_scheduled_at.isoformat()
+                    if chapter.deletion_scheduled_at else None
+                ),
+            })
+
+    # Invoice snapshot — counts by status, total outstanding
+    invoice_counts = {s: 0 for s in REGIONAL_INVOICE_STATUSES}
+    outstanding_total = Decimal("0")
+    invoices = Invoice.query.filter_by(region_id=region.id).all()
+    for inv in invoices:
+        if inv.status in invoice_counts:
+            invoice_counts[inv.status] += 1
+        if inv.status in ("sent", "overdue"):
+            outstanding_total += Decimal(str(inv.amount or 0))
+
+    # Officer summary — top 5 active officers, formal roles only
+    officer_memberships = (
+        db.session.query(RegionMembership)
+        .filter(
+            RegionMembership.region_id == region.id,
+            RegionMembership.active == True,
+            RegionMembership.role.in_(list(REGIONAL_OFFICER_ROLES)),
+        )
+        .limit(5)
+        .all()
+    )
+    officer_summary = []
+    for m in officer_memberships:
+        user = db.session.get(User, m.user_id)
+        if user is None:
+            continue
+        officer_summary.append({
+            "user_id": user.id,
+            "full_name": user.full_name,
+            "role": m.role,
+        })
+
+    return jsonify({
+        "region": {
+            "id": region.id,
+            "name": region.name,
+            "abbreviation": region.abbreviation,
+            "description": region.description,
+        },
+        "kpis": {
+            **{k: v for k, v in region_kpis.items() if k != "dues_ytd"},
+            "dues_ytd": f"{region_kpis['dues_ytd']:.2f}",
+            "invoices_outstanding_total": f"{outstanding_total:.2f}",
+        },
+        "chapters": chapter_rows,
+        "invoice_snapshot": {
+            **invoice_counts,
+            "outstanding_total": f"{outstanding_total:.2f}",
+        },
+        "officer_summary": officer_summary,
+        "agent_findings": [],
     }), 200
 
 
@@ -420,74 +555,6 @@ def search_eligible_users(region_id):
             }
             for u in users
         ]
-    }), 200
-
-
-# ── Regional Director Dashboard ──────────────────────────────────────────
-
-
-@regions_bp.route("/my-dashboard", methods=["GET"])
-@login_required
-def my_region_dashboard():
-    """Return aggregated stats for all regions where the current user is a regional director."""
-    director_memberships = RegionMembership.query.filter_by(
-        user_id=current_user.id,
-        role="regional_director",
-        active=True,
-    ).all()
-
-    if not director_memberships:
-        return jsonify({
-            "regions": [],
-            "total_regions": 0,
-            "total_chapters": 0,
-            "total_members": 0,
-        }), 200
-
-    region_ids = [rm.region_id for rm in director_memberships]
-    regions = Region.query.filter(
-        Region.id.in_(region_ids),
-        Region.active == True,
-    ).order_by(Region.name).all()
-
-    regions_data = []
-    grand_total_chapters = 0
-    grand_total_members = 0
-
-    for region in regions:
-        active_chapters = region.chapters.filter_by(active=True).order_by(Chapter.name).all()
-        chapter_count = len(active_chapters)
-        total_members = 0
-        chapters_list = []
-
-        for ch in active_chapters:
-            member_count = ch.memberships.filter_by(active=True).count()
-            total_members += member_count
-            chapters_list.append({
-                "id": ch.id,
-                "name": ch.name,
-                "abbreviation": ch.designation,
-                "member_count": member_count,
-            })
-
-        grand_total_chapters += chapter_count
-        grand_total_members += total_members
-
-        regions_data.append({
-            "id": region.id,
-            "name": region.name,
-            "abbreviation": region.abbreviation,
-            "description": region.description,
-            "chapter_count": chapter_count,
-            "total_members": total_members,
-            "chapters": chapters_list,
-        })
-
-    return jsonify({
-        "regions": regions_data,
-        "total_regions": len(regions_data),
-        "total_chapters": grand_total_chapters,
-        "total_members": grand_total_members,
     }), 200
 
 
