@@ -343,7 +343,7 @@ export default function IHQDashboard() {
                 actions={(c) => (
                   c.suspended ? (
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleChapterUnsuspend(filteredChapters.find((x) => x.id === c.id)!); }}
+                      onClick={(e) => { e.stopPropagation(); const original = filteredChapters.find((x) => x.id === c.id); if (original) handleChapterUnsuspend(original); }}
                       className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-900/20 hover:bg-emerald-900/30 px-2.5 py-1 rounded-lg transition-colors border border-emerald-800/30"
                       title="Lift Suspension"
                     >
@@ -351,7 +351,7 @@ export default function IHQDashboard() {
                     </button>
                   ) : (
                     <button
-                      onClick={(e) => { e.stopPropagation(); setSuspendingChapter(filteredChapters.find((x) => x.id === c.id) ?? null); setChapterSuspendReason(""); }}
+                      onClick={(e) => { e.stopPropagation(); const original = filteredChapters.find((x) => x.id === c.id); if (original) { setSuspendingChapter(original); setChapterSuspendReason(""); } }}
                       className="inline-flex items-center gap-1 text-xs font-medium text-orange-400 bg-orange-900/20 hover:bg-orange-900/30 px-2.5 py-1 rounded-lg transition-colors border border-orange-800/30"
                       title="Suspend Chapter"
                     >
