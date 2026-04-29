@@ -179,7 +179,7 @@ function SidebarContent({
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, memberships, logout, isPlatformAdmin } = useAuthStore();
   const { organization, chapter } = useConfigStore();
-  const { isRegionalDirector, isOrgAdmin, loadRegions } = useRegionStore();
+  const { isRegionalDirector, isOrgAdmin, regionsWithDashboardAccess, loadRegions } = useRegionStore();
 
   const activeMembership = memberships.find((m) => m.chapter_id === user?.active_chapter_id);
   const isPresident = activeMembership?.role === "president" || activeMembership?.role === "admin";
@@ -212,8 +212,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navSections = filteredSections.map((section) => {
     if (section.label === "Overview") {
       const extra = [];
-      if (isRegionalDirector) {
-        extra.push({ to: "/region-dashboard", label: "Region Dashboard", icon: BarChart3, module: "dashboard" as ModuleKey });
+      if (regionsWithDashboardAccess.length > 0) {
+        if (regionsWithDashboardAccess.length > 1) {
+          console.warn(
+            "User has dashboard access in multiple regions; linking to first:",
+            regionsWithDashboardAccess,
+          );
+        }
+        extra.push({
+          to: `/regions/${regionsWithDashboardAccess[0]}?tab=dashboard`,
+          label: "Regional Dashboard",
+          icon: BarChart3,
+          module: "dashboard" as ModuleKey,
+        });
       }
       if (isOrgAdmin) {
         extra.push({ to: "/ihq", label: "IHQ Dashboard", icon: Globe, module: "dashboard" as ModuleKey });
