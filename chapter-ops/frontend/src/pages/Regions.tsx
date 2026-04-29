@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useRegionStore } from "@/stores/regionStore";
 import {
@@ -10,6 +11,7 @@ import {
   searchEligibleUsers,
   searchDirectory,
   fetchDirectoryMemberDetail,
+  fetchRegionDashboard,
 } from "@/services/regionService";
 import {
   fetchRegionalInvoices,
@@ -17,6 +19,7 @@ import {
   bulkCreateRegionalInvoices,
   updateRegionalInvoice,
 } from "@/services/invoiceService";
+import RegionDashboardTab from "@/components/RegionDashboardTab";
 import type {
   RegionWithStats,
   RegionDetail,
@@ -28,6 +31,7 @@ import type {
   OrgDirectoryChapter,
   OrgDirectoryMemberDetail,
   InvoiceWithChapter,
+  RegionDashboardPayload,
 } from "@/types";
 
 const REGION_ROLE_LABELS: Record<RegionRole, string> = {
@@ -478,6 +482,30 @@ function RegionDetailView({
   const canManageInvoices = isAdmin || isDirector || isTreasurer;
   const canViewInvoices = isAdmin || isRegionalOfficer;
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") === "manage" ? "manage" : "dashboard";
+
+  const [dashboardPayload, setDashboardPayload] = useState<RegionDashboardPayload | null>(null);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== "dashboard") return;
+    setDashboardError(null);
+    fetchRegionDashboard(detail.region.id)
+      .then(setDashboardPayload)
+      .catch((err: { response?: { status?: number } }) => {
+        if (err?.response?.status === 403) {
+          // Defensive — sidebar should never link here for users without access,
+          // but if it does (role removed mid-session), bounce them home with a
+          // notice. This codebase has no toast library, so we use window.alert.
+          window.alert("You don't have access to that region.");
+          window.location.assign("/dashboard");
+          return;
+        }
+        setDashboardError("Failed to load dashboard.");
+      });
+  }, [activeTab, detail.region.id]);
+
   return (
     <div className="space-y-6">
       <button
@@ -490,32 +518,62 @@ function RegionDetailView({
         Back to Regions
       </button>
 
-      <RegionInfoSection
-        detail={detail}
-        canEdit={canEdit}
-        onUpdated={onRefresh}
-      />
+      <div className="flex gap-1 border-b border-[var(--color-border)]">
+        {(["dashboard", "manage"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setSearchParams({ tab })}
+            className={`px-4 py-2 text-sm font-medium capitalize border-b-2 transition-colors ${
+              activeTab === tab
+                ? "border-brand-primary text-brand-primary-dark"
+                : "border-transparent text-content-secondary hover:text-content-secondary"
+            }`}
+          >
+            {tab === "dashboard" ? "Dashboard" : "Manage"}
+          </button>
+        ))}
+      </div>
 
-      <ChaptersSection
-        chapters={detail.chapters}
-        currentRegionId={detail.region.id}
-        isOrgAdmin={canManageChapters}
-        allRegions={allRegions}
-        onRefresh={onRefresh}
-      />
-
-      <RegionalOfficersSection
-        detail={detail}
-        isOrgAdmin={canManageOfficers}
-        onUpdated={onRefresh}
-      />
-
-      {canViewInvoices && (
-        <RegionalInvoicesSection
-          regionId={detail.region.id}
-          chapters={detail.chapters}
-          canManage={canManageInvoices}
-        />
+      {activeTab === "dashboard" ? (
+        dashboardError ? (
+          <div className="p-3 bg-red-900/20 border border-red-900/30 text-red-400 rounded-md text-sm flex justify-between items-center">
+            {dashboardError}
+            <button
+              onClick={() => {
+                setDashboardError(null);
+                fetchRegionDashboard(detail.region.id)
+                  .then(setDashboardPayload)
+                  .catch(() => setDashboardError("Failed to load dashboard."));
+              }}
+              className="underline"
+            >
+              Retry
+            </button>
+          </div>
+        ) : !dashboardPayload ? (
+          <p className="text-sm text-content-muted py-8 text-center">Loading dashboard...</p>
+        ) : (
+          <RegionDashboardTab payload={dashboardPayload} />
+        )
+      ) : (
+        <>
+          <RegionInfoSection detail={detail} canEdit={canEdit} onUpdated={onRefresh} />
+          <ChaptersSection
+            chapters={detail.chapters}
+            currentRegionId={detail.region.id}
+            isOrgAdmin={canManageChapters}
+            allRegions={allRegions}
+            onRefresh={onRefresh}
+          />
+          <RegionalOfficersSection detail={detail} isOrgAdmin={canManageOfficers} onUpdated={onRefresh} />
+          {canViewInvoices && (
+            <RegionalInvoicesSection
+              regionId={detail.region.id}
+              chapters={detail.chapters}
+              canManage={canManageInvoices}
+            />
+          )}
+        </>
       )}
     </div>
   );
