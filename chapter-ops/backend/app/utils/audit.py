@@ -25,11 +25,7 @@ def record_audit(
     back to None for unauthenticated callers (e.g. callback hits where the
     session was lost — record the attempt anyway).
     """
-    actor_id = (
-        current_user.id
-        if hasattr(current_user, "id") and current_user.is_authenticated
-        else None
-    )
+    actor_id = current_user.id if current_user.is_authenticated else None
     event = AuditEvent(
         actor_user_id=actor_id,
         event_type=event_type,

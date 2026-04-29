@@ -15,7 +15,10 @@ class AuditEvent(BaseModel):
     __tablename__ = "audit_event"
 
     actor_user_id: Mapped[str | None] = mapped_column(
-        db.String(36), db.ForeignKey("user.id"), nullable=True, index=True
+        db.String(36),
+        db.ForeignKey("user.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     event_type: Mapped[str] = mapped_column(
         db.String(64), nullable=False, index=True
