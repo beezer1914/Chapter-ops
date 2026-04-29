@@ -2,9 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Cut all Invoice reads over to the polymorphic columns Deploy 2 backfilled, extend `recompute_financial_status` with the cross-tier outstanding-invoice clause, and wire status-transition triggers so sending/paying/cancelling an invoice keeps `ChapterMembership.financial_status` honest. Legacy columns are still WRITTEN (the dual-write from Deploy 2 stays in place); Deploy 5 drops them.
+**Goal:** Cut all Invoice reads over to the polymorphic columns Deploy 2 backfilled. **Pure read cutover with zero behavior change.** Legacy columns are still WRITTEN (the dual-write from Deploy 2 stays in place); Deploy 5 drops them.
 
-**Architecture:** A new `app/services/invoice_queries.py` module centralises four polymorphic query patterns (chapter→user, chapter→user-for-one-member, invoices owed by a chapter, region→chapter) so every read site uses the same canonical filter and string-literal drift is impossible. All ten production read sites flip to the helpers. `recompute_financial_status` gains a `_has_outstanding_external_invoices(user_id, org_id)` clause that ANDs with the existing dues check. Three status-transition trigger points (`sent`, `paid`, `cancelled`) call recompute for the target user.
+**Architecture:** A new `app/services/invoice_queries.py` module centralises four polymorphic query patterns (chapter→user, chapter→user-for-one-member, invoices owed by a chapter, region→chapter) so every read site uses the same canonical filter and string-literal drift is impossible. All ten production read sites flip to the helpers.
+
+**Deferred from this deploy (pending brainstorm before Deploy 4):**
+
+The original spec at [`2026-04-24-payment-flows-expansion-design.md`](../specs/2026-04-24-payment-flows-expansion-design.md) prescribes:
+- Extend `recompute_financial_status` with a cross-tier "any outstanding Region/Org invoice → not_financial" clause.
+- Add status-transition triggers (sent/paid/cancelled) that call recompute for the target user.
+
+That spec rule was written to match one specific org's policy ("fully financial requires chapter + regional + national"). Pulling it into Deploy 3 would lock that policy in as the platform-wide default for every org. Because no Region→User or Org→User invoices exist in production today (those flows ship in Deploy 4), the rigid rule has no current effect and there's time to design something more configurable. Both deferred items are tightly coupled — without the cross-tier clause, the status-transition triggers would call recompute on code paths where it's a no-op. Both wait for a focused brainstorm on org-level financial-status flexibility before Deploy 4 lands.
 
 **Tech Stack:** Flask 3.x, SQLAlchemy 2.x, Flask-Login, pytest. **No new Alembic migrations** — Deploy 3 is pure code change.
 
@@ -16,7 +24,7 @@
 - Single Alembic head `d5e0a7c2f4b6` confirmed on production
 - All 7 Invoice/Payment construction sites dual-write polymorphic columns
 
-**Risk profile:** Per the design spec, Deploy 3 is the **riskiest deploy** of the rollout — polymorphic columns become the read-path source of truth. Mitigation built into Task 9:
+**Risk profile:** Per the design spec, Deploy 3 is the **riskiest deploy** of the rollout — polymorphic columns become the read-path source of truth. Mitigation built into Task 7:
 - DB backup taken immediately before deploy (operator step, captured in the runbook)
 - Legacy columns are still written, so revert is safe — re-pointing reads back to legacy columns produces correct results until Deploy 5 drops them
 - 24h close-monitoring window post-deploy
@@ -885,7 +893,7 @@ Where these appear inside an `or_(...)` clause that combines two of them, lift e
 Run: `cd chapter-ops/backend && python -m flask seed-demo --reset 2>&1 | tail -20`
 Expected: seeder runs to completion without exceptions. Verify with: `python -c "from app import create_app; app = create_app(); from app.extensions import db; from app.models import Invoice; app.app_context().push(); print(Invoice.query.count())"` — should return a non-zero count.
 
-(If your local DB is in production-like state and you'd rather not reset, skip this step and verify in a follow-up `flask seed-demo` run during Task 9's smoke verification window.)
+(If your local DB is in production-like state and you'd rather not reset, skip this step and verify in a follow-up `flask seed-demo` run during Task 7's smoke verification window.)
 
 - [ ] **Step 4: Commit**
 
@@ -895,551 +903,7 @@ git commit -m "chore(seed): flip seeder Invoice cleanup queries to polymorphic c
 ```
 
 ---
-
-## Task 7: Extend `recompute_financial_status` for cross-tier outstanding invoices
-
-**Purpose:** Per the design spec, a member is "financial" only when (a) all chapter dues are satisfied AND (b) no outstanding region invoices target the user within their organization AND (c) no outstanding org invoices target the user. Today only chapter dues are checked. After this task, region/org outstanding invoices also flip the user to `not_financial`.
-
-**At production today** there are no Region→User or Org→User invoices (those flows ship in Deploy 4). So this change is a no-op against current data — it's groundwork that will activate as Deploy 4 lands.
-
-**Files:**
-- Modify: `chapter-ops/backend/app/services/dues_service.py` — extend `recompute_financial_status` and add `_has_outstanding_external_invoices` helper
-- Test: `chapter-ops/backend/tests/test_dues_service_cross_tier.py` (new)
-
-- [ ] **Step 1: Write the failing tests**
-
-Create `chapter-ops/backend/tests/test_dues_service_cross_tier.py`:
-
-```python
-"""Tests for cross-tier financial_status logic in dues_service (Deploy 3)."""
-
-from datetime import date, timedelta
-from decimal import Decimal
-
-from app.extensions import db
-from app.models import ChapterMembership, Invoice, ChapterPeriodDues
-from app.services.dues_service import recompute_financial_status
-from tests.conftest import (
-    make_user, make_organization, make_chapter, make_membership, make_region,
-)
-
-
-def _make_active_period_with_satisfied_dues(chapter, user, creator):
-    """Set up a chapter period with one fully-paid dues row so the existing
-    chapter-dues check returns 'satisfied' — leaving the cross-tier clause
-    as the only thing that can flip status."""
-    from app.models import ChapterPeriod
-    period = ChapterPeriod(
-        chapter_id=chapter.id,
-        period_type="annual",
-        name="Test Period",
-        start_date=date(2026, 1, 1),
-        end_date=date(2026, 12, 31),
-        is_active=True,
-    )
-    db.session.add(period)
-    db.session.flush()
-    dues = ChapterPeriodDues(
-        chapter_id=chapter.id,
-        user_id=user.id,
-        period_id=period.id,
-        fee_type_id="dues",
-        amount_owed=Decimal("100.00"),
-        amount_paid=Decimal("100.00"),
-        status="paid",
-    )
-    db.session.add(dues)
-
-
-class TestCrossTierFinancialStatus:
-    def test_outstanding_region_invoice_flips_member_to_not_financial(self, app, db_session):
-        org = make_organization()
-        region = make_region(org)
-        chapter = make_chapter(org, region=region)
-        member = make_user(email="m@example.com")
-        membership = make_membership(member, chapter, role="member", financial_status="financial")
-        _make_active_period_with_satisfied_dues(chapter, member, member)
-        # Region→user invoice outstanding (Deploy 4 flow, but cross-tier clause must read it)
-        db.session.add(Invoice(
-            scope="member",  # legacy enum is required non-null; semantic is via polymorphic
-            invoice_number="RGN-USER-1",
-            description="regional dues",
-            amount=Decimal("75.00"),
-            status="sent",
-            due_date=date.today() + timedelta(days=10),
-            created_by_id=member.id,
-            issuer_type="region",
-            issuer_id=region.id,
-            target_type="user",
-            target_id=member.id,
-        ))
-        db.session.commit()
-
-        recompute_financial_status(chapter, member.id)
-        db.session.refresh(membership)
-        assert membership.financial_status == "not_financial"
-
-    def test_outstanding_org_invoice_flips_member_to_not_financial(self, app, db_session):
-        org = make_organization()
-        chapter = make_chapter(org)
-        member = make_user(email="m@example.com")
-        membership = make_membership(member, chapter, role="member", financial_status="financial")
-        _make_active_period_with_satisfied_dues(chapter, member, member)
-        db.session.add(Invoice(
-            scope="member",
-            invoice_number="ORG-USER-1",
-            description="national dues",
-            amount=Decimal("100.00"),
-            status="overdue",
-            due_date=date.today() - timedelta(days=5),
-            created_by_id=member.id,
-            issuer_type="organization",
-            issuer_id=org.id,
-            target_type="user",
-            target_id=member.id,
-        ))
-        db.session.commit()
-
-        recompute_financial_status(chapter, member.id)
-        db.session.refresh(membership)
-        assert membership.financial_status == "not_financial"
-
-    def test_paid_external_invoice_does_not_flip_status(self, app, db_session):
-        org = make_organization()
-        region = make_region(org)
-        chapter = make_chapter(org, region=region)
-        member = make_user(email="m@example.com")
-        membership = make_membership(member, chapter, role="member", financial_status="financial")
-        _make_active_period_with_satisfied_dues(chapter, member, member)
-        # PAID region→user invoice should not block financial status
-        db.session.add(Invoice(
-            scope="member",
-            invoice_number="RGN-USER-PAID-1",
-            description="regional dues paid",
-            amount=Decimal("75.00"),
-            status="paid",
-            due_date=date.today() - timedelta(days=10),
-            created_by_id=member.id,
-            issuer_type="region",
-            issuer_id=region.id,
-            target_type="user",
-            target_id=member.id,
-        ))
-        db.session.commit()
-
-        recompute_financial_status(chapter, member.id)
-        db.session.refresh(membership)
-        assert membership.financial_status == "financial"
-
-    def test_cross_org_isolation(self, app, db_session):
-        """Org B's invoice on a member must not affect that member's status in Org A."""
-        org_a = make_organization(name="Org A")
-        org_b = make_organization(name="Org B")
-        chapter_a = make_chapter(org_a)
-        member = make_user(email="m@example.com")
-        membership_a = make_membership(member, chapter_a, role="member", financial_status="financial")
-        _make_active_period_with_satisfied_dues(chapter_a, member, member)
-        # Outstanding invoice from Org B (different org) should NOT affect Org A status
-        db.session.add(Invoice(
-            scope="member",
-            invoice_number="ORG-B-USER-1",
-            description="org b dues",
-            amount=Decimal("100.00"),
-            status="sent",
-            due_date=date.today() + timedelta(days=10),
-            created_by_id=member.id,
-            issuer_type="organization",
-            issuer_id=org_b.id,
-            target_type="user",
-            target_id=member.id,
-        ))
-        db.session.commit()
-
-        recompute_financial_status(chapter_a, member.id)
-        db.session.refresh(membership_a)
-        assert membership_a.financial_status == "financial"
-```
-
-- [ ] **Step 2: Run the tests and verify they fail**
-
-Run: `cd chapter-ops/backend && python -m pytest tests/test_dues_service_cross_tier.py -v`
-Expected: 2-3 tests fail (the two outstanding-invoice tests will fail because `recompute_financial_status` ignores Region/Org invoices today; the paid-invoice and cross-org-isolation tests may pass coincidentally because today's logic also ignores them — but they document the intended behavior).
-
-- [ ] **Step 3: Implement the cross-tier helper and extend recompute**
-
-In `chapter-ops/backend/app/services/dues_service.py`, add the helper function above `recompute_financial_status` (around line 332):
-
-```python
-def _has_outstanding_external_invoices(user_id: str, organization_id: str) -> bool:
-    """True if any sent/overdue Region or Organization invoice targets this user
-    within the given organization. Region invoices count only when the region
-    belongs to the same organization (cross-org isolation)."""
-    from app.models import Invoice, Region
-
-    region_ids_subquery = (
-        db.session.query(Region.id)
-        .filter(Region.organization_id == organization_id)
-        .subquery()
-    )
-
-    return db.session.query(Invoice.id).filter(
-        Invoice.target_type == "user",
-        Invoice.target_id == user_id,
-        Invoice.status.in_(("sent", "overdue")),
-        db.or_(
-            db.and_(
-                Invoice.issuer_type == "organization",
-                Invoice.issuer_id == organization_id,
-            ),
-            db.and_(
-                Invoice.issuer_type == "region",
-                Invoice.issuer_id.in_(region_ids_subquery),
-            ),
-        ),
-    ).first() is not None
-```
-
-Then extend `recompute_financial_status`. Find the line:
-
-```python
-    new_status = "financial" if all(_row_satisfied(d) for d in owed_rows) else "not_financial"
-```
-
-Replace with:
-
-```python
-    chapter_dues_satisfied = all(_row_satisfied(d) for d in owed_rows)
-    has_external_outstanding = _has_outstanding_external_invoices(
-        user_id=user_id, organization_id=chapter.organization_id,
-    )
-    new_status = (
-        "financial" if chapter_dues_satisfied and not has_external_outstanding
-        else "not_financial"
-    )
-```
-
-- [ ] **Step 4: Run the tests and verify they pass**
-
-Run: `cd chapter-ops/backend && python -m pytest tests/test_dues_service_cross_tier.py -v`
-Expected: 4/4 pass.
-
-- [ ] **Step 5: Wider sanity — confirm no regression on existing dues tests**
-
-Run: `cd chapter-ops/backend && python -m pytest tests/test_dues_service_cross_tier.py tests/test_payments_dual_write.py tests/test_webhooks_dual_write.py -v`
-Expected: all green.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add chapter-ops/backend/app/services/dues_service.py chapter-ops/backend/tests/test_dues_service_cross_tier.py
-git commit -m "feat(dues): cross-tier financial_status considers Region/Org outstanding invoices"
-```
-
----
-
-## Task 8: Add status-transition triggers on invoice send / pay / cancel
-
-**Purpose:** Per the spec, sending an invoice (status → `sent`) must call `recompute_financial_status` for the target user; same for `paid` (which can flip a member back to financial) and `cancelled` (treated as forgiveness). Today these transitions don't trigger recompute — only payment-via-Stripe does (via `apply_payment` in the webhook).
-
-**Scope:** Three invoice routes contain status mutations:
-- `invoices.py:send_invoice` (single send) — sets status='sent'
-- `invoices.py:bulk_send_invoices` (batch send) — sets status='sent' for many
-- `invoices.py:update_invoice` (treasurer manual edit) — can set any status, including 'paid'/'cancelled'
-- `webhooks.py:_create_payment_from_session` — already calls recompute via `apply_payment` for chapter-dues path, plus the auto-link path that sets `open_invoice.status = "paid"` (line 191) — this auto-link path needs an explicit recompute call
-
-**Files:**
-- Modify: `chapter-ops/backend/app/routes/invoices.py` (send_invoice, bulk_send_invoices, update_invoice)
-- Modify: `chapter-ops/backend/app/routes/webhooks.py` (auto-link path)
-- Test: `chapter-ops/backend/tests/test_invoice_status_triggers.py` (new)
-
-- [ ] **Step 1: Write the failing tests**
-
-Create `chapter-ops/backend/tests/test_invoice_status_triggers.py`:
-
-```python
-"""Tests for invoice status transition → recompute_financial_status triggers (Deploy 3)."""
-
-from datetime import date, timedelta
-from decimal import Decimal
-from unittest.mock import patch
-
-from app.extensions import db
-from app.models import ChapterMembership, Invoice
-from app.utils.polymorphic import chapter_to_user_invoice_kwargs
-from tests.conftest import (
-    make_user, make_organization, make_chapter, make_membership, make_region,
-)
-
-
-def _login(client, user, password="Str0ng!Password1"):
-    return client.post("/api/auth/login", json={"email": user.email, "password": password})
-
-
-def _make_external_invoice(*, issuer_type, issuer_id, user, status):
-    """Insert a region/org invoice targeting a user."""
-    inv = Invoice(
-        scope="member",
-        invoice_number=f"EXT-{issuer_type}-{user.email}-{status}",
-        description="ext",
-        amount=Decimal("50.00"),
-        status=status,
-        due_date=date.today() + timedelta(days=10),
-        created_by_id=user.id,
-        issuer_type=issuer_type,
-        issuer_id=issuer_id,
-        target_type="user",
-        target_id=user.id,
-    )
-    db.session.add(inv)
-    return inv
-
-
-class TestStatusTriggers:
-    def test_send_invoice_recomputes_financial_status(self, client, db_session):
-        """Sending a region→user invoice flips a financial member to not_financial."""
-        org = make_organization()
-        region = make_region(org)
-        chapter = make_chapter(org, region=region)
-        member = make_user(email="m@example.com")
-        treasurer = make_user(email="t@example.com")
-        membership = make_membership(member, chapter, role="member", financial_status="financial")
-        from app.models import OrganizationMembership
-        db.session.add(OrganizationMembership(user_id=treasurer.id, organization_id=org.id, role="admin"))
-        treasurer.active_chapter_id = chapter.id
-
-        # A draft region→user invoice (must be region for region_role_required to bind)
-        inv = _make_external_invoice(issuer_type="region", issuer_id=region.id, user=member, status="draft")
-        db.session.commit()
-
-        # Send via the chapter-level send_invoice endpoint — region→user invoices are
-        # not yet exposed as a separate endpoint (Deploy 4), so we exercise update_invoice
-        # which mutates status.
-        _login(client, treasurer)
-        # update_invoice is a chapter-scoped endpoint; we drive status via direct DB mutation
-        # plus an explicit recompute call to mirror what the trigger should do.
-        # The simpler path: test via webhook auto-link below for sent→paid coverage. Here
-        # we rely on the dedicated send_invoice path on chapter→member invoices.
-        chapter_inv = Invoice(
-            scope="member",
-            invoice_number="INV-SEND-1",
-            description="dues",
-            amount=Decimal("100.00"),
-            status="draft",
-            due_date=date.today() + timedelta(days=10),
-            created_by_id=treasurer.id,
-            **chapter_to_user_invoice_kwargs(chapter_id=chapter.id, user_id=member.id),
-        )
-        db.session.add(chapter_inv)
-        db.session.commit()
-
-        resp = client.post(f"/api/invoices/{chapter_inv.id}/send")
-        assert resp.status_code == 200
-        db.session.refresh(membership)
-        # The send transition should have triggered recompute. The dues system isn't seeded
-        # for this member, so recompute is a no-op (returns False without changing status).
-        # The trigger correctness is observable by patching recompute and asserting it was called.
-
-    def test_send_invoice_calls_recompute(self, client, db_session):
-        """Verify the trigger by spying on recompute_financial_status."""
-        org = make_organization()
-        chapter = make_chapter(org)
-        member = make_user(email="m@example.com")
-        treasurer = make_user(email="t@example.com")
-        make_membership(member, chapter, role="member")
-        make_membership(treasurer, chapter, role="treasurer")
-        treasurer.active_chapter_id = chapter.id
-        chapter_inv = Invoice(
-            scope="member",
-            invoice_number="INV-SEND-SPY-1",
-            description="dues",
-            amount=Decimal("100.00"),
-            status="draft",
-            due_date=date.today() + timedelta(days=10),
-            created_by_id=treasurer.id,
-            **chapter_to_user_invoice_kwargs(chapter_id=chapter.id, user_id=member.id),
-        )
-        db.session.add(chapter_inv)
-        db.session.commit()
-
-        _login(client, treasurer)
-        with patch("app.routes.invoices.recompute_financial_status") as mock_recompute:
-            resp = client.post(f"/api/invoices/{chapter_inv.id}/send")
-        assert resp.status_code == 200
-        # recompute should have been called once with the target user
-        mock_recompute.assert_called_once()
-        call_kwargs = mock_recompute.call_args
-        assert call_kwargs.args[1] == member.id or call_kwargs.kwargs.get("user_id") == member.id
-
-    def test_update_invoice_to_paid_calls_recompute(self, client, db_session):
-        org = make_organization()
-        chapter = make_chapter(org)
-        member = make_user(email="m@example.com")
-        treasurer = make_user(email="t@example.com")
-        make_membership(member, chapter, role="member")
-        make_membership(treasurer, chapter, role="treasurer")
-        treasurer.active_chapter_id = chapter.id
-        chapter_inv = Invoice(
-            scope="member",
-            invoice_number="INV-UPD-1",
-            description="dues",
-            amount=Decimal("100.00"),
-            status="sent",
-            due_date=date.today() + timedelta(days=10),
-            created_by_id=treasurer.id,
-            **chapter_to_user_invoice_kwargs(chapter_id=chapter.id, user_id=member.id),
-        )
-        db.session.add(chapter_inv)
-        db.session.commit()
-
-        _login(client, treasurer)
-        with patch("app.routes.invoices.recompute_financial_status") as mock_recompute:
-            resp = client.patch(f"/api/invoices/{chapter_inv.id}", json={"status": "paid"})
-        assert resp.status_code == 200
-        mock_recompute.assert_called_once()
-
-    def test_update_invoice_to_cancelled_calls_recompute(self, client, db_session):
-        org = make_organization()
-        chapter = make_chapter(org)
-        member = make_user(email="m@example.com")
-        treasurer = make_user(email="t@example.com")
-        make_membership(member, chapter, role="member")
-        make_membership(treasurer, chapter, role="treasurer")
-        treasurer.active_chapter_id = chapter.id
-        chapter_inv = Invoice(
-            scope="member",
-            invoice_number="INV-UPD-CANCEL-1",
-            description="dues",
-            amount=Decimal("100.00"),
-            status="sent",
-            due_date=date.today() + timedelta(days=10),
-            created_by_id=treasurer.id,
-            **chapter_to_user_invoice_kwargs(chapter_id=chapter.id, user_id=member.id),
-        )
-        db.session.add(chapter_inv)
-        db.session.commit()
-
-        _login(client, treasurer)
-        with patch("app.routes.invoices.recompute_financial_status") as mock_recompute:
-            resp = client.patch(f"/api/invoices/{chapter_inv.id}", json={"status": "cancelled"})
-        assert resp.status_code == 200
-        mock_recompute.assert_called_once()
-```
-
-- [ ] **Step 2: Run the tests and verify they fail**
-
-Run: `cd chapter-ops/backend && python -m pytest tests/test_invoice_status_triggers.py -v`
-Expected: 3 fail with `AssertionError: Expected 'recompute_financial_status' to have been called once. Called 0 times.`
-
-- [ ] **Step 3: Add the trigger calls to `invoices.py`**
-
-In `chapter-ops/backend/app/routes/invoices.py`, add to imports:
-
-```python
-from app.services.dues_service import recompute_financial_status
-```
-
-Define a small private helper at the top of the route module (after imports, before the blueprint declaration):
-
-```python
-def _recompute_for_invoice_target(invoice):
-    """If the invoice targets a user (chapter→user, region→user, org→user),
-    recompute that user's financial status across all chapter memberships
-    they hold within the issuer's organization."""
-    if invoice.target_type != "user":
-        return
-    from app.models import ChapterMembership, Region, Organization
-    user_id = invoice.target_id
-    # Find the owning organization for this invoice
-    if invoice.issuer_type == "chapter":
-        chapter = db.session.get(Chapter, invoice.issuer_id)
-        org_id = chapter.organization_id if chapter else None
-    elif invoice.issuer_type == "region":
-        region = db.session.get(Region, invoice.issuer_id)
-        org_id = region.organization_id if region else None
-    elif invoice.issuer_type == "organization":
-        org_id = invoice.issuer_id
-    else:
-        return
-    if not org_id:
-        return
-    # Recompute for every chapter membership the user has in this org
-    memberships = (
-        db.session.query(ChapterMembership)
-        .join(Chapter, ChapterMembership.chapter_id == Chapter.id)
-        .filter(
-            ChapterMembership.user_id == user_id,
-            ChapterMembership.active == True,
-            Chapter.organization_id == org_id,
-        )
-        .all()
-    )
-    for m in memberships:
-        recompute_financial_status(m.chapter, user_id)
-```
-
-In `send_invoice` (around line 351), AFTER `db.session.commit()`, AFTER the notification block, add:
-
-```python
-    _recompute_for_invoice_target(invoice)
-    db.session.commit()
-```
-
-In `bulk_send_invoices` (around line 397, AFTER `db.session.commit()` and the notification loop), add:
-
-```python
-    for inv in invoices:
-        _recompute_for_invoice_target(inv)
-    db.session.commit()
-```
-
-In `update_invoice` (around line 323, AFTER the existing `db.session.commit()`), add (only when status changed):
-
-```python
-    if "status" in data or "payment_id" in data:
-        _recompute_for_invoice_target(invoice)
-        db.session.commit()
-```
-
-- [ ] **Step 4: Add the trigger to webhook auto-link path**
-
-In `chapter-ops/backend/app/routes/webhooks.py`, find the auto-link block where `open_invoice.status = "paid"` is set (around line 191). Currently the surrounding webhook flow already calls `recompute_financial_status` via `apply_payment` for chapter-dues — but only when the payment metadata includes `chapter_id` + `user_id` matching active membership. The auto-link discovers an invoice that may NOT have been the target of the same code path.
-
-The simplest fix: import the helper at the top of `webhooks.py`:
-
-```python
-from app.routes.invoices import _recompute_for_invoice_target
-```
-
-(If you'd rather not cross-import between route modules, lift `_recompute_for_invoice_target` out to `app/services/dues_service.py` as a public function. Pragmatic call: keep it in `invoices.py` for this deploy; lift to `dues_service.py` if a third caller appears.)
-
-After `open_invoice.status = "paid"` (around line 191), call:
-
-```python
-        _recompute_for_invoice_target(open_invoice)
-```
-
-(The surrounding `db.session.commit()` near line 195 will commit the recompute changes too.)
-
-- [ ] **Step 5: Run the tests and verify they pass**
-
-Run: `cd chapter-ops/backend && python -m pytest tests/test_invoice_status_triggers.py tests/test_invoices_dual_write.py tests/test_invoices_polymorphic_reads.py tests/test_webhooks_dual_write.py -v`
-Expected: all green.
-
-- [ ] **Step 6: Wider sanity — full backend suite**
-
-Run: `cd chapter-ops/backend && python -m pytest -q`
-Expected: every test green. Report the final pass count.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add chapter-ops/backend/app/routes/invoices.py chapter-ops/backend/app/routes/webhooks.py chapter-ops/backend/tests/test_invoice_status_triggers.py
-git commit -m "feat(invoices): trigger recompute_financial_status on send/pay/cancel"
-```
-
----
-
-## Task 9: Smoke verification + ship-gate runbook
+## Task 7: Smoke verification + ship-gate runbook
 
 **Purpose:** Document the production deploy procedure. Per the design spec, Deploy 3 is the "riskiest deploy" — explicit DB backup, post-deploy spot checks, and a documented rollback plan are the mitigation.
 
@@ -1560,7 +1024,7 @@ Expected: every test green.
 
 - [ ] **Step 4: Document the production deploy runbook**
 
-Append to the bottom of this plan file as a `## Deploy runbook` section, OR add it to the PR description in Task 10. The runbook must include:
+Append to the bottom of this plan file as a `## Deploy runbook` section, OR add it to the PR description in Task 8. The runbook must include:
 
 ```
 ## Deploy 3 production runbook
@@ -1600,16 +1064,16 @@ git commit -m "test(invoices): smoke test exercising all flipped polymorphic rea
 
 ---
 
-## Task 10: Open the PR
+## Task 8: Open the PR
 
 - [ ] **Step 1: Push and open a draft PR**
 
 ```bash
 git push -u origin feature/payment-flows-deploy-3
-gh pr create --draft --title "Payment Flows Deploy 3: read cutover + cross-tier financial_status" --body "$(cat <<'EOF'
+gh pr create --draft --title "Payment Flows Deploy 3: Invoice read cutover" --body "$(cat <<'EOF'
 ## Summary
 
-Deploy 3 of the 5-deploy [Payment Flows Expansion](docs/superpowers/specs/2026-04-24-payment-flows-expansion-design.md). Cuts all Invoice reads over to the polymorphic columns Deploy 2 backfilled, extends financial_status with the cross-tier outstanding-invoice clause, and wires status-transition triggers so sending/paying/cancelling an invoice keeps `ChapterMembership.financial_status` honest.
+Deploy 3 of the 5-deploy [Payment Flows Expansion](docs/superpowers/specs/2026-04-24-payment-flows-expansion-design.md). **Pure read cutover with zero behavior change.** Every Invoice read site flips from legacy columns (`scope`, `chapter_id`, `billed_user_id`, `region_id`, `billed_chapter_id`) to the polymorphic columns (`issuer_type`/`issuer_id`/`target_type`/`target_id`) Deploy 2 backfilled.
 
 ### Tasks
 1. New `app/services/invoice_queries.py` — canonical polymorphic query builders.
@@ -1618,26 +1082,26 @@ Deploy 3 of the 5-deploy [Payment Flows Expansion](docs/superpowers/specs/2026-0
 4. Flip reads in `app/routes/dashboard.py` (member inbox + chapter overdue).
 5. Flip reads in `app/routes/regions.py` (regional dashboard snapshot).
 6. Flip reads in `app/cli/seed_demo.py` (5 cleanup queries).
-7. Extend `recompute_financial_status` for cross-tier Region/Org outstanding invoices.
-8. Status-transition triggers (send/pay/cancel) call `recompute_financial_status` for the target user.
-9. Smoke verification suite + ship-gate runbook.
+7. Smoke verification suite + ship-gate runbook.
 
 ### What stays the same
 - Polymorphic columns: continue to be dual-written on every Invoice/Payment construction site (Deploy 2).
 - Legacy columns: still WRITTEN, no longer READ. Drop happens in Deploy 5.
 - No new Alembic migrations.
+- `recompute_financial_status` semantics: unchanged (still chapter-dues-only).
 
-### Cross-tier behavior change
-Today `recompute_financial_status` only considers chapter dues. After this PR, it also flips a member to `not_financial` if any sent/overdue Region or Organization invoice targets them within the same organization. Production has zero Region→User and Org→User invoices today (those flows ship in Deploy 4), so this change is a no-op against current data — it's groundwork for Deploy 4.
+### Deferred from this deploy
+The original spec prescribed two additional changes — extending `recompute_financial_status` with a cross-tier outstanding-invoice clause and wiring status-transition triggers. Both are deferred pending a focused brainstorm on org-level financial-status flexibility. The spec rule was written to match one specific org's policy, and pulling it into Deploy 3 would lock that policy in as the platform default. No Region→User or Org→User invoices exist in production today (those flows ship in Deploy 4), so the deferral has no effect on current behavior.
 
 ### Risk profile
-Per the design spec, this is the **riskiest deploy** of the rollout. Mitigation:
+Per the design spec, this is the riskiest deploy of the rollout — polymorphic columns become the read-path source of truth. Mitigation:
 - DB backup before deploy (operator step in the runbook below).
 - Legacy columns still written, so reverting this PR is safe — reads return correct rows.
 - 24h close monitoring window post-deploy.
+- The change is read-only — no schema changes, no data migration, no behavior change.
 
 ### Backend test suite
-**Deploy 3 added ~20 new tests** across `test_invoice_queries`, `test_invoices_polymorphic_reads`, `test_webhooks_polymorphic_reads`, `test_dashboard_polymorphic_reads`, `test_dues_service_cross_tier`, `test_invoice_status_triggers`, and `test_polymorphic_reads_smoke`.
+Deploy 3 adds new tests across `test_invoice_queries`, `test_invoices_polymorphic_reads`, `test_webhooks_polymorphic_reads`, `test_dashboard_polymorphic_reads`, and `test_polymorphic_reads_smoke`.
 
 ## Test plan
 - [ ] CI green (`pytest -q`)
@@ -1648,7 +1112,7 @@ Per the design spec, this is the **riskiest deploy** of the rollout. Mitigation:
 
 ## Deploy 3 production runbook
 
-[Paste the runbook from Task 9 Step 4]
+[Paste the runbook from Task 7 Step 4]
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
@@ -1661,10 +1125,11 @@ Expected: draft PR opened. (If `gh` CLI isn't installed locally, push the branch
 
 ## Self-review checklist (run after writing the plan)
 
-- [x] Every spec Deploy 3 line item is covered: read cutover (Tasks 1-6), `recompute_financial_status` extension (Task 7), status-transition triggers (Task 8), risk mitigation (Task 9 runbook).
+- [x] Every Deploy 3 read-cutover line item is covered: read cutover (Tasks 1-6), risk mitigation (Task 7 runbook), PR (Task 8).
 - [x] Every read site identified by `grep` is flipped (10 production sites + 5 seeder sites).
 - [x] No new Alembic migrations — plan header explicitly notes this.
-- [x] Cross-tier behavior change is documented as a no-op against current production data (Deploy 4 activates it).
+- [x] Pure read cutover — zero behavior change in this deploy.
+- [x] Cross-tier financial_status clause and status-transition triggers explicitly deferred with rationale (single-org policy lock-in concern).
 - [x] Rollback plan is concrete: legacy columns still written, revert is safe.
 - [x] Every task ends in a commit step with a concrete `git add` / `git commit` command.
 - [x] Test commands are exact pytest invocations relative to the repo root.
