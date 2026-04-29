@@ -19,6 +19,7 @@ from flask import Blueprint, current_app, jsonify, request
 from app.extensions import db
 from app.models import Chapter, ChapterMembership, Payment, Donation, Invoice
 from app.models.event import EventAttendance
+from app.utils.polymorphic import user_to_chapter_payment_kwargs
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +139,9 @@ def _create_payment_from_session(session: dict, metadata: dict, payment_type: st
         fee_type_id=metadata.get("fee_type_id") or None,
         plan_id=plan_id,
         notes=metadata.get("notes") or None,
+        **user_to_chapter_payment_kwargs(
+            user_id=user_id, chapter_id=chapter_id,
+        ),
     )
     db.session.add(payment)
     db.session.flush()
