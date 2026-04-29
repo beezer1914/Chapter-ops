@@ -1,12 +1,15 @@
-"""backfill polymorphic columns on invoice and payment
+"""backfill polymorphic columns on invoice and payment (also merges MFA chain)
 
 Populates issuer_type/issuer_id/target_type/target_id on invoice and
 payer_type/payer_id/receiver_type/receiver_id on payment from the
 existing legacy columns. Idempotent — only updates rows where the
 polymorphic column is NULL.
 
+Also merges the MFA reset audit chain (cbdffd5a4544) with the Deploy 1
+chain (c6e9b3f7a0d2) by listing both as parents.
+
 Revision ID: d2a4c6e8b0f1
-Revises: c6e9b3f7a0d2
+Revises: c6e9b3f7a0d2, cbdffd5a4544
 Create Date: 2026-04-29 09:00:00.000000
 
 """
@@ -14,7 +17,7 @@ from alembic import op
 
 
 revision = 'd2a4c6e8b0f1'
-down_revision = 'c6e9b3f7a0d2'
+down_revision = ('c6e9b3f7a0d2', 'cbdffd5a4544')
 branch_labels = None
 depends_on = None
 
