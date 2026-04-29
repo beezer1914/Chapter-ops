@@ -5,7 +5,7 @@ Org-admin-only endpoints providing cross-chapter, cross-region visibility.
 These are tenant-exempt — no chapter context needed, scoped at organization level.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
