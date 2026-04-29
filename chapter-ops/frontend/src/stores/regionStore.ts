@@ -7,6 +7,7 @@ interface RegionState {
   selectedRegion: RegionDetail | null;
   isOrgAdmin: boolean;
   isRegionalDirector: boolean;
+  regionsWithDashboardAccess: string[];
   loading: boolean;
   error: string | null;
 
@@ -22,6 +23,7 @@ const INITIAL_STATE = {
   selectedRegion: null,
   isOrgAdmin: false,
   isRegionalDirector: false,
+  regionsWithDashboardAccess: [],
   loading: false,
   error: null,
 };
@@ -37,6 +39,7 @@ export const useRegionStore = create<RegionState>((set) => ({
         regions: data.regions,
         isOrgAdmin: data.is_org_admin,
         isRegionalDirector: data.is_regional_director ?? false,
+        regionsWithDashboardAccess: data.regions_with_dashboard_access ?? [],
         loading: false,
       });
     } catch {

@@ -13,12 +13,15 @@ import type {
   RegionDashboardPayload,
 } from "@/types";
 
-export async function fetchRegions(): Promise<{
+export interface FetchRegionsResponse {
   regions: RegionWithStats[];
   is_org_admin: boolean;
   is_regional_director: boolean;
-}> {
-  const response = await api.get("/regions");
+  regions_with_dashboard_access: string[];
+}
+
+export async function fetchRegions(): Promise<FetchRegionsResponse> {
+  const response = await api.get<FetchRegionsResponse>("/regions");
   return response.data;
 }
 
