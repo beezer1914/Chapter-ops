@@ -22,8 +22,8 @@ def upgrade():
     op.create_table(
         'audit_event',
         sa.Column('id', sa.String(36), primary_key=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')),
         sa.Column('actor_user_id', sa.String(36), sa.ForeignKey('user.id', ondelete='SET NULL'), nullable=True),
         sa.Column('event_type', sa.String(64), nullable=False),
         sa.Column('target_type', sa.String(20), nullable=False),

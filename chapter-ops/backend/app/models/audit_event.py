@@ -13,6 +13,9 @@ from app.models.base import BaseModel
 
 class AuditEvent(BaseModel):
     __tablename__ = "audit_event"
+    __table_args__ = (
+        db.Index("ix_audit_event_target", "target_type", "target_id"),
+    )
 
     actor_user_id: Mapped[str | None] = mapped_column(
         db.String(36),

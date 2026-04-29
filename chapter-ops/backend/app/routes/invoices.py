@@ -21,7 +21,7 @@ from app.utils.decorators import chapter_required, role_required, region_role_re
 from app.utils.permissions import enforce_module_access
 from app.utils.polymorphic import (
     chapter_to_user_invoice_kwargs,
-    region_to_chapter_invoice_kwargs,  # imported now; used in Task 6
+    region_to_chapter_invoice_kwargs,
 )
 
 invoices_bp = Blueprint("invoices", __name__, url_prefix="/api/invoices")
